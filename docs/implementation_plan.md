@@ -87,78 +87,78 @@ Kế hoạch triển khai Atlassian Agent (bao gồm Jira Agent và Confluence A
 
 ### Phase 9: Triển khai MCP Resources Capability
 
-### Mục tiêu
-- Triển khai API Resources cho MCP Atlassian Server
-- Chuyển đổi các tools hiện có thành resources khi phù hợp
-- Tối ưu hóa cấu trúc dữ liệu trả về cho mục đích AI
+✅ Đã hoàn thành!
 
-### Checklist
-1. **Cấu trúc mã cho Resources API**
-   - [x] Tạo module `resources` cho tất cả các resources
-   - [x] Thiết lập interfaces và types cho resources
-   - [x] Tạo các helper functions cho việc định dạng dữ liệu trả về
+- [x] Thiết lập cơ sở hạ tầng cho MCP Resource Capability
+- [x] Xây dựng hệ thống mẫu và template để triển khai resources
+- [x] Phân loại API thành Resource (read-only) và Tool (có side effects)
+- [x] Triển khai Resource handler cho Jira và Confluence
+- [x] Đặc tả URI pattern cho Resources
+- [x] Kiểm thử Resources với MCP Inspector và Cline
+- [x] Chuẩn hóa định dạng phản hồi cho Resources
 
-2. **Triển khai Resource API cơ bản**
-   - [x] Đăng ký MCP Resources Capability trên server
-   - [x] Tạo cơ chế đăng ký resource (registerResource)
-   - [x] Cải thiện xử lý context để đảm bảo `atlassianConfig` luôn có sẵn
-   - [x] Thêm xử lý lỗi cho resources
+### Jira Resources (Đã triển khai)
 
-3. **Triển khai Resources cho Jira Projects**
-   - [x] Resource `jira://projects` để liệt kê tất cả projects
-   - [x] Resource `jira://projects/{projectKey}` để lấy chi tiết project
-   - [x] Tối ưu cấu trúc dữ liệu trả về cho các project
-   - [x] Thêm xử lý URI pattern để trích xuất tham số từ URI
+- [x] `jira://projects` - Danh sách tất cả projects
+- [x] `jira://projects/{projectKey}` - Chi tiết project cụ thể
+- [x] `jira://issues/{issueKey}` - Chi tiết issue cụ thể
+- [x] `jira://issues` - Danh sách tất cả issues (hỗ trợ phân trang)
+- [x] `jira://issues?jql={query}` - Tìm kiếm issues bằng JQL
+- [x] `jira://issues/{issueKey}/transitions` - Các trạng thái có thể chuyển đổi của issue
+- [x] `jira://issues/{issueKey}/comments` - Comments trên issue
+- [x] `jira://users` - Danh sách users
+- [x] `jira://users/{accountId}` - Chi tiết user cụ thể
 
-4. **Triển khai Resources cho Jira Issues**
-   - [x] Resource `jira://issues/{issueKey}` để lấy chi tiết một issue
-   - [x] Resource `jira://issues` để liệt kê các issues với phân trang
-   - [x] Hỗ trợ JQL để tìm kiếm issues (`jira://issues?jql={query}`)
-   - [x] Resource `jira://issues/{issueKey}/transitions` để lấy danh sách transitions
-   - [x] Resource `jira://issues/{issueKey}/comments` để lấy danh sách comments
+### Confluence Resources (Đã triển khai)
 
-5. **Triển khai Resources cho Jira Users**
-   - [x] Resource `jira://users` để lấy danh sách users (hạn chế: API Jira yêu cầu query parameter)
-   - [x] Resource `jira://users/{accountId}` để lấy thông tin chi tiết user
-   - [x] Lưu ý giới hạn từ API Jira Cloud về việc chỉ chấp nhận accountId thực tế, không hỗ trợ email/username
+- [x] `confluence://spaces` - Danh sách tất cả spaces
+- [x] `confluence://spaces/{spaceKey}` - Chi tiết space cụ thể
+- [x] `confluence://spaces/{spaceKey}/pages` - Danh sách trang trong space
+- [x] `confluence://pages` - Danh sách tất cả pages
+- [x] `confluence://pages?cql={query}` - Tìm kiếm pages bằng CQL
+- [x] `confluence://pages/{pageId}` - Chi tiết page cụ thể
+- [x] `confluence://pages/{pageId}/children` - Các trang con
+- [x] `confluence://pages/{pageId}/comments` - Comments trên page
 
-6. **Chuyển đổi Tools thành Resources**
-   - [x] Tool `searchIssues` -> Resource `jira://issues?jql={query}` 
-   - [ ] Tool `getPage` -> Resource `confluence://pages/:pageId`
-   - [ ] Tool `searchPages` -> Resource `confluence://pages?cql={query}`
-   - [ ] Tool `getSpaces` -> Resource `confluence://spaces`
+### Checklist chuyển đổi Tools thành Resources
 
-7. **Bổ sung Resources**
-   - [ ] Confluence Spaces: `confluence://spaces` và `confluence://spaces/:spaceKey`
-   - [ ] Confluence Pages: `confluence://pages/:pageId` và `confluence://pages/:pageId/children`
-   - [ ] Comments: `confluence://pages/:pageId/comments`
+#### Tools đã chuyển đổi thành Resources
+- [x] `searchIssues` → `jira://issues?jql={query}`
+- [x] `getPage` → `confluence://pages/{pageId}`
+- [x] `getSpaces` → `confluence://spaces`
+- [x] `searchPages` → `confluence://pages?cql={query}`
 
-### Kết luận về phân loại API
-Sau khi phân tích các API, chúng ta đã phân loại chúng thành hai nhóm chính:
+#### Tools giữ nguyên do có side effects
+- [x] `createIssue` - Gây tác dụng phụ (tạo mới issue)
+- [x] `updateIssue` - Gây tác dụng phụ (thay đổi dữ liệu issue)
+- [x] `transitionIssue` - Gây tác dụng phụ (thay đổi trạng thái issue)
+- [x] `addComment` (Jira) - Gây tác dụng phụ (thêm comment)
+- [x] `createPage` - Gây tác dụng phụ (tạo mới page)
+- [x] `updatePage` - Gây tác dụng phụ (thay đổi dữ liệu page)
+- [x] `addComment` (Confluence) - Gây tác dụng phụ (thêm comment)
 
-1. **Resources**: Các API chỉ đọc, không gây tác dụng phụ, dùng để truy xuất thông tin
-   - Ví dụ: lấy danh sách projects, chi tiết issue, tìm kiếm theo JQL/CQL
-   - URI pattern: `protocol://resource-type/identifier`
-   - Phù hợp để triển khai qua giao thức resources
+**Tổng kết hiện tại:** Tất cả Resources dự kiến cho Jira và Confluence đã được triển khai đầy đủ. Hệ thống MCP Resource Capability hiện đang hoạt động tốt với khả năng phân trang và định dạng phản hồi chuẩn. Tiếp tục tối ưu và mở rộng các resources trong Phase 10.
 
-2. **Tools**: Các API thực hiện hành động, làm thay đổi trạng thái hệ thống
-   - Ví dụ: tạo/cập nhật/xóa issues, thêm comments, chuyển trạng thái
-   - Phù hợp để giữ nguyên dưới dạng tools
+## Phase 10: Tối ưu hóa và Mở rộng Resources
 
-Ưu tiên triển khai các API chỉ đọc dưới dạng Resources trước vì:
-- Đơn giản hơn để triển khai (không phức tạp về xác thực/ủy quyền)
-- Cung cấp mô hình truy cập thông nhất và dễ mở rộng
-- Phù hợp với mục đích chính của Claude là truy vấn thông tin
-
-### Phase 10: Tối ưu và Mở rộng
-- [ ] Thêm các authentication methods bổ sung (OAuth)
+### 1. Thêm các authentication methods bổ sung (OAuth)
+- [ ] Triển khai OAuth cho Jira và Confluence
 - [ ] Cập nhật documentation cho tất cả APIs
-- [ ] Cải thiện hiệu suất
-  - [ ] Tối ưu hóa API calls
-  - [ ] Cài đặt caching để giảm số lượng requests
-  - [ ] Cải thiện error handling và retry logic
 
-### Phase 11: Triển khai MCP Capabilities khác
+### 2. Cải thiện hiệu suất
+- [ ] Tối ưu hóa API calls
+- [ ] Cài đặt caching để giảm số lượng requests
+- [ ] Cải thiện error handling và retry logic
+
+### 3. Mở rộng thêm resources cho Jira (Filters, Dashboards, Boards)
+- [ ] Thêm hỗ trợ cho Filters, Dashboards, Boards trong Jira
+- [ ] Hỗ trợ thêm tham số truy vấn cho các resources
+- [ ] Cải thiện định dạng dữ liệu trả về và metadata
+
+### 4. Cải thiện định dạng dữ liệu trả về và metadata
+- [ ] Cải thiện định dạng dữ liệu trả về và metadata
+
+## Phase 11: Triển khai MCP Capabilities khác
 - [ ] Triển khai MCP Prompts Capability
   - [ ] Thiết kế cấu trúc prompt chuẩn cho Atlassian
   - [ ] Tạo hệ thống xử lý và routing prompt

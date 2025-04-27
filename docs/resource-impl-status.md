@@ -1,59 +1,67 @@
-# Trạng thái triển khai Resources và Tools
+# Trạng thái Triển khai MCP Resources & Tools
 
-## Resources
+Tài liệu này theo dõi trạng thái triển khai tất cả MCP Resources & Tools cho Atlassian Server.
+
+## MCP Resources
 
 ### Jira Resources
 
-| Resource | URI Pattern | Trạng thái | Chức năng |
-|----------|-------------|------------|-----------|
-| Projects (danh sách) | `jira://projects` | ✅ Đã triển khai | Lấy danh sách tất cả projects |
-| Project chi tiết | `jira://projects/{projectKey}` | ✅ Đã triển khai | Lấy thông tin chi tiết về một project |
-| Issue chi tiết | `jira://issues/{issueKey}` | ✅ Đã triển khai | Lấy thông tin chi tiết về một issue |
-| Issues (danh sách) | `jira://issues` | ✅ Đã triển khai | Lấy danh sách issues với phân trang |
-| Tìm kiếm Issues | `jira://issues?jql={query}` | ✅ Đã triển khai | Tìm kiếm issues theo JQL |
-| Issue Transitions | `jira://issues/{issueKey}/transitions` | ✅ Đã triển khai | Lấy danh sách các transitions có thể |
-| Issue Comments | `jira://issues/{issueKey}/comments` | ✅ Đã triển khai | Lấy danh sách comments của issue |
-| Users | `jira://users` | ✅ Đã triển khai* | Lấy danh sách người dùng Jira |
-| User chi tiết | `jira://users/{accountId}` | ✅ Đã triển khai* | Lấy thông tin chi tiết về một người dùng |
-
-\* **Lưu ý về API Jira Cloud**:
-- `jira://users`: API Jira Cloud yêu cầu phải truyền query parameter (username/property) để tìm kiếm, không hỗ trợ lấy toàn bộ users
-- `jira://users/{accountId}`: Chỉ chấp nhận accountId thực tế của Jira Cloud (ví dụ: "557058:8c1557f3-81f6-4479-a006-dd5e914a7c11"), không hỗ trợ email, username thông thường
+| Resource | URI | Trạng thái | Chức năng |
+|----------|-----|------------|-----------|
+| Danh sách Projects | `jira://projects` | ✅ Đã triển khai | Trả về danh sách tất cả projects |
+| Chi tiết Project | `jira://projects/{projectKey}` | ✅ Đã triển khai | Trả về thông tin chi tiết về project cụ thể |
+| Chi tiết Issue | `jira://issues/{issueKey}` | ✅ Đã triển khai | Trả về thông tin chi tiết về issue cụ thể |
+| Danh sách Issues | `jira://issues` | ✅ Đã triển khai | Trả về danh sách tất cả issues (có phân trang) |
+| Tìm kiếm Issues bằng JQL | `jira://issues?jql={query}` | ✅ Đã triển khai | Tìm kiếm issues dựa trên JQL query (⚠️ Chuyển từ Tool `searchIssues`) |
+| Transitions của Issue | `jira://issues/{issueKey}/transitions` | ✅ Đã triển khai | Trả về danh sách transitions có thể của issue cụ thể |
+| Comments của Issue | `jira://issues/{issueKey}/comments` | ✅ Đã triển khai | Trả về danh sách comments trên issue cụ thể |
+| Danh sách Users | `jira://users` | ✅ Đã triển khai | Trả về danh sách users trong Jira |
+| Chi tiết User | `jira://users/{accountId}` | ✅ Đã triển khai | Trả về thông tin chi tiết về user cụ thể |
 
 ### Confluence Resources
 
-| Resource | URI Pattern | Trạng thái | Chức năng |
-|----------|-------------|------------|-----------|
-| Spaces (danh sách) | `confluence://spaces` | 📝 Kế hoạch | Lấy danh sách tất cả spaces |
-| Space chi tiết | `confluence://spaces/{spaceKey}` | 📝 Kế hoạch | Lấy thông tin chi tiết về một space |
-| Pages (danh sách) | `confluence://spaces/{spaceKey}/pages` | 📝 Kế hoạch | Lấy danh sách trang trong một space |
-| Tìm kiếm Pages | `confluence://pages?cql={query}` | 📝 Kế hoạch | Tìm kiếm pages theo CQL |
-| Page chi tiết | `confluence://pages/{pageId}` | 📝 Kế hoạch | Lấy thông tin chi tiết về một page |
-| Page Children | `confluence://pages/{pageId}/children` | 📝 Kế hoạch | Lấy danh sách trang con |
-| Page Comments | `confluence://pages/{pageId}/comments` | 📝 Kế hoạch | Lấy danh sách comments của page |
+| Resource | URI | Trạng thái | Chức năng |
+|----------|-----|------------|-----------|
+| Danh sách Spaces | `confluence://spaces` | ✅ Đã triển khai | Trả về danh sách tất cả spaces (⚠️ Chuyển từ Tool `getSpaces`) |
+| Chi tiết Space | `confluence://spaces/{spaceKey}` | ✅ Đã triển khai | Trả về thông tin chi tiết về space cụ thể |
+| Pages trong Space | `confluence://spaces/{spaceKey}/pages` | ✅ Đã triển khai | Trả về danh sách pages trong space cụ thể |
+| Danh sách Pages | `confluence://pages` | ✅ Đã triển khai | Trả về danh sách tất cả pages |
+| Tìm kiếm Pages bằng CQL | `confluence://pages?cql={query}` | ✅ Đã triển khai | Tìm kiếm pages dựa trên CQL query (⚠️ Chuyển từ Tool `searchPages`) |
+| Chi tiết Page | `confluence://pages/{pageId}` | ✅ Đã triển khai | Trả về thông tin chi tiết về page cụ thể (⚠️ Chuyển từ Tool `getPage`) |
+| Children của Page | `confluence://pages/{pageId}/children` | ✅ Đã triển khai | Trả về danh sách children của page cụ thể |
+| Comments của Page | `confluence://pages/{pageId}/comments` | ✅ Đã triển khai | Trả về danh sách comments trên page cụ thể |
 
-## Tools
+## MCP Tools
 
 ### Jira Tools
 
-| Tool | Trạng thái | Chức năng | Ghi chú |
-|------|------------|-----------|---------|
-| `createIssue` | 🔄 Đã có | Tạo issue mới | Giữ nguyên dạng tool (gây tác dụng phụ) |
-| `updateIssue` | 🔄 Đã có | Cập nhật issue | Giữ nguyên dạng tool (gây tác dụng phụ) |
-| `addComment` | 🔄 Đã có | Thêm comment vào issue | Giữ nguyên dạng tool (gây tác dụng phụ) |
-| `transitionIssue` | 🔄 Đã có | Chuyển trạng thái issue | Giữ nguyên dạng tool (gây tác dụng phụ) |
-| `searchIssues` | ✅ Đã chuyển đổi | Tìm kiếm issues theo JQL | Đã chuyển thành resource `jira://issues?jql={query}` |
+| Tool | Trạng thái | Chức năng |
+|------|------------|-----------|
+| `createIssue` | ✅ Đã triển khai | Tạo mới issue trong Jira |
+| `updateIssue` | ✅ Đã triển khai | Cập nhật thông tin issue |
+| `transitionIssue` | ✅ Đã triển khai | Chuyển đổi trạng thái issue |
+| `addComment` (Jira) | ✅ Đã triển khai | Thêm comment vào issue |
+| `searchIssues` | ⚠️ Chuyển sang Resource | Đã chuyển thành resource `jira://issues?jql={query}` |
 
 ### Confluence Tools
 
-| Tool | Trạng thái | Chức năng | Ghi chú |
-|------|------------|-----------|---------|
-| `createPage` | 🔄 Đã có | Tạo trang mới | Giữ nguyên dạng tool (gây tác dụng phụ) |
-| `updatePage` | 🔄 Đã có | Cập nhật trang | Giữ nguyên dạng tool (gây tác dụng phụ) |
-| `addComment` | 🔄 Đã có | Thêm comment vào trang | Giữ nguyên dạng tool (gây tác dụng phụ) |
-| `getPage` | ⚠️ Cần chuyển đổi | Lấy thông tin chi tiết trang | Chuyển thành resource `confluence://pages/{pageId}` |
-| `getSpaces` | ⚠️ Cần chuyển đổi | Lấy danh sách spaces | Chuyển thành resource `confluence://spaces` |
-| `searchPages` | ⚠️ Cần chuyển đổi | Tìm kiếm trang theo CQL | Chuyển thành resource `confluence://pages?cql={query}` |
+| Tool | Trạng thái | Chức năng |
+|------|------------|-----------|
+| `createPage` | ✅ Đã triển khai | Tạo mới page trong Confluence |
+| `updatePage` | ✅ Đã triển khai | Cập nhật nội dung page |
+| `addComment` (Confluence) | ✅ Đã triển khai | Thêm comment vào page |
+| `getPage` | ⚠️ Chuyển sang Resource | Đã chuyển thành resource `confluence://pages/{pageId}` |
+| `getSpaces` | ⚠️ Chuyển sang Resource | Đã chuyển thành resource `confluence://spaces` |
+| `searchPages` | ⚠️ Chuyển sang Resource | Đã chuyển thành resource `confluence://pages?cql={query}` |
+
+---
+
+## Chú thích
+
+- ✅ Đã triển khai: Đã triển khai và sẵn sàng sử dụng
+- 🔄 Đang triển khai: Đang trong quá trình triển khai
+- 📝 Kế hoạch: Đã lên kế hoạch triển khai
+- ⚠️ Chuyển sang Resource: Tool đã được chuyển đổi thành Resource
 
 ## Kế hoạch triển khai
 
@@ -65,23 +73,19 @@
 - ✅ Triển khai resources cho Jira Issues (danh sách, chi tiết, tìm kiếm JQL)
 - ✅ Triển khai resources cho Issue Transitions và Comments
 - ✅ Triển khai resources cho Jira Users (với các hạn chế của API Jira Cloud)
+- ✅ Triển khai resources cho Confluence Spaces (danh sách và chi tiết)
+- ✅ Triển khai resources cho Confluence Pages (danh sách, chi tiết, tìm kiếm CQL)
+- ✅ Triển khai resources cho Page Children và Comments
 - ✅ Chuyển đổi tool `searchIssues` thành resource `jira://issues?jql={query}`
+- ✅ Chuyển đổi tool `getPage` thành resource `confluence://pages/{pageId}`
+- ✅ Chuyển đổi tool `getSpaces` thành resource `confluence://spaces`
+- ✅ Chuyển đổi tool `searchPages` thành resource `confluence://pages?cql={query}`
 
 ### Đang thực hiện
-- 🔄 Chuẩn bị triển khai resources cho Confluence
+- 🔄 Tối ưu hóa và mở rộng MCP Resources
 
 ### Sắp triển khai
-1. Resources cho Confluence:
-   - Spaces và Pages
-   - Tìm kiếm và truy vấn chi tiết
-   - Comments của Pages
-
-2. Chuyển đổi Tools thành Resources:
-   - Tool `getPage` -> Resource `confluence://pages/{pageId}`
-   - Tool `getSpaces` -> Resource `confluence://spaces`
-   - Tool `searchPages` -> Resource `confluence://pages?cql={query}`
-
-3. Cải thiện và tối ưu:
+1. Cải thiện và tối ưu:
    - Mở rộng thêm Jira resources (Filters, Dashboards, Boards)
    - Hỗ trợ thêm tham số truy vấn cho các resources
    - Cải thiện định dạng dữ liệu trả về cho AI 
