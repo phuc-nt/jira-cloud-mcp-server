@@ -79,11 +79,11 @@ const getAtlassianConfigFromEnv = (): AtlassianConfig => {
 export function registerResource(
   server: McpServer, 
   resourceName: string,
-  resourceUri: string, 
+  resourceUri: string | any, // chấp nhận ResourceTemplate
   description: string, 
   handler: ResourceHandlerFunction
 ) {
-  logger.info(`Registering resource: ${resourceName} (${resourceUri})`);
+  logger.info(`Registering resource: ${resourceName} (${resourceUri instanceof Object && 'pattern' in resourceUri ? resourceUri.pattern : resourceUri})`);
   
   // Đăng ký resource với MCP Server theo đúng định nghĩa API
   server.resource(resourceName, resourceUri, 

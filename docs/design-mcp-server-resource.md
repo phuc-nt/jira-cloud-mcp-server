@@ -140,13 +140,140 @@ confluence://pages/{pageId}/children # Trang con của một trang
 confluence://pages/{pageId}/comments # Bình luận của trang
 ```
 
-## 4. Kế hoạch triển khai
+## 4. Hướng dẫn implement MCP Resource
 
-### 4.1. Tạo cấu trúc thư mục
+### 4.1. Chuẩn hóa dùng ResourceTemplate
+
+**Nguyên tắc quan trọng**: Luôn dùng `ResourceTemplate` cho mọi resource dù có hay không có parameter.
+
+#### 4.1.1. Resource KHÔNG có parameter (static URI)
+
+```typescript
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { createJsonResource } from '../../utils/mcp-resource.js';
+
+export function registerProjectResources(server: McpServer) {
+  server.resource(
+    'jira-projects-list',
+    new ResourceTemplate('jira://projects', { list: undefined }),
+    async (uri, _params, extra) => {
+      // Lấy danh sách dự án từ Jira API
+      // ...
+      return createJsonResource(uri.href, {
+        projects: formattedProjects,
+        count: formattedProjects.length,
+        message: `Tìm thấy ${formattedProjects.length} dự án`
+      });
+    }
+  );
+}
+```
+
+#### 4.1.2. Resource CÓ parameter (dynamic URI)
+
+```typescript
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { createJsonResource } from '../../utils/mcp-resource.js';
+
+export function registerIssueResources(server: McpServer) {
+  server.resource(
+    'jira-issue-details',
+    new ResourceTemplate('jira://issues/{issueKey}', { list: undefined }),
+    async (uri, { issueKey }, extra) => {
+      // Đảm bảo issueKey là string
+      const normalizedIssueKey = Array.isArray(issueKey) ? issueKey[0] : issueKey;
+      // Lấy thông tin issue từ Jira API
+      // ...
+      return createJsonResource(uri.href, {
+        issue: formattedIssue,
+        message: `Thông tin chi tiết issue ${normalizedIssueKey}`
+      });
+    }
+  );
+}
+```
+
+#### 4.1.3. Lưu ý khi dùng ResourceTemplate
+
+- **Tham số trong URI**: Bất kỳ phần nào nằm trong `{}` sẽ được MCP SDK tự động parse và truyền vào handler.
+- **Chuẩn hóa tham số**: Tham số có thể là string hoặc string[], nên luôn chuẩn hóa:
+  ```typescript
+  const normalizedParam = Array.isArray(param) ? param[0] : param;
+  ```
+- **Handler nhận 3 tham số**: `(uri, params, extra)`
+- **Lý do dùng ResourceTemplate cho mọi resource**:
+  - Codebase thống nhất, dễ bảo trì
+  - Dễ dàng mở rộng với tham số trong tương lai
+  - Không ảnh hưởng đến hoạt động của MCP SDK
+
+### 4.2. Định dạng trả về đúng chuẩn MCP
+
+Đảm bảo mọi resource trả về đúng định dạng theo chuẩn MCP:
+
+```typescript
+// Tạo resource JSON
+export function createJsonResource(uri: string, data: any) {
+  return {
+    contents: [
+      {
+        uri: uri,
+        mimeType: "application/json",
+        text: JSON.stringify(data)  // Bắt buộc phải chuyển thành text!
+      }
+    ]
+  };
+}
+
+// Tạo resource Text
+export function createTextResource(uri: string, data: string) {
+  return {
+    contents: [
+      {
+        uri: uri,
+        mimeType: "text/plain",
+        text: data
+      }
+    ]
+  };
+}
+```
+
+### 4.3. Sử dụng utility function để đăng ký
+
+Nên sử dụng hàm utility `registerResource` để đăng ký resource:
+
+```typescript
+// src/utils/mcp-resource.ts
+export function registerResource(
+  server: McpServer, 
+  resourceName: string,
+  resourceUri: string | any, // Có thể truyền ResourceTemplate
+  description: string, 
+  handler: ResourceHandlerFunction
+) {
+  logger.info(`Registering resource: ${resourceName} (${resourceUri instanceof Object && 'pattern' in resourceUri ? resourceUri.pattern : resourceUri})`);
+  
+  // Đăng ký resource với MCP Server
+  server.resource(resourceName, resourceUri, 
+    async (uri, extra) => {
+      try {
+        // Xử lý context, params và gọi handler cùng config
+        // ...
+      } catch (error) {
+        // Xử lý lỗi
+      }
+    }
+  );
+}
+```
+
+## 5. Cấu trúc thư mục và triển khai
+
+### 5.1. Cấu trúc thư mục
 
 ```
 src/
-├── resources/                    # Thư mục mới chứa tất cả resources
+├── resources/                    # Thư mục chứa tất cả resources
 │   ├── jira/                     # Resources cho Jira
 │   │   ├── index.ts              # Đăng ký tất cả Jira resources
 │   │   ├── issues.ts             # Định nghĩa resources cho issues
@@ -161,78 +288,14 @@ src/
     └── mcp-resource.ts           # Utility functions cho resources
 ```
 
-### 4.2. Tạo file utility cho MCP Resource
+### 5.2. Triển khai resources cho Jira
 
-```typescript
-// src/utils/mcp-resource.ts
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { Logger } from './logger.js';
-
-const logger = Logger.getLogger('MCPResource');
-
-// QUAN TRỌNG: Định dạng trả về đúng chuẩn MCP
-export function createJsonResource(uri: string, data: any) {
-  return {
-    contents: [
-      {
-        uri: uri,
-        mimeType: "application/json",
-        text: JSON.stringify(data)
-      }
-    ]
-  };
-}
-
-export function createTextResource(uri: string, data: string) {
-  return {
-    contents: [
-      {
-        uri: uri,
-        mimeType: "text/plain",
-        text: data
-      }
-    ]
-  };
-}
-
-// Hàm đăng ký resource theo chuẩn MCP
-export function registerResource(server: McpServer, uri: string, description: string, handler: Function) {
-  logger.info(`Registering resource: ${uri}`);
-  
-  // Đăng ký resource trực tiếp với server
-  server.resource(uri, description, async (uri, params, exchange) => {
-    try {
-      logger.info(`Handling resource request for: ${uri.href}`);
-      logger.debug(`Resource params:`, params);
-      
-      // Đảm bảo context có atlassianConfig
-      const config = exchange.context.atlassianConfig;
-      if (!config) {
-        logger.error(`Atlassian configuration not found in context for resource: ${uri.href}`);
-        throw new Error('Atlassian configuration not found in context');
-      }
-      
-      // Gọi handler với params và context
-      const result = await handler(params, { config, uri: uri.href });
-      logger.debug(`Resource result for ${uri.href}:`, result);
-      
-      return result;
-    } catch (error) {
-      logger.error(`Error in resource handler for ${uri.href}:`, error);
-      throw error;
-    }
-  });
-}
-```
-
-### 4.3. Triển khai resources cho Jira
-
-#### 4.3.1. Tạo file index.ts cho Jira resources
+#### 5.2.1. Tạo file index.ts cho Jira resources
 
 ```typescript
 // src/resources/jira/index.ts
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { ListResourcesRequestSchema, ReadResourceRequestSchema } from "@modelcontextprotocol/sdk/server/schemas.js";
+import { ListResourcesRequestSchema } from "@modelcontextprotocol/sdk/server/schemas.js";
 import { registerIssueResources } from './issues.js';
 import { registerProjectResources } from './projects.js';
 import { registerUserResources } from './users.js';
@@ -267,106 +330,15 @@ export function registerJiraResources(server: McpServer) {
 }
 ```
 
-#### 4.3.2. Triển khai projects resources
+### 5.3. Cập nhật file index.ts của dự án
 
 ```typescript
-// src/resources/jira/projects.ts
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { ApiError } from '../../utils/error-handler.js';
-import { callJiraApi } from '../../utils/atlassian-api.js';
-import { createJsonResource, registerResource } from '../../utils/mcp-resource.js';
-import { Logger } from '../../utils/logger.js';
-
-const logger = Logger.getLogger('JiraResource:Projects');
-
-export function registerProjectResources(server: McpServer) {
-  // Resource: Danh sách projects
-  registerResource(
-    server,
-    'jira://projects',
-    'Lấy danh sách dự án trong Jira',
-    async (params, { config, uri }) => {
-      logger.info('Getting Jira projects');
-      
-      try {
-        const projects = await callJiraApi(config, '/rest/api/2/project', 'GET');
-        
-        // Chuyển đổi response thành định dạng thân thiện
-        const result = projects.map((project: any) => ({
-          id: project.id,
-          key: project.key,
-          name: project.name,
-          projectType: project.projectTypeKey,
-          url: `${config.baseUrl}/browse/${project.key}`
-        }));
-        
-        // Trả về đúng định dạng MCP
-        return createJsonResource(uri, result);
-      } catch (error) {
-        logger.error('Error getting Jira projects:', error);
-        throw error;
-      }
-    }
-  );
-  
-  // Resource: Thông tin chi tiết project
-  registerResource(
-    server,
-    'jira://projects/:projectKey',
-    'Lấy thông tin chi tiết về dự án trong Jira',
-    async (params: { projectKey: string }, { config, uri }) => {
-      logger.info(`Getting Jira project: ${params.projectKey}`);
-      
-      try {
-        const project = await callJiraApi(config, `/rest/api/2/project/${params.projectKey}`, 'GET');
-        
-        // Chuyển đổi response thành định dạng thân thiện
-        const result = {
-          id: project.id,
-          key: project.key,
-          name: project.name,
-          description: project.description,
-          lead: project.lead?.displayName,
-          url: `${config.baseUrl}/browse/${project.key}`,
-          projectType: project.projectTypeKey
-        };
-        
-        // Trả về đúng định dạng MCP
-        return createJsonResource(uri, result);
-      } catch (error) {
-        logger.error(`Error getting Jira project ${params.projectKey}:`, error);
-        throw error;
-      }
-    }
-  );
-}
-```
-
-### 4.4. Cập nhật file index.ts của dự án
-
-```typescript
-// src/index.ts
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { registerAllResources } from './resources/index.js';
 import { registerJiraTools } from './tools/jira/index.js';
 import { registerConfluenceTools } from './tools/confluence/index.js';
-import { registerAllResources } from './resources/index.js';
-import { dotenvConfig } from './utils/dotenv-config.js';
 import { Logger } from './utils/logger.js';
-
-// Cấu hình và khởi tạo môi trường
-dotenvConfig();
-const logger = Logger.getLogger('MCPServer');
-
-// Khởi tạo Atlassian config từ biến môi trường
-const atlassianConfig = {
-  baseUrl: `https://${process.env.ATLASSIAN_SITE_NAME}`,
-  email: process.env.ATLASSIAN_USER_EMAIL,
-  apiToken: process.env.ATLASSIAN_API_TOKEN
-};
-
-logger.info('[INFO][MCP:Server] Initializing MCP Atlassian Server...');
-logger.info(`[INFO][MCP:Server] Connected to Atlassian site: ${process.env.ATLASSIAN_SITE_NAME}`);
 
 // QUAN TRỌNG: Khởi tạo server với khai báo capabilities
 const server = new McpServer({
@@ -394,120 +366,34 @@ registerConfluenceTools(server);
 
 // Khởi động server
 const transport = new StdioServerTransport();
-server.connect(transport)
-  .then(() => {
-    logger.info('[INFO][MCP:Server] MCP Atlassian Server started successfully');
-  })
-  .catch(error => {
-    logger.error('Failed to start MCP Server:', error);
-    process.exit(1);
-  });
+server.connect(transport);
 ```
 
-## 5. Tránh lỗi "MCP error -32602: Resource not found"
+## 6. Tránh lỗi "MCP error -32602: Resource not found"
 
-Để tránh lỗi phổ biến "MCP error -32602: Resource not found", cần tuân thủ các nguyên tắc sau:
+### 6.1. Checklist để tránh lỗi
 
-### 5.1. Khai báo capabilities
+1. **Khai báo capabilities**: Luôn khai báo `capabilities: { resources: {} }` khi khởi tạo server
+2. **Đăng ký ListResourcesRequest**: Cài đặt handler để liệt kê tất cả resources có thể truy cập
+3. **Định dạng trả về đúng chuẩn**: Đảm bảo đúng cấu trúc `{ contents: [{ uri, mimeType, text }] }`
+4. **Đăng ký resource trước khi connect**: Thứ tự đúng là: `registerResources()` → `server.connect()`
+5. **Xử lý lỗi đúng cách**: Bắt và xử lý lỗi trong handler, không để crash server
 
-Luôn khai báo capabilities khi khởi tạo server:
+## 7. Kiểm thử Resources
 
-```typescript
-const server = new McpServer({
-  name: 'mcp-atlassian-integration',
-  version: '1.0.0'
-}, {
-  capabilities: {
-    resources: {},  // Bắt buộc để hỗ trợ resources
-    tools: {}
-  }
-});
-```
-
-### 5.2. Đăng ký ListResourcesRequest handler
-
-Đảm bảo đăng ký handler cho ListResourcesRequest để Cline có thể discover resources:
-
-```typescript
-server.setRequestHandler(ListResourcesRequestSchema, async () => {
-  return {
-    resources: [
-      { uri: "jira://projects", name: "Jira Projects", mimeType: "application/json" },
-      // Liệt kê tất cả resources ở đây
-    ]
-  };
-});
-```
-
-### 5.3. Đăng ký resource trực tiếp với server
-
-Sử dụng phương thức `server.resource()` để đăng ký resource:
-
-```typescript
-server.resource(
-  "jira://projects", 
-  "Jira Projects", 
-  async (uri, params, exchange) => {
-    // Xử lý và trả về đúng định dạng
-    return {
-      contents: [
-        {
-          uri: uri.href,
-          mimeType: "application/json",
-          text: JSON.stringify(data)
-        }
-      ]
-    };
-  }
-);
-```
-
-### 5.4. Định dạng trả về đúng chuẩn MCP
-
-Đảm bảo định dạng trả về tuân thủ chuẩn MCP:
-
-```typescript
-return {
-  contents: [
-    {
-      uri: uri.href,
-      mimeType: "application/json",
-      text: JSON.stringify(data)  // Phải chuyển thành text!
-    }
-  ]
-};
-```
-
-### 5.5. Đăng ký resources trước khi connect
-
-Đảm bảo đăng ký tất cả resources **trước khi** gọi `server.connect(transport)`.
-
-### 5.6. Xử lý lỗi đúng cách
-
-Bắt và xử lý lỗi trong handler, trả về thông báo lỗi có ý nghĩa.
-
-## 6. Kiểm thử Resources
-
-### 6.1. Sử dụng MCP Inspector
+### 7.1. Sử dụng MCP Inspector
 
 ```bash
 npx @modelcontextprotocol/inspector node ./dist/index.js
 ```
 
-MCP Inspector sẽ mở giao diện web cho phép bạn:
-- Xem danh sách resources đã đăng ký
-- Thử gọi resources với các tham số khác nhau
-- Xem kết quả trả về
-
-### 6.2. Kiểm tra với Cline
+### 7.2. Kiểm tra với Cline
 
 1. Cấu hình Cline để kết nối với MCP server
-2. Sử dụng câu lệnh như "Lấy danh sách các dự án Jira hiện có"
+2. Sử dụng câu lệnh tự nhiên như "Lấy danh sách các dự án Jira hiện có"
 3. Kiểm tra xem Cline có thể truy cập resources hay không
 
-### 6.3. Kiểm tra logs
-
-Thêm logs chi tiết vào handlers để debug:
+### 7.3. Thiết lập logs chi tiết
 
 ```typescript
 logger.debug(`Handling resource request for: ${uri.href}`);
@@ -515,16 +401,15 @@ logger.debug(`Resource params:`, params);
 logger.debug(`Resource result:`, result);
 ```
 
-## 7. Tổng kết
+## 8. Tổng kết
 
-Triển khai MCP Resources cho Atlassian API cho phép AI truy cập dữ liệu có cấu trúc từ Jira và Confluence. Bằng cách tuân thủ các nguyên tắc đăng ký và định dạng resource đúng chuẩn MCP, bạn có thể tránh lỗi "MCP error -32602: Resource not found" và tạo ra một MCP server hoạt động hiệu quả.
+Các điểm quan trọng khi triển khai MCP Resources Capability:
 
-Các điểm quan trọng cần nhớ:
-1. Khai báo capabilities khi khởi tạo server
-2. Đăng ký ListResourcesRequest handler
-3. Sử dụng `server.resource()` để đăng ký resource
-4. Trả về định dạng đúng chuẩn MCP với property `contents`
-5. Đăng ký resources trước khi connect
-6. Xử lý lỗi đúng cách
+1. **Luôn dùng ResourceTemplate**: Dù có hay không có parameter
+2. **Chuẩn hóa tham số**: `const normalized = Array.isArray(param) ? param[0] : param;`
+3. **Định dạng response đúng chuẩn**: Dùng `createJsonResource` hoặc `createTextResource`
+4. **Khai báo capabilities**: Luôn thêm `capabilities: { resources: {} }`
+5. **Thứ tự đăng ký**: Resources → Tools → Connect
+6. **Xử lý lỗi đúng cách**: Không để crash server
 
-Với những hướng dẫn này, bạn có thể triển khai thành công MCP Resources Capability cho Atlassian mà không gặp lỗi "Resource not found".
+Với những nguyên tắc và hướng dẫn này, bạn có thể triển khai thành công MCP Resources Capability cho Atlassian một cách hiệu quả, đúng chuẩn, và dễ bảo trì.

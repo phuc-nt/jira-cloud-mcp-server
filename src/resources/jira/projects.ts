@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerResource, createJsonResource } from '../../utils/mcp-resource.js';
 import { AtlassianConfig } from '../../utils/atlassian-api.js';
 import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
@@ -156,7 +156,7 @@ export function registerProjectResources(server: McpServer) {
   registerResource(
     server,
     'jira-projects-list',
-    'jira://projects',
+    new ResourceTemplate('jira://projects', { list: undefined }),
     'Danh sách tất cả các dự án trong Jira',
     async (params, { config, uri }) => {
       logger.info('Getting list of Jira projects');
