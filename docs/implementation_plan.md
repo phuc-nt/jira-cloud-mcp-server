@@ -106,27 +106,32 @@ Kế hoạch triển khai Atlassian Agent (bao gồm Jira Agent và Confluence A
 
 3. **Triển khai Resources cho Jira Projects**
    - [x] Resource `jira://projects` để liệt kê tất cả projects
-   - [x] Resource `jira://projects/:projectKey` để lấy chi tiết project
+   - [x] Resource `jira://projects/{projectKey}` để lấy chi tiết project
    - [x] Tối ưu cấu trúc dữ liệu trả về cho các project
    - [x] Thêm xử lý URI pattern để trích xuất tham số từ URI
 
 4. **Triển khai Resources cho Jira Issues**
-   - [x] Resource `jira://issues/:issueKey` để lấy chi tiết một issue
-   - [ ] Resource `jira://issues` để liệt kê các issues với phân trang
-   - [ ] Hỗ trợ JQL để tìm kiếm issues (`jira://issues?jql={query}`)
-   - [ ] Thêm resources cho transitions và comments của issues
+   - [x] Resource `jira://issues/{issueKey}` để lấy chi tiết một issue
+   - [x] Resource `jira://issues` để liệt kê các issues với phân trang
+   - [x] Hỗ trợ JQL để tìm kiếm issues (`jira://issues?jql={query}`)
+   - [x] Resource `jira://issues/{issueKey}/transitions` để lấy danh sách transitions
+   - [x] Resource `jira://issues/{issueKey}/comments` để lấy danh sách comments
 
-5. **Chuyển đổi Tools thành Resources**
-   - [ ] Tool `searchIssues` -> Resource `jira://issues?jql={query}` 
+5. **Triển khai Resources cho Jira Users**
+   - [x] Resource `jira://users` để lấy danh sách users (hạn chế: API Jira yêu cầu query parameter)
+   - [x] Resource `jira://users/{accountId}` để lấy thông tin chi tiết user
+   - [x] Lưu ý giới hạn từ API Jira Cloud về việc chỉ chấp nhận accountId thực tế, không hỗ trợ email/username
+
+6. **Chuyển đổi Tools thành Resources**
+   - [x] Tool `searchIssues` -> Resource `jira://issues?jql={query}` 
    - [ ] Tool `getPage` -> Resource `confluence://pages/:pageId`
    - [ ] Tool `searchPages` -> Resource `confluence://pages?cql={query}`
    - [ ] Tool `getSpaces` -> Resource `confluence://spaces`
 
-6. **Bổ sung Resources**
-   - [ ] Jira Users: `jira://users` và `jira://users/:accountId`
-   - [ ] Confluence Spaces: `confluence://spaces/:spaceKey`
-   - [ ] Confluence Pages: `confluence://pages/:pageId/children`
-   - [ ] Comments: `jira://issues/:issueKey/comments` và `confluence://pages/:pageId/comments`
+7. **Bổ sung Resources**
+   - [ ] Confluence Spaces: `confluence://spaces` và `confluence://spaces/:spaceKey`
+   - [ ] Confluence Pages: `confluence://pages/:pageId` và `confluence://pages/:pageId/children`
+   - [ ] Comments: `confluence://pages/:pageId/comments`
 
 ### Kết luận về phân loại API
 Sau khi phân tích các API, chúng ta đã phân loại chúng thành hai nhóm chính:
