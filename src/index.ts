@@ -1,17 +1,11 @@
 import dotenv from 'dotenv';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { registerGetIssueTool } from './tools/jira/get-issue.js';
-import { registerSearchIssuesTool } from './tools/jira/search-issues.js';
 import { registerCreateIssueTool } from './tools/jira/create-issue.js';
 import { registerUpdateIssueTool } from './tools/jira/update-issue.js';
 import { registerTransitionIssueTool } from './tools/jira/transition-issue.js';
 import { registerAssignIssueTool } from './tools/jira/assign-issue.js';
 import { registerCreatePageTool } from './tools/confluence/create-page.js';
-import { registerGetPageTool } from './tools/confluence/get-page.js';
-import { registerSearchPagesTool } from './tools/confluence/search-pages.js';
-import { registerUpdatePageTool } from './tools/confluence/update-page.js';
-import { registerGetSpacesTool } from './tools/confluence/get-spaces.js';
 import { registerAddCommentTool } from './tools/confluence/add-comment.js';
 import { registerAllResources } from './resources/index.js';
 import { Logger } from './utils/logger.js';
@@ -88,8 +82,6 @@ const wrapToolHandler = (registerToolFn: (server: McpServer) => void) => {
 
 // Đăng ký tất cả các tools với wrapper
 // Jira tools
-wrapToolHandler(registerGetIssueTool);
-wrapToolHandler(registerSearchIssuesTool);
 wrapToolHandler(registerCreateIssueTool);
 wrapToolHandler(registerUpdateIssueTool);
 wrapToolHandler(registerTransitionIssueTool);
@@ -97,10 +89,6 @@ wrapToolHandler(registerAssignIssueTool);
 
 // Confluence tools
 wrapToolHandler(registerCreatePageTool);
-wrapToolHandler(registerGetPageTool);
-wrapToolHandler(registerSearchPagesTool);
-wrapToolHandler(registerUpdatePageTool);
-wrapToolHandler(registerGetSpacesTool);
 wrapToolHandler(registerAddCommentTool);
 
 // Đăng ký tất cả resources
@@ -123,8 +111,6 @@ async function startServer() {
     logger.info('Registered tools:');
 
     // Jira tools
-    logger.info('- getIssue (Jira)');
-    logger.info('- searchIssues (Jira)');
     logger.info('- createIssue (Jira)');
     logger.info('- updateIssue (Jira)');
     logger.info('- transitionIssue (Jira)');
@@ -132,10 +118,6 @@ async function startServer() {
 
     // Confluence tools
     logger.info('- createPage (Confluence)');
-    logger.info('- getPage (Confluence)');
-    logger.info('- searchPages (Confluence)');
-    logger.info('- updatePage (Confluence)');
-    logger.info('- getSpaces (Confluence)');
     logger.info('- addComment (Confluence)');
     
     // Resources
