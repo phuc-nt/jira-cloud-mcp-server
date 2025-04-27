@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  # MCP Server với STDIO transport
+  mcp-atlassian:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mcp-atlassian-server:latest
+    container_name: mcp-atlassian
+    environment:
+      - ATLASSIAN_SITE_NAME=${ATLASSIAN_SITE_NAME}
+      - ATLASSIAN_USER_EMAIL=${ATLASSIAN_USER_EMAIL}
+      - ATLASSIAN_API_TOKEN=${ATLASSIAN_API_TOKEN}
+      - MCP_SERVER_NAME=${MCP_SERVER_NAME:-mcp-atlassian-integration}
+      - MCP_SERVER_VERSION=${MCP_SERVER_VERSION:-1.0.0}
+    stdin_open: true  # Cần thiết cho STDIO transport
+    tty: true         # Cần thiết cho STDIO transport
+    volumes:
+      - ./.env:/app/.env:ro
+    restart: unless-stopped 

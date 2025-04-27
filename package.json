@@ -1,0 +1,42 @@
+{
+  "name": "dev_mcp-server-atlassian",
+  "version": "1.0.0",
+  "description": "MCP Server for interacting with Atlassian Jira and Confluence",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "nodemon --exec ts-node --esm src/index.ts"
+  },
+  "keywords": [
+    "mcp",
+    "model",
+    "context",
+    "protocol",
+    "atlassian",
+    "jira",
+    "confluence"
+  ],
+  "author": "Phuc Nguyen",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.2",
+    "axios": "^1.6.2",
+    "axios-retry": "^4.5.0",
+    "cross-fetch": "^4.1.0",
+    "dotenv": "^16.4.1",
+    "jira.js": "^3.0.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.13",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.3",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

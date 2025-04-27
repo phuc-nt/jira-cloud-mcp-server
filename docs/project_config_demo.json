@@ -1,0 +1,39 @@
+{
+  "jira": {
+    "domain": "https://phuc-nt.atlassian.net",
+    "projectKey": "XDEMO2"
+  },
+  "confluence": {
+    "domain": "https://phuc-nt.atlassian.net",
+    "spaceKey": "TX"
+  },
+  "slack": {
+    "teamId": "T07UZEWG7A9",
+    "projectChannel": "C08JFTGTN2K"
+  },
+  "projectMembers": [
+    {
+      "name": "Phúc",
+      "email": "phucnt0@gmail.com",
+      "jiraAccountId": "557058:24acce7b-a0c1-4f45-97f1-7eb4afd2ff5f"
+    },
+    {
+      "name": "Hưng",
+      "email": "ng.duchungbmt@gmail.com",
+      "jiraAccountId": "557058:8c1557f3-81f6-4479-a006-dd5e914a7c11"
+    },
+    {
+      "name": "Đăng",
+      "email": "mrburgundy2911@gmail.com",
+      "jiraAccountId": "62e8c6c8c1b3a10ac3a9c03f"
+    }
+  ],
+  "auth": {
+    "jira": {
+      "apiTokenEnvVar": "JIRA_API_TOKEN"
+    },
+    "slack": {
+      "botTokenEnvVar": "SLACK_BOT_TOKEN"
+    }
+  }
+}
