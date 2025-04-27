@@ -85,17 +85,46 @@ Kế hoạch triển khai Atlassian Agent (bao gồm Jira Agent và Confluence A
   - [x] Đảm bảo thông báo nhất quán giữa các công cụ
   - [x] Kiểm thử thông báo phản hồi từ tất cả các công cụ
 
-### Phase 9: Tối ưu và Mở rộng
-- [ ] Tối ưu hóa hiệu suất API calls
-- [ ] Cài đặt caching để giảm số lượng requests
-- [ ] Cải thiện error handling và retry logic
+### Phase 9: Triển khai MCP Resources Capability
+- [x] Cấu trúc hóa codebase cho Resources API
+  - [x] Tạo cấu trúc thư mục `src/resources`
+  - [x] Tạo utility functions trong `src/utils/mcp-resource.ts`
+  - [x] Tạo file hướng dẫn triển khai `docs/design-mcp-server-resource.md`
+- [x] Triển khai Resource API Cơ bản
+  - [x] Đăng ký MCP Resources Capability
+  - [x] Chuẩn hóa định dạng response với ResourceTemplate
+  - [x] Xây dựng hàm helper `createJsonResource` và `createTextResource`
+- [x] Triển khai Resource cho Jira Projects
+  - [x] Resource `jira://projects` (danh sách project)
+  - [x] Resource `jira://projects/:projectKey` (chi tiết project)
+- [x] Triển khai Resource cho Jira Issues
+  - [x] Resource `jira://issues/{issueKey}` (chi tiết issue)
+- [ ] Triển khai các Jira Resources còn lại
+  - [ ] Resource `jira://issues` (danh sách tất cả issue)
+  - [ ] Resource `jira://issues?jql={query}` (tìm kiếm issue theo JQL)
+  - [ ] Resource `jira://issues/{issueKey}/transitions` (trạng thái chuyển đổi)
+  - [ ] Resource `jira://issues/{issueKey}/comments` (bình luận của issue)
+  - [ ] Resource `jira://users` (danh sách user)
+  - [ ] Resource `jira://users/{accountId}` (chi tiết user)
+- [ ] Triển khai Confluence Resources
+  - [ ] Resource `confluence://spaces` (danh sách không gian)
+  - [ ] Resource `confluence://spaces/{spaceKey}` (chi tiết không gian)
+  - [ ] Resource `confluence://spaces/{spaceKey}/pages` (danh sách page trong không gian)
+  - [ ] Resource `confluence://pages` (danh sách tất cả page)
+  - [ ] Resource `confluence://pages?cql={query}` (tìm kiếm page theo CQL)
+  - [ ] Resource `confluence://pages/{pageId}` (chi tiết page)
+  - [ ] Resource `confluence://pages/{pageId}/children` (trang con)
+  - [ ] Resource `confluence://pages/{pageId}/comments` (bình luận của page)
+
+### Phase 10: Tối ưu và Mở rộng
 - [ ] Thêm các authentication methods bổ sung (OAuth)
 - [ ] Cập nhật documentation cho tất cả APIs
-- [ ] Triển khai MCP Resources Capability
-  - [ ] Xác định loại tài nguyên Atlassian (Issues, Pages, Spaces)
-  - [ ] Tạo schema cho mỗi loại tài nguyên
-  - [ ] Triển khai endpoints liệt kê tài nguyên
-  - [ ] Triển khai caching cho resources
+- [ ] Cải thiện hiệu suất
+  - [ ] Tối ưu hóa API calls
+  - [ ] Cài đặt caching để giảm số lượng requests
+  - [ ] Cải thiện error handling và retry logic
+
+### Phase 11: Triển khai MCP Capabilities khác
 - [ ] Triển khai MCP Prompts Capability
   - [ ] Thiết kế cấu trúc prompt chuẩn cho Atlassian
   - [ ] Tạo hệ thống xử lý và routing prompt
@@ -105,7 +134,7 @@ Kế hoạch triển khai Atlassian Agent (bao gồm Jira Agent và Confluence A
   - [ ] Phát triển chiến lược sampling cho dữ liệu Atlassian
   - [ ] Tạo API để client điều chỉnh sampling parameters
 
-### Phase 10: Tích hợp với DevAssist Central Agent
+### Phase 12: Tích hợp với DevAssist Central Agent
 - [ ] Tạo interface giữa MCP Server và Central Agent
 - [ ] Cập nhật mock agents trong Central Agent để sử dụng MCP Server
 - [ ] Viết integration test giữa Central Agent và MCP Server
@@ -115,13 +144,13 @@ Kế hoạch triển khai Atlassian Agent (bao gồm Jira Agent và Confluence A
   - [ ] Hỗ trợ Prompt processing trong Central Agent
   - [ ] Triển khai Sampling controls trong Central Agent
 
-### Phase 11: Triển khai Security và Monitoring
+### Phase 13: Triển khai Security và Monitoring
 - [ ] Triển khai rate limiting để tránh quá tải API
 - [ ] Thiết lập monitoring cho API calls
 - [ ] Cài đặt logging cho mọi requests và responses
 - [ ] Thiết lập cơ chế bảo mật cho tokens và credentials
 
-### Phase 12: Dockerization và Deployment (Hoàn thành)
+### Phase 14: Dockerization và Deployment (Hoàn thành)
 - [x] Tạo Dockerfile
 - [x] Thiết lập Docker Compose cho môi trường phát triển
 - [x] Tạo script quản lý Docker (start-docker.sh)
@@ -133,7 +162,7 @@ Kế hoạch triển khai Atlassian Agent (bao gồm Jira Agent và Confluence A
   - [x] Cập nhật README.md với hướng dẫn cài đặt và sử dụng
   - [x] Cập nhật tài liệu xử lý sự cố phổ biến
 
-### Phase 13: Dọn dẹp và Tối ưu hóa Source Code (Hoàn thành)
+### Phase 15: Dọn dẹp và Tối ưu hóa Source Code (Hoàn thành)
 - [x] Loại bỏ code và file không cần thiết
   - [x] Xóa thư mục `coverage` (báo cáo test tạm thời)
   - [x] Xóa file `.DS_Store` (file metadata của macOS)
