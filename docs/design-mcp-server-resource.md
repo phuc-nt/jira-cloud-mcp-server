@@ -413,3 +413,92 @@ Các điểm quan trọng khi triển khai MCP Resources Capability:
 6. **Xử lý lỗi đúng cách**: Không để crash server
 
 Với những nguyên tắc và hướng dẫn này, bạn có thể triển khai thành công MCP Resources Capability cho Atlassian một cách hiệu quả, đúng chuẩn, và dễ bảo trì.
+
+## Danh sách Resources và Tools
+
+### Jira Resources
+| URI | Mô tả | Lý do |
+| --- | ----- | ----- |
+| `jira://projects` | Danh sách project | Đã triển khai - Trả về danh sách project với thông tin tổng hợp |
+| `jira://projects/:projectKey` | Chi tiết project | Đã triển khai - Trả về thông tin chi tiết của một project cụ thể |
+| `jira://issues/:issueKey` | Chi tiết issue | Đã triển khai - Trả về thông tin chi tiết của một issue với xử lý lỗi | 
+| `jira://issues?jql={query}` | Tìm kiếm issue theo JQL | Sẽ chuyển đổi từ tool `searchIssues` - Cần chuyển đổi từ tool để đồng bộ với mô hình Resource |
+| `jira://issues` | Danh sách issue | Đang triển khai - Sẽ trả về danh sách issue với phân trang |
+| `jira://issues/:issueKey/transitions` | Các trạng thái có thể chuyển đổi | Sẽ triển khai - Trả về danh sách các transition có thể thực hiện |
+| `jira://issues/:issueKey/comments` | Bình luận của issue | Sẽ triển khai - Trả về danh sách comments của issue cụ thể |
+| `jira://users` | Danh sách user | Sẽ triển khai - Trả về danh sách người dùng với thông tin cơ bản |
+| `jira://users/:accountId` | Chi tiết user | Sẽ triển khai - Trả về thông tin chi tiết của một người dùng |
+
+### Confluence Resources
+| URI | Mô tả | Lý do |
+| --- | ----- | ----- |
+| `confluence://spaces` | Danh sách không gian | Sẽ chuyển đổi từ tool `getSpaces` - Cần chuyển đổi để đồng bộ với mô hình Resource |
+| `confluence://spaces/:spaceKey` | Chi tiết không gian | Sẽ triển khai - Trả về thông tin chi tiết của một không gian |
+| `confluence://spaces/:spaceKey/pages` | Danh sách trang trong không gian | Sẽ triển khai - Trả về danh sách trang trong một không gian cụ thể |
+| `confluence://pages/:pageId` | Chi tiết trang | Sẽ chuyển đổi từ tool `getPage` - Cần chuyển đổi để đồng bộ với mô hình Resource |
+| `confluence://pages?cql={query}` | Tìm kiếm trang theo CQL | Sẽ chuyển đổi từ tool `searchPages` - Cần chuyển đổi để đồng bộ với mô hình Resource |
+| `confluence://pages/:pageId/children` | Danh sách trang con | Sẽ triển khai - Trả về danh sách trang con của một trang cụ thể |
+| `confluence://pages/:pageId/comments` | Bình luận của trang | Sẽ triển khai - Trả về danh sách bình luận của một trang |
+
+### Jira Tools
+| URI | Mô tả | Lý do |
+| --- | ----- | ----- |
+| `createIssue` | Tạo issue mới | API gây tác dụng phụ, thay đổi trạng thái hệ thống |
+| `updateIssue` | Cập nhật issue | API gây tác dụng phụ, thay đổi trạng thái hệ thống |
+| `deleteIssue` | Xóa issue | API gây tác dụng phụ, thay đổi trạng thái hệ thống |
+| `transitionIssue` | Chuyển đổi trạng thái issue | API gây tác dụng phụ, thay đổi trạng thái hệ thống |
+| `addComment` | Thêm bình luận | API gây tác dụng phụ, thay đổi trạng thái hệ thống |
+| `updateComment` | Cập nhật bình luận | API gây tác dụng phụ, thay đổi trạng thái hệ thống |
+| `deleteComment` | Xóa bình luận | API gây tác dụng phụ, thay đổi trạng thái hệ thống |
+| `assignIssue` | Gán issue cho người dùng | API gây tác dụng phụ, thay đổi trạng thái hệ thống |
+
+### Confluence Tools
+| URI | Mô tả | Lý do |
+| --- | ----- | ----- |
+| `createPage` | Tạo trang mới | API gây tác dụng phụ, thay đổi trạng thái hệ thống |
+| `updatePage` | Cập nhật trang | API gây tác dụng phụ, thay đổi trạng thái hệ thống |
+| `deletePage` | Xóa trang | API gây tác dụng phụ, thay đổi trạng thái hệ thống |
+| `addComment` | Thêm bình luận | API gây tác dụng phụ, thay đổi trạng thái hệ thống |
+| `updateComment` | Cập nhật bình luận | API gây tác dụng phụ, thay đổi trạng thái hệ thống |
+| `deleteComment` | Xóa bình luận | API gây tác dụng phụ, thay đổi trạng thái hệ thống |
+
+## Kế hoạch triển khai
+
+### Đã hoàn thành
+1. **Đăng ký MCP Resources Capability**
+   - Cập nhật server để hỗ trợ resources capability
+   - Tạo cấu trúc mã cơ bản cho resources
+   - Tạo hàm xử lý cho việc đăng ký resource
+   - Cải thiện xử lý context với fallback cho `atlassianConfig`
+
+2. **Resource API cơ bản cho Jira**
+   - Triển khai `jira://projects` trả về danh sách dự án với thông tin tổng hợp
+   - Triển khai `jira://projects/:projectKey` trả về chi tiết dự án với hỗ trợ trích xuất từ URI
+   - Triển khai `jira://issues/:issueKey` trả về chi tiết issue với xử lý lỗi
+   - Tối ưu định dạng trả về dữ liệu để phù hợp với mục đích AI
+
+### Đang triển khai
+1. **Triển khai Jira Issues API**
+   - Resource `jira://issues` để liệt kê tất cả issues với phân trang
+   - Thêm hỗ trợ tìm kiếm issues theo điều kiện khác nhau
+   - Hoàn thiện xử lý lỗi và kiểm tra tham số
+   - Tối ưu cấu trúc trả về cho mục đích AI
+
+2. **Chuyển đổi các tools thành resources**
+   - Tool `searchIssues` -> Resource `jira://issues?jql={query}`
+   - Tool `getPage` -> Resource `confluence://pages/{pageId}`
+   - Tool `searchPages` -> Resource `confluence://pages?cql={query}`
+   - Tool `getSpaces` -> Resource `confluence://spaces`
+
+### Sẽ triển khai
+1. **Triển khai Jira Resources bổ sung**
+   - Resource `jira://issues/:issueKey/transitions` cho danh sách transitions
+   - Resource `jira://issues/:issueKey/comments` cho danh sách comments
+   - Resource `jira://users` cho danh sách người dùng
+   - Resource `jira://users/:accountId` cho chi tiết người dùng
+
+2. **Triển khai Confluence Resources**
+   - Resource `confluence://spaces/:spaceKey` cho chi tiết không gian
+   - Resource `confluence://spaces/:spaceKey/pages` cho danh sách trang trong không gian
+   - Resource `confluence://pages/:pageId/children` cho danh sách trang con
+   - Resource `confluence://pages/:pageId/comments` cho danh sách bình luận

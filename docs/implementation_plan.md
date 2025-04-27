@@ -86,35 +86,64 @@ Kế hoạch triển khai Atlassian Agent (bao gồm Jira Agent và Confluence A
   - [x] Kiểm thử thông báo phản hồi từ tất cả các công cụ
 
 ### Phase 9: Triển khai MCP Resources Capability
-- [x] Cấu trúc hóa codebase cho Resources API
-  - [x] Tạo cấu trúc thư mục `src/resources`
-  - [x] Tạo utility functions trong `src/utils/mcp-resource.ts`
-  - [x] Tạo file hướng dẫn triển khai `docs/design-mcp-server-resource.md`
-- [x] Triển khai Resource API Cơ bản
-  - [x] Đăng ký MCP Resources Capability
-  - [x] Chuẩn hóa định dạng response với ResourceTemplate
-  - [x] Xây dựng hàm helper `createJsonResource` và `createTextResource`
-- [x] Triển khai Resource cho Jira Projects
-  - [x] Resource `jira://projects` (danh sách project)
-  - [x] Resource `jira://projects/:projectKey` (chi tiết project)
-- [x] Triển khai Resource cho Jira Issues
-  - [x] Resource `jira://issues/{issueKey}` (chi tiết issue)
-- [ ] Triển khai các Jira Resources còn lại
-  - [ ] Resource `jira://issues` (danh sách tất cả issue)
-  - [ ] Resource `jira://issues?jql={query}` (tìm kiếm issue theo JQL)
-  - [ ] Resource `jira://issues/{issueKey}/transitions` (trạng thái chuyển đổi)
-  - [ ] Resource `jira://issues/{issueKey}/comments` (bình luận của issue)
-  - [ ] Resource `jira://users` (danh sách user)
-  - [ ] Resource `jira://users/{accountId}` (chi tiết user)
-- [ ] Triển khai Confluence Resources
-  - [ ] Resource `confluence://spaces` (danh sách không gian)
-  - [ ] Resource `confluence://spaces/{spaceKey}` (chi tiết không gian)
-  - [ ] Resource `confluence://spaces/{spaceKey}/pages` (danh sách page trong không gian)
-  - [ ] Resource `confluence://pages` (danh sách tất cả page)
-  - [ ] Resource `confluence://pages?cql={query}` (tìm kiếm page theo CQL)
-  - [ ] Resource `confluence://pages/{pageId}` (chi tiết page)
-  - [ ] Resource `confluence://pages/{pageId}/children` (trang con)
-  - [ ] Resource `confluence://pages/{pageId}/comments` (bình luận của page)
+
+### Mục tiêu
+- Triển khai API Resources cho MCP Atlassian Server
+- Chuyển đổi các tools hiện có thành resources khi phù hợp
+- Tối ưu hóa cấu trúc dữ liệu trả về cho mục đích AI
+
+### Checklist
+1. **Cấu trúc mã cho Resources API**
+   - [x] Tạo module `resources` cho tất cả các resources
+   - [x] Thiết lập interfaces và types cho resources
+   - [x] Tạo các helper functions cho việc định dạng dữ liệu trả về
+
+2. **Triển khai Resource API cơ bản**
+   - [x] Đăng ký MCP Resources Capability trên server
+   - [x] Tạo cơ chế đăng ký resource (registerResource)
+   - [x] Cải thiện xử lý context để đảm bảo `atlassianConfig` luôn có sẵn
+   - [x] Thêm xử lý lỗi cho resources
+
+3. **Triển khai Resources cho Jira Projects**
+   - [x] Resource `jira://projects` để liệt kê tất cả projects
+   - [x] Resource `jira://projects/:projectKey` để lấy chi tiết project
+   - [x] Tối ưu cấu trúc dữ liệu trả về cho các project
+   - [x] Thêm xử lý URI pattern để trích xuất tham số từ URI
+
+4. **Triển khai Resources cho Jira Issues**
+   - [x] Resource `jira://issues/:issueKey` để lấy chi tiết một issue
+   - [ ] Resource `jira://issues` để liệt kê các issues với phân trang
+   - [ ] Hỗ trợ JQL để tìm kiếm issues (`jira://issues?jql={query}`)
+   - [ ] Thêm resources cho transitions và comments của issues
+
+5. **Chuyển đổi Tools thành Resources**
+   - [ ] Tool `searchIssues` -> Resource `jira://issues?jql={query}` 
+   - [ ] Tool `getPage` -> Resource `confluence://pages/:pageId`
+   - [ ] Tool `searchPages` -> Resource `confluence://pages?cql={query}`
+   - [ ] Tool `getSpaces` -> Resource `confluence://spaces`
+
+6. **Bổ sung Resources**
+   - [ ] Jira Users: `jira://users` và `jira://users/:accountId`
+   - [ ] Confluence Spaces: `confluence://spaces/:spaceKey`
+   - [ ] Confluence Pages: `confluence://pages/:pageId/children`
+   - [ ] Comments: `jira://issues/:issueKey/comments` và `confluence://pages/:pageId/comments`
+
+### Kết luận về phân loại API
+Sau khi phân tích các API, chúng ta đã phân loại chúng thành hai nhóm chính:
+
+1. **Resources**: Các API chỉ đọc, không gây tác dụng phụ, dùng để truy xuất thông tin
+   - Ví dụ: lấy danh sách projects, chi tiết issue, tìm kiếm theo JQL/CQL
+   - URI pattern: `protocol://resource-type/identifier`
+   - Phù hợp để triển khai qua giao thức resources
+
+2. **Tools**: Các API thực hiện hành động, làm thay đổi trạng thái hệ thống
+   - Ví dụ: tạo/cập nhật/xóa issues, thêm comments, chuyển trạng thái
+   - Phù hợp để giữ nguyên dưới dạng tools
+
+Ưu tiên triển khai các API chỉ đọc dưới dạng Resources trước vì:
+- Đơn giản hơn để triển khai (không phức tạp về xác thực/ủy quyền)
+- Cung cấp mô hình truy cập thông nhất và dễ mở rộng
+- Phù hợp với mục đích chính của Claude là truy vấn thông tin
 
 ### Phase 10: Tối ưu và Mở rộng
 - [ ] Thêm các authentication methods bổ sung (OAuth)
