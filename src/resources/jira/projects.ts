@@ -192,11 +192,10 @@ export function registerProjectResources(server: McpServer) {
   registerResource(
     server,
     'jira-project-details',
-    'jira://projects/:projectKey',
+    new ResourceTemplate('jira://projects/{projectKey}', { list: undefined }),
     'Thông tin chi tiết về một dự án trong Jira',
     async (params, { config, uri }) => {
       // Lấy projectKey từ URI pattern
-      // Phân tích URI để lấy tham số
       let projectKey = '';
       if (params && 'projectKey' in params) {
         projectKey = params.projectKey;
@@ -205,7 +204,6 @@ export function registerProjectResources(server: McpServer) {
         const uriParts = uri.split('/');
         projectKey = uriParts[uriParts.length - 1];
       }
-
       if (!projectKey) {
         throw new ApiError(
           ApiErrorType.VALIDATION_ERROR,
@@ -214,13 +212,10 @@ export function registerProjectResources(server: McpServer) {
           new Error('Missing project key parameter')
         );
       }
-      
       logger.info(`Getting details for Jira project: ${projectKey}`);
-      
       try {
         // Lấy thông tin dự án từ Jira API
         const project = await getProject(config, projectKey);
-        
         // Chuyển đổi response thành định dạng thân thiện hơn
         const formattedProject = {
           id: project.id,
@@ -232,7 +227,6 @@ export function registerProjectResources(server: McpServer) {
           projectCategory: project.projectCategory?.name || 'Uncategorized',
           projectType: project.projectTypeKey
         };
-        
         // Trả về đúng định dạng MCP resource
         return createJsonResource(uri, {
           project: formattedProject,
