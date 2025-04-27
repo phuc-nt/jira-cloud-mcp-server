@@ -13,6 +13,7 @@ import { registerSearchPagesTool } from './tools/confluence/search-pages.js';
 import { registerUpdatePageTool } from './tools/confluence/update-page.js';
 import { registerGetSpacesTool } from './tools/confluence/get-spaces.js';
 import { registerAddCommentTool } from './tools/confluence/add-comment.js';
+import { registerAllResources } from './resources/index.js';
 import { Logger } from './utils/logger.js';
 import { AtlassianConfig } from './utils/atlassian-api.js';
 
@@ -43,10 +44,14 @@ const atlassianConfig: AtlassianConfig = {
 
 logger.info('Initializing MCP Atlassian Server...');
 
-// Khởi tạo MCP server
+// Khởi tạo MCP server với capabilities
 const server = new McpServer({
   name: process.env.MCP_SERVER_NAME || 'mcp-atlassian-integration',
-  version: process.env.MCP_SERVER_VERSION || '1.0.0'
+  version: process.env.MCP_SERVER_VERSION || '1.0.0',
+  capabilities: {
+    resources: {},  // Khai báo hỗ trợ resources capability
+    tools: {}
+  }
 });
 
 // Log thông tin cấu hình để debug
@@ -59,37 +64,17 @@ const wrapToolHandler = (registerToolFn: (server: McpServer) => void) => {
     tool: (name: string, description: string, schema: any, handler: any) => {
       // Đăng ký lại tool với handler mới xử lý context
       server.tool(name, description, schema, async (params: any, context: any) => {
+        // Context được cung cấp trực tiếp cho handler
+        context.atlassianConfig = atlassianConfig;
+        
         logger.debug(`Tool ${name} called with context keys: [${Object.keys(context)}]`);
         
-        // Kiểm tra context hiện có
-        if (typeof context === 'object') {
-          // Thử debug để xem context có phương thức gì
-          logger.debug(`Context methods: ${Object.getOwnPropertyNames(Object.getPrototypeOf(context))}`);
-        }
-        
-        // Truyền cấu hình vào trực tiếp thay vì qua context
-        if (handler.length === 2) { // Nếu handler chấp nhận 2 tham số (params và context)
-          try {
-            // Giả lập context dạng object đơn giản
-            const simpleContext = {
-              atlassianConfig: atlassianConfig,
-              // Thêm các phương thức của context nếu cần
-              get: (key: string) => key === 'atlassianConfig' ? atlassianConfig : undefined,
-              set: (key: string, value: any) => { /* implement if needed */ }
-            };
-            
-            return await handler(params, simpleContext);
-          } catch (error) {
-            logger.error(`Error in wrapped handler for ${name}:`, error);
-            return {
-              content: [{ type: 'text', text: `Error in tool handler: ${error instanceof Error ? error.message : String(error)}` }],
-              isError: true
-            };
-          }
-        } else {
-          logger.error(`Handler for ${name} does not accept expected parameters`);
+        try {
+          return await handler(params, context);
+        } catch (error) {
+          logger.error(`Error in wrapped handler for ${name}:`, error);
           return {
-            content: [{ type: 'text', text: 'Internal server error: invalid handler' }],
+            content: [{ type: 'text', text: `Error in tool handler: ${error instanceof Error ? error.message : String(error)}` }],
             isError: true
           };
         }
@@ -117,6 +102,11 @@ wrapToolHandler(registerSearchPagesTool);
 wrapToolHandler(registerUpdatePageTool);
 wrapToolHandler(registerGetSpacesTool);
 wrapToolHandler(registerAddCommentTool);
+
+// Đăng ký tất cả resources
+logger.info('Registering MCP Resources...');
+// Thiết lập context.atlassianConfig trong các resource handlers được xử lý trong mcp-resource.ts
+registerAllResources(server);
 
 // Khởi động server dựa trên loại transport được cấu hình
 async function startServer() {
@@ -147,6 +137,11 @@ async function startServer() {
     logger.info('- updatePage (Confluence)');
     logger.info('- getSpaces (Confluence)');
     logger.info('- addComment (Confluence)');
+    
+    // Resources
+    logger.info('Registered resources:');
+    logger.info('- jira://projects');
+    logger.info('- jira://projects/{projectKey}');
   } catch (error) {
     logger.error('Failed to start MCP Server:', error);
     process.exit(1);
