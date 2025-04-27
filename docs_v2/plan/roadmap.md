@@ -1,0 +1,81 @@
+# Roadmap phát triển MCP Atlassian Server
+
+Roadmap này mô tả các giai đoạn phát triển trong tương lai của MCP Atlassian Server, tập trung vào tối ưu hóa cho môi trường local và cải thiện trải nghiệm người dùng.
+
+## Phase 10: Tối ưu hóa và Mở rộng Resources (ưu tiên Local-first)
+
+### 1. Đơn giản hóa xác thực cho môi trường local
+- [ ] Hướng dẫn chi tiết cách thiết lập biến môi trường `.env` và config cho Cline, tránh phức tạp hóa OAuth nếu chưa cần thiết
+- [ ] Nếu muốn thử nghiệm OAuth, chỉ cần hỗ trợ flow đơn giản, không cần multi-tenant hoặc cloud callback
+
+### 2. Tối ưu hiệu suất và trải nghiệm local
+- [ ] Áp dụng caching in-memory (LRU hoặc TTL) cho các resource phổ biến (danh sách project, user, space, board, v.v.)
+- [ ] Thêm tuỳ chọn bật/tắt cache qua biến môi trường
+- [ ] Đảm bảo các lỗi mạng, lỗi xác thực được trả về rõ ràng, dễ debug cho user cá nhân
+
+### 3. Mở rộng resource cho Jira/Confluence (ưu tiên các API có ích cho developer cá nhân)
+- [ ] Bổ sung resource cho các đối tượng thường dùng: Filters, Boards, Dashboards, Sprints
+- [ ] Cho phép truyền query params (filter, limit, sort) cho các resource dạng danh sách
+- [ ] Chuẩn hóa metadata trả về (ví dụ: tổng số, phân trang, link đến Atlassian UI)
+
+### 4. Cải thiện developer experience cho local dev
+- [ ] Viết script tự động build và tạo symlink cho Cline nhận diện nhanh (không cần docker nếu chưa cần)
+- [ ] Thêm hướng dẫn debug MCP server khi chạy cùng Cline (log ra stderr, hướng dẫn mở devtools của VS Code)
+- [ ] Viết test case minh hoạ cho từng resource/tool (có thể chạy độc lập, không cần cloud)
+
+## Phase 11: Tối ưu hóa trải nghiệm với Cline và MCP Client Local
+
+### 1. Tối ưu hóa phản hồi cho Cline
+- [ ] Chuẩn hóa markdown và metadata trong phản hồi để Cline hiển thị đẹp, dễ đọc
+- [ ] Thêm ví dụ về MCP Rule/Prompt cho Cline, giúp AI tự động sử dụng resource/tool đúng ngữ cảnh
+- [ ] Viết hướng dẫn cấu hình MCP server cho Cline (cấu hình file, biến môi trường, cách restart server)
+
+### 2. Hỗ trợ cá nhân hóa và tuỳ biến cho user local
+- [ ] Cho phép user lưu cấu hình project, filter, space yêu thích vào local file
+- [ ] Cho phép user cấu hình alias cho các resource/tool thường dùng
+- [ ] Hỗ trợ export/import cấu hình cá nhân dễ dàng chia sẻ
+
+### 3. Đóng gói và phân phối cho developer cá nhân
+- [ ] Chuẩn bị script cài đặt nhanh cho Mac/Linux/Windows (không cần cloud)
+- [ ] Viết tài liệu "Getting Started with MCP Atlassian for Cline" dành cho developer tự học
+- [ ] Chuẩn bị bộ ví dụ (sample project, sample .env, sample MCP client test script)
+
+## Phase 12: Chia sẻ kiến thức, chuẩn bị seminar, xây dựng cộng đồng
+
+### 1. Chuẩn bị nội dung chia sẻ, seminar, workshop
+- [ ] Viết bài blog/bài hướng dẫn về MCP, phân biệt Tool vs Resource, best practice cho local dev
+- [ ] Xây dựng slide, demo script cho seminar "MCP hoá Atlassian nội bộ với Cline"
+- [ ] Tạo video demo thao tác thực tế với Cline, MCP Inspector, test script
+
+### 2. Đóng góp và xây dựng cộng đồng MCP
+- [ ] Đăng source code lên GitHub với README chi tiết, hướng dẫn chạy local-first
+- [ ] Tham gia thảo luận, trả lời câu hỏi trên các diễn đàn MCP (GitHub Discussions, Discord, v.v.)
+- [ ] Mở issues, PR hoặc đóng góp tài liệu cho MCP SDK nếu phát hiện bug hoặc có đề xuất cải tiến
+
+### 3. Tích hợp phản hồi và mở rộng dần
+- [ ] Thu thập phản hồi từ đồng nghiệp, cộng đồng về trải nghiệm local-first
+- [ ] Ưu tiên cải tiến dựa trên feedback thực tế của user cá nhân/Cline
+- [ ] Nếu có nhu cầu, chuẩn bị tài liệu chuyển đổi lên cloud hoặc multi-user (phase sau, không ưu tiên hiện tại)
+
+## Phase 13: (Tuỳ chọn, khi đã vững local) - Chuẩn bị cho Cloud/Multi-user
+
+### 1. Thiết kế cho môi trường production
+- [ ] Thiết kế lại authentication, multi-tenant, rate limiting, logging cho production/cloud
+- [ ] Chuẩn bị Docker image production-ready, hướng dẫn deploy lên server/cloud
+- [ ] Tối ưu bảo mật (token rotation, audit log, v.v.)
+
+### 2. Mở rộng tính năng cho multi-user
+- [ ] Xây dựng hệ thống quản lý người dùng
+- [ ] Triển khai cơ chế phân quyền chi tiết
+- [ ] Thiết lập monitoring và alerting
+- [ ] Viết migration guide từ local lên cloud
+
+## Tóm tắt ưu tiên
+
+Roadmap này tập trung vào các ưu tiên sau:
+1. **Local-first**: Tối ưu trải nghiệm cho người dùng local trước khi mở rộng lên cloud
+2. **Developer Experience**: Cải thiện trải nghiệm cho developer sử dụng MCP Atlassian với Cline
+3. **Knowledge Sharing**: Chia sẻ kiến thức và xây dựng cộng đồng xung quanh MCP
+4. **Incremental Growth**: Phát triển dần dần dựa trên phản hồi thực tế
+
+Các phase tiếp theo sẽ liên tục được cập nhật dựa trên tiến độ thực tế và phản hồi từ cộng đồng. 
