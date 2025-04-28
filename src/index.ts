@@ -10,6 +10,7 @@ import { registerAddCommentTool } from './tools/confluence/add-comment.js';
 import { registerAllResources } from './resources/index.js';
 import { Logger } from './utils/logger.js';
 import { AtlassianConfig } from './utils/atlassian-api.js';
+import { registerJiraResources } from './resources/jira/index.js';
 
 // Tải biến môi trường
 dotenv.config();
@@ -93,8 +94,8 @@ wrapToolHandler(registerAddCommentTool);
 
 // Đăng ký tất cả resources
 logger.info('Registering MCP Resources...');
-// Thiết lập context.atlassianConfig trong các resource handlers được xử lý trong mcp-resource.ts
-registerAllResources(server);
+// registerAllResources(server); // Đã bao gồm registerJiraResources bên trong, tránh trùng lặp
+registerJiraResources(server);
 
 // Khởi động server dựa trên loại transport được cấu hình
 async function startServer() {

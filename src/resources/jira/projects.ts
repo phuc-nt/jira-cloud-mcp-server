@@ -238,4 +238,66 @@ export function registerProjectResources(server: McpServer) {
       }
     }
   );
+
+  // Resource: Danh sách role của một project
+  registerResource(
+    server,
+    'jira-project-roles',
+    new ResourceTemplate('jira://projects/{projectKey}/roles', { list: undefined }),
+    'Danh sách role của một project trong Jira',
+    async (params, { config, uri }) => {
+      let projectKey = '';
+      if (params && 'projectKey' in params) {
+        projectKey = Array.isArray(params.projectKey) ? params.projectKey[0] : params.projectKey;
+      } else {
+        // Trích xuất từ URI path nếu params không có
+        const uriParts = uri.split('/');
+        projectKey = uriParts[uriParts.length - 2];
+      }
+      if (!projectKey) {
+        throw new Error('Thiếu projectKey');
+      }
+      logger.info(`Getting roles for Jira project: ${projectKey}`);
+      try {
+        const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
+        const headers = {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'User-Agent': 'MCP-Atlassian-Server/1.0.0'
+        };
+        let baseUrl = config.baseUrl;
+        if (!baseUrl.startsWith('https://')) baseUrl = `https://${baseUrl}`;
+        const url = `${baseUrl}/rest/api/3/project/${encodeURIComponent(projectKey)}/role`;
+        logger.debug(`Calling Jira API: ${url}`);
+        const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+        if (!response.ok) {
+          const statusCode = response.status;
+          const responseText = await response.text();
+          logger.error(`Jira API error (${statusCode}):`, responseText);
+          throw new Error(`Jira API error: ${responseText}`);
+        }
+        const data = await response.json();
+        // data là object: key là roleName, value là URL chứa roleId
+        const roles = Object.entries(data).map(([roleName, url]) => {
+          const urlStr = String(url);
+          const match = urlStr.match(/\/role\/(\d+)$/);
+          return {
+            roleName,
+            roleId: match ? match[1] : '',
+            url: urlStr
+          };
+        });
+        return createJsonResource(uri, {
+          roles,
+          count: roles.length,
+          projectKey,
+          message: `Có ${roles.length} role trong project ${projectKey}`
+        });
+      } catch (error) {
+        logger.error(`Error getting roles for Jira project ${projectKey}:`, error);
+        throw error;
+      }
+    }
+  );
 }

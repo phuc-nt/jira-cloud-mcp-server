@@ -8,6 +8,14 @@ MCP Server tạo cầu nối giữa các trợ lý AI và hệ thống Atlassian
 
 Ứng dụng này triển khai Model Context Protocol (MCP), một chuẩn mở giúp các mô hình AI gọi công cụ và tương tác với dịch vụ bên ngoài.
 
+## Tài liệu
+
+Để hiểu rõ hơn về kiến trúc và cách sử dụng MCP Server Atlassian, vui lòng tham khảo:
+
+- [Xây dựng MCP Server: Từ Kiến Trúc đến Triển Khai](docs/knowledge/building-mcp-server.md): Hướng dẫn chi tiết về cách xây dựng và triển khai MCP Server
+- [Resource và Tool trong MCP Atlassian](docs/knowledge/resource-and-tool-architecture.md): Giải thích chi tiết về kiến trúc Resource và Tool
+- [MCP Trong Thực Tiễn: Luồng Hoạt Động Với Atlassian](docs_v2/dev-guide/workflow-examples.md): Ví dụ thực tiễn về luồng hoạt động đầy đủ
+
 ## Yêu cầu hệ thống
 
 - Node.js 16+ (cho phát triển local)
@@ -213,9 +221,9 @@ Thêm comment vào trang Confluence.
   - `pageId*`: ID của trang cần thêm comment
   - `content*`: Nội dung của comment (ở định dạng Confluence storage/HTML)
 
-## Xử lý sự cố
+## Khắc phục sự cố
 
-Nếu bạn gặp vấn đề khi kết nối với Cline, hãy kiểm tra:
+Nếu bạn gặp vấn đề khi kết nối đến MCP Server, hãy kiểm tra:
 
 1. Container Docker đang chạy:
    ```bash
@@ -234,4 +242,4 @@ Nếu bạn gặp vấn đề khi kết nối với Cline, hãy kiểm tra:
 4. Kiểm tra kết nối với API Atlassian:
    ```bash
    curl -u "your-email@example.com:your-api-token" -H "Content-Type: application/json" https://your-site.atlassian.net/rest/api/3/project
-   ``` 
+   ```

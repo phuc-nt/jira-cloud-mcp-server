@@ -2,23 +2,6 @@
 
 Roadmap này mô tả các giai đoạn phát triển trong tương lai của MCP Atlassian Server, tập trung vào tối ưu hóa cho môi trường local và cải thiện trải nghiệm người dùng.
 
-## Phase 9.5: Refactor & Chuẩn hóa Nhóm Tools
-
-### 1. Chuẩn hóa cấu trúc và đăng ký tools
-- [ ] Refactor lại toàn bộ nhóm Tools theo mini-plan (docs/dev-guide/mini-plan-refactor-tools.md)
-- [ ] Chuẩn hóa lại folder structure, gom đăng ký tools tập trung, tách rõ theo domain (Jira/Confluence)
-- [ ] Chỉ giữ lại các tool thực hiện mutation/action, loại bỏ hoàn toàn tool chỉ đọc
-
-### 2. Chuẩn hóa codebase và best practices
-- [ ] Áp dụng helper functions cho đăng ký, response, error handling
-- [ ] Đảm bảo mọi tool đều có unit test, logging, tài liệu rõ ràng
-- [ ] Đồng bộ naming, pattern với nhóm Resource
-
-### 3. Đảm bảo chất lượng và tài liệu hóa
-- [ ] Chạy lại toàn bộ test, bổ sung ví dụ cho từng tool
-- [ ] Cập nhật tài liệu phát triển, best practices
-- [ ] Đánh giá lại sự trùng lặp/chồng chéo giữa Tool và Resource
-
 ## Phase 10: Tối ưu hóa và Mở rộng Resources (ưu tiên Local-first)
 
 ### 1. Đơn giản hóa xác thực cho môi trường local
@@ -34,6 +17,10 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [ ] Bổ sung resource cho các đối tượng thường dùng: Filters, Boards, Dashboards, Sprints
 - [ ] Cho phép truyền query params (filter, limit, sort) cho các resource dạng danh sách
 - [ ] Chuẩn hóa metadata trả về (ví dụ: tổng số, phân trang, link đến Atlassian UI)
+- [ ] Bổ sung schema (metadata) cho tất cả resource MCP để client (Cline) hiển thị đúng kiểu dữ liệu trả về. Tham khảo hướng dẫn chi tiết: [dev-guide/schema-metadata.md](../dev-guide/schema-metadata.md)
+- [ ] Sửa lỗi encode JQL có ký tự đặc biệt/dấu cách trong resource issues (tham khảo [test-report.md](./test-report.md))
+- [ ] Cải thiện tool createPage để hỗ trợ content phức tạp và parentId (tham khảo [test-report.md](./test-report.md))
+- [ ] Bổ sung validation chi tiết cho các tham số tool
 
 ### 4. Cải thiện developer experience cho local dev
 - [ ] Viết script tự động build và tạo symlink cho Cline nhận diện nhanh (không cần docker nếu chưa cần)
@@ -95,4 +82,6 @@ Roadmap này tập trung vào các ưu tiên sau:
 3. **Knowledge Sharing**: Chia sẻ kiến thức và xây dựng cộng đồng xung quanh MCP
 4. **Incremental Growth**: Phát triển dần dần dựa trên phản hồi thực tế
 
-Các phase tiếp theo sẽ liên tục được cập nhật dựa trên tiến độ thực tế và phản hồi từ cộng đồng. 
+Các phase tiếp theo sẽ liên tục được cập nhật dựa trên tiến độ thực tế và phản hồi từ cộng đồng.
+
+- [ ] Bổ sung schema (metadata) cho tất cả resource MCP để client (Cline) hiển thị đúng kiểu dữ liệu trả về. Tham khảo hướng dẫn chi tiết: [dev-guide/schema-metadata.md](../dev-guide/schema-metadata.md) 
