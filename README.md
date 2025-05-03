@@ -42,78 +42,77 @@ graph TD
     Tools --> ConfTools[Confluence Tools<br/>create page, comment]
 ```
 
-## One-Click Installation
+## Installation & Setup
 
-MCP Atlassian Server (by phuc-nt) is available for one-click installation directly from Cline Marketplace!
+For detailed installation and setup instructions, please refer to our [installation guide](./llms-install.md).
 
-In Cline, simply type:
-```
-Install MCP Atlassian Server (by phuc-nt)
-```
+The guide includes:
+- Prerequisites and system requirements
+- Step-by-step setup for Node.js environments
+- Configuring Cline AI assistant
+- Getting and setting up Atlassian API tokens
+- Security recommendations and best practices
 
-And follow the configuration prompts.
+## Complete Feature List
 
-## Marketplace Installation (Recommended)
+### Jira Resources (Read-only data)
 
-1. Open Cline AI assistant
-2. Type: "Install MCP Atlassian Server (by phuc-nt) from marketplace"
-3. Follow the on-screen configuration prompts
-4. Enter your Atlassian site name, email, and API token
+| Resource | Description | Endpoint Pattern |
+|----------|-------------|------------------|
+| Issues | Get issue details or list of issues | `jira://issues` or `jira://issues/{issueKey}` |
+| Issues with JQL | Search issues with JQL queries | `jira://issues?jql={query}` |
+| Issue Transitions | Get available transitions for an issue | `jira://issues/{issueKey}/transitions` |
+| Issue Comments | Get comments for a specific issue | `jira://issues/{issueKey}/comments` |
+| Projects | Get project details or list of projects | `jira://projects` or `jira://projects/{projectKey}` |
+| Project Roles | Get roles defined in a project | `jira://projects/{projectKey}/roles` |
+| Users | Get user details by ID | `jira://users/{accountId}` |
+| Assignable Users | Get users that can be assigned to a project | `jira://users/assignable/{projectKey}` |
+| Role Users | Get users in a specific project role | `jira://users/role/{projectKey}/{roleId}` |
 
-That's it! The server will be automatically configured and ready to use.
+### Confluence Resources (Read-only data)
 
-> **For detailed instructions, see [llms-install.md](./llms-install.md)**
+| Resource | Description | Endpoint Pattern |
+|----------|-------------|------------------|
+| Spaces | Get space details or list of spaces | `confluence://spaces` or `confluence://spaces/{spaceKey}` |
+| Pages | Get page content or list of pages | `confluence://pages` or `confluence://pages/{pageId}` |
 
-## System Requirements
+### Jira Tools (Actions)
 
-- Node.js 16+ and npm
-- Git
-- Atlassian Cloud account and API token with appropriate permissions
-- Cline AI assistant (primary supported client)
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `createIssue` | Create a new Jira issue | `projectKey`, `summary`, optional: `issueType`, `description`, etc. |
+| `updateIssue` | Update an existing issue | `issueKey`, fields to update |
+| `transitionIssue` | Change issue status | `issueKey`, `transitionId`, optional: `comment` |
+| `assignIssue` | Assign issue to a user | `issueKey`, `accountId` |
 
-## Quick Setup
+### Confluence Tools (Actions)
 
-```bash
-git clone https://github.com/phuc-nt/mcp-atlassian-server.git
-cd mcp-atlassian-server
-npm install
-npm run build
-```
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `createPage` | Create a new Confluence page | `title`, `spaceKey`, `content` (HTML) |
+| `addComment` | Add comment to a page | `pageId`, `content` (HTML) |
+| `updatePage` | Update existing page content | `pageId`, `content`, `version` |
 
-### Node.js Configuration
+## Upcoming Features
 
-Configure Cline connection (add to `cline_mcp_settings.json`):
+The following features are planned for future releases:
 
-```json
-{
-  "mcpServers": {
-    "mcp-atlassian-server": {
-      "disabled": false,
-      "timeout": 60,
-      "command": "node",
-      "args": [
-        "/full/path/to/mcp-atlassian-server/dist/index.js"
-      ],
-      "env": {
-        "ATLASSIAN_SITE_NAME": "your-site.atlassian.net",
-        "ATLASSIAN_USER_EMAIL": "your-email@example.com",
-        "ATLASSIAN_API_TOKEN": "your-api-token"
-      },
-      "transportType": "stdio"
-    }
-  }
-}
-```
+### Additional Resources
+- **Jira**: Filters, Boards, Dashboards, Sprints
+- **Confluence**: Advanced page search, labels, attachments
 
-## Resources & Tools Available
+### Enhanced Functionality
+- In-memory caching for frequently accessed resources
+- Improved JQL handling with special characters
+- Support for advanced Confluence page creation with parent pages
+- More detailed resource metadata and schema
+- Developer tooling (quick build scripts, debug tools)
 
-### Resources (Read-only)
-- **Jira**: Issues, Projects, Users, Comments, Transitions
-- **Confluence**: Spaces, Pages
-
-### Tools (Actions)
-- **Jira**: Create Issue, Update Issue, Transition Issue, Assign Issue
-- **Confluence**: Create Page, Add Comment
+### User Experience
+- Personalization options (favorite projects, spaces)
+- Resource and tool aliases
+- Export/import configurations
+- One-click installation enhancement
 
 ## Request Flow
 
@@ -139,17 +138,7 @@ sequenceDiagram
     Cline->>User: "Created issue DEMO-123"
 ```
 
-## Key Capabilities
-
-### Jira Capabilities
-- **Query Data**: View issues, projects, users, and search with JQL
-- **Perform Actions**: Create issues, update content, transition states, assign issues
-
-### Confluence Capabilities
-- **Content Management**: Create pages with simple HTML content
-- **Collaboration**: Add comments to Confluence pages
-
-### Example Use Cases
+## Example Use Cases
 Try asking Cline these queries after installation:
 
 1. **Create and Manage Tasks**
@@ -188,24 +177,6 @@ Try asking Cline these queries after installation:
 - Never share your token with a non-trusted party
 - Be cautious when asking LLMs to analyze config files containing your token
 - See detailed security guidelines in [llms-install.md](./llms-install.md#security-warning-when-using-llms)
-
-## Troubleshooting
-
-If you experience connection issues:
-
-1. Check server logs for errors
-2. Test Atlassian API connection:
-   ```bash
-   curl -u "your-email@example.com:your-api-token" -H "Content-Type: application/json" https://your-site.atlassian.net/rest/api/3/project
-   ```
-
-## Detailed Documentation & Notes
-
-- See [llms-install.md](./llms-install.md) for detailed setup instructions for Git, Node.js, and Cline configuration.
-- Ensure your Atlassian API token has sufficient permissions.  
-  - See "API Token Permissions Note" in [llms-install.md](./llms-install.md).
-- Be aware of security implications when using LLMs with configuration files containing tokens.
-- If you encounter permission errors, verify the permissions of the user who created the token.
 
 ## Contribute & Support
 
