@@ -94,8 +94,7 @@ wrapToolHandler(registerAddCommentTool);
 
 // Register all resources
 logger.info('Registering MCP Resources...');
-// registerAllResources(server); // Already includes registerJiraResources inside, avoid duplication
-registerJiraResources(server);
+registerAllResources(server);
 
 // Start the server based on configured transport type
 async function startServer() {

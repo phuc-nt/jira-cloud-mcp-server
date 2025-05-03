@@ -59,60 +59,69 @@ The guide includes:
 
 | Resource | Description | Endpoint Pattern |
 |----------|-------------|------------------|
-| Issues | Get issue details or list of issues | `jira://issues` or `jira://issues/{issueKey}` |
-| Issues with JQL | Search issues with JQL queries | `jira://issues?jql={query}` |
+| Issues (details) | Get details of a Jira issue | `jira://issues/{issueKey}` |
+| Issues (list) | List all issues | `jira://issues` |
+| Issues (search JQL) | Search issues with JQL | `jira://issues?jql={jql}` |
 | Issue Transitions | Get available transitions for an issue | `jira://issues/{issueKey}/transitions` |
 | Issue Comments | Get comments for a specific issue | `jira://issues/{issueKey}/comments` |
-| Projects | Get project details or list of projects | `jira://projects` or `jira://projects/{projectKey}` |
-| Project Roles | Get roles defined in a project | `jira://projects/{projectKey}/roles` |
-| Users | Get user details by ID | `jira://users/{accountId}` |
-| Assignable Users | Get users that can be assigned to a project | `jira://users/assignable/{projectKey}` |
-| Role Users | Get users in a specific project role | `jira://users/role/{projectKey}/{roleId}` |
+| Projects (list) | List all projects | `jira://projects` |
+| Project (details) | Get details of a project | `jira://projects/{projectKey}` |
+| Project Roles | Get roles in a project | `jira://projects/{projectKey}/roles` |
+| User (details) | Get user details by accountId | `jira://users/{accountId}` |
+| Assignable Users | Get assignable users for a project | `jira://users/assignable/{projectKey}` |
+| Users by Role | Get users in a project role | `jira://users/role/{projectKey}/{roleId}` |
 
 ### Confluence Resources (Read-only data)
 
 | Resource | Description | Endpoint Pattern |
 |----------|-------------|------------------|
-| Spaces | Get space details or list of spaces | `confluence://spaces` or `confluence://spaces/{spaceKey}` |
-| Pages | Get page content or list of pages | `confluence://pages` or `confluence://pages/{pageId}` |
+| Spaces (list) | List all spaces | `confluence://spaces` |
+| Space (details) | Get details of a space | `confluence://spaces/{spaceKey}` |
+| Space Pages | List pages in a space | `confluence://spaces/{spaceKey}/pages` |
+| Page (details) | Get details of a page | `confluence://pages/{pageId}` |
+| Pages (search CQL) | Search pages with CQL | `confluence://pages?cql={cql}` |
+| Page Children | List child pages | `confluence://pages/{pageId}/children` |
+| Page Comments | Get comments for a page | `confluence://pages/{pageId}/comments` |
 
 ### Jira Tools (Actions)
 
 | Tool | Description | Key Parameters |
 |------|-------------|----------------|
-| `createIssue` | Create a new Jira issue | `projectKey`, `summary`, optional: `issueType`, `description`, etc. |
-| `updateIssue` | Update an existing issue | `issueKey`, fields to update |
-| `transitionIssue` | Change issue status | `issueKey`, `transitionId`, optional: `comment` |
-| `assignIssue` | Assign issue to a user | `issueKey`, `accountId` |
+| `createIssue` | Create a new issue in Jira | `projectKey*`, `summary*`, `issueType`, `description`, `priority`, `assignee`, `labels` |
+| `updateIssue` | Update information of a Jira issue | `issueIdOrKey*`, `summary`, `description`, `priority`, `labels`, `customFields` |
+| `transitionIssue` | Transition the status of a Jira issue | `issueIdOrKey*`, `transitionId*`, `comment` |
+| `assignIssue` | Assign a Jira issue to a user | `issueIdOrKey*`, `accountId` |
 
 ### Confluence Tools (Actions)
 
 | Tool | Description | Key Parameters |
 |------|-------------|----------------|
-| `createPage` | Create a new Confluence page | `title`, `spaceKey`, `content` (HTML) |
-| `addComment` | Add comment to a page | `pageId`, `content` (HTML) |
-| `updatePage` | Update existing page content | `pageId`, `content`, `version` |
+| `createPage` | Create a new page in Confluence | `spaceKey*`, `title*`, `content*`, `parentId` |
+| `addComment` | Add a comment to a Confluence page | `pageId*`, `content*` |
 
 ## Upcoming Features
 
 The following features are planned for future releases:
 
 ### Additional Resources
-- **Jira**: Filters, Boards, Dashboards, Sprints
-- **Confluence**: Advanced page search, labels, attachments
+- **Jira**: Filters, Boards, Dashboards, Sprints, Backlog Management
+- **Confluence**: Labels, Attachments, Content Versions History
+- **Better Integration**: Deep links to Atlassian UI, Embedded Macros, Advanced Templates
 
 ### Enhanced Functionality
 - In-memory caching for frequently accessed resources
-- Improved JQL handling with special characters
-- Support for advanced Confluence page creation with parent pages
+- Improved JQL/CQL handling with special characters and complex queries
+- Support for advanced page creation with nested content and rich media
 - More detailed resource metadata and schema
 - Developer tooling (quick build scripts, debug tools)
+- `updatePage` tool refinement to support versioning and templates
 
 ### User Experience
 - Personalization options (favorite projects, spaces)
 - Resource and tool aliases
 - Export/import configurations
 - One-click installation enhancement
+- Improved error handling and suggestions
 
 ## Request Flow
 
