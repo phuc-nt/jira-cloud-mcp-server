@@ -1,104 +1,53 @@
-# MCP Server cho Atlassian (Jira và Confluence)
+# MCP Server for Atlassian (Jira & Confluence)
 
-MCP (Model Context Protocol) Server cho Atlassian giúp kết nối các trợ lý AI với Jira và Confluence, cho phép truy vấn và thực hiện các tác vụ trên Atlassian Cloud.
+[![MCP Server](https://img.shields.io/badge/MCP%20Marketplace-Ready-brightgreen)](https://github.com/phuc-nt/mcp-atlassian-server)
 
-## Tổng quan
+## Introduction
 
-MCP Server tạo cầu nối giữa các trợ lý AI và hệ thống Atlassian, cho phép AI tương tác với Jira và Confluence mà không cần được huấn luyện trước về các API cụ thể.
+**MCP Atlassian Server** is a Model Context Protocol (MCP) server that connects AI agents like Cline, Claude Desktop, or Cursor to Atlassian Jira and Confluence, enabling them to query data and perform actions through a standardized interface.
 
-Ứng dụng này triển khai Model Context Protocol (MCP), một chuẩn mở giúp các mô hình AI gọi công cụ và tương tác với dịch vụ bên ngoài.
+> **Note:** This server is primarily designed and optimized for use with Cline, though it follows the MCP standard and can work with other MCP-compatible clients.
 
-## Tài liệu
+- **Key Features:**  
+  - Connect AI agents to Atlassian Jira and Confluence
+  - Support both Resources (read-only) and Tools (actions/mutations)
+  - Easy integration with Cline through MCP Marketplace
+  - Local-first design for personal development environments
+  - Optimized integration with Cline AI assistant
 
-Để hiểu rõ hơn về kiến trúc và cách sử dụng MCP Server Atlassian, vui lòng tham khảo:
+## Quick Installation Guide
 
-- [Xây dựng MCP Server: Từ Kiến Trúc đến Triển Khai](docs/knowledge/building-mcp-server.md): Hướng dẫn chi tiết về cách xây dựng và triển khai MCP Server
-- [Resource và Tool trong MCP Atlassian](docs/knowledge/resource-and-tool-architecture.md): Giải thích chi tiết về kiến trúc Resource và Tool
-- [MCP Trong Thực Tiễn: Luồng Hoạt Động Với Atlassian](docs_v2/dev-guide/workflow-examples.md): Ví dụ thực tiễn về luồng hoạt động đầy đủ
+> **Recommended:** Read [llms-install.md](./llms-install.md) for detailed instructions, prerequisites, configuration steps, and usage examples for both macOS and Windows.
 
-## Yêu cầu hệ thống
+## System Requirements
 
-- Node.js 16+ (cho phát triển local)
-- Docker và Docker Compose (cho triển khai container)
-- Tài khoản Atlassian Cloud và API token
+- Node.js 16+ and npm
+- Git
+- Atlassian Cloud account and API token with appropriate permissions
+- Cline AI assistant (primary supported client)
+- (Optional) Docker Desktop for container-based deployment
 
-## Cài đặt và Khởi chạy
+## Quick Setup
 
-### Phát triển Local
-
-1. Clone repository:
-   ```bash
-   git clone https://github.com/yourusername/mcp-atlassian-server.git
-   cd mcp-atlassian-server
-   ```
-
-2. Cài đặt dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Tạo file `.env` với nội dung:
-   ```
-   ATLASSIAN_SITE_NAME=your-site.atlassian.net
-   ATLASSIAN_USER_EMAIL=your-email@example.com
-   ATLASSIAN_API_TOKEN=your-api-token
-   ```
-
-4. Build và chạy:
-   ```bash
-   npm run build
-   npm start
-   ```
-
-### Sử dụng Docker
-
-1. Tạo file `.env` như trên
-
-2. Chạy script để quản lý Docker:
-   ```bash
-   chmod +x start-docker.sh
-   ./start-docker.sh
-   ```
-
-3. Chọn "1. Chạy MCP Server (với STDIO Transport)"
-
-## Kết nối với Cline
-
-Có hai cách để kết nối MCP Server với Cline:
-
-### Phương pháp 1: Kết nối qua Docker (khuyến nghị)
-
-Thêm cấu hình sau vào file `cline_mcp_settings.json`:
-
-```json
-{
-  "mcpServers": {
-    "atlassian-docker-stdio": {
-      "disabled": false,
-      "timeout": 60,
-      "command": "docker",
-      "args": ["exec", "-i", "mcp-atlassian", "node", "dist/index.js"],
-      "env": {},
-      "transportType": "stdio"
-    }
-  }
-}
+```bash
+git clone https://github.com/phuc-nt/mcp-atlassian-server.git
+cd mcp-atlassian-server
+npm install
+npm run build
 ```
 
-Với cách này, thông tin xác thực Atlassian sẽ được đọc từ file `.env` trong container, không cần thiết lập lại trong cấu hình Cline.
-
-### Phương pháp 2: Kết nối trực tiếp với Node.js local
-
-Nếu bạn không muốn sử dụng Docker, bạn có thể kết nối trực tiếp với Node.js local:
+Configure Cline connection (add to `cline_mcp_settings.json`):
 
 ```json
 {
   "mcpServers": {
-    "atlassian-local-stdio": {
+    "mcp-atlassian-server": {
       "disabled": false,
       "timeout": 60,
       "command": "node",
-      "args": ["/đường/dẫn/tới/mcp-atlassian-server/dist/index.js"],
+      "args": [
+        "/full/path/to/mcp-atlassian-server/dist/index.js"
+      ],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site.atlassian.net",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -110,136 +59,59 @@ Nếu bạn không muốn sử dụng Docker, bạn có thể kết nối trực
 }
 ```
 
-**Lưu ý**: Khi sử dụng phương pháp này, bạn cần thay thế `/đường/dẫn/tới/` bằng đường dẫn thực tế đến thư mục dự án của bạn và cung cấp thông tin xác thực Atlassian trực tiếp trong cấu hình.
+> **For step-by-step details, see [llms-install.md](./llms-install.md)**
 
-## Quản lý Docker
+## Key Capabilities
 
-Script `start-docker.sh` cung cấp các tùy chọn sau:
+### Jira Capabilities
+- **Query Data**: View issues, projects, users, and search with JQL
+- **Perform Actions**: Create issues, update content, transition states, assign issues
 
-1. Chạy MCP Server (với STDIO Transport)
-2. Dừng và xóa container
-3. Xem logs của container
-4. Hiển thị cấu hình Cline
-5. Thoát
+### Confluence Capabilities
+- **Content Management**: Create pages with simple HTML content
+- **Collaboration**: Add comments to Confluence pages
 
-## Chi tiết API
+### Example Use Cases
+- "Create a new issue in project DEMO about login errors"
+- "Find all issues assigned to me in the current sprint"
+- "Transition issue DEMO-43 to Done status"
+- "Create a Confluence page titled 'Meeting Notes'"
 
-MCP Server cung cấp các API để tương tác với Jira và Confluence:
+> These queries work best within the Cline environment, which has been thoroughly tested with this MCP server.
 
-### Jira API
+## Detailed Documentation & Notes
 
-#### `getIssue`
-Lấy thông tin chi tiết về một issue trong Jira.
-- **Tham số**:
-  - `issueIdOrKey*`: ID hoặc key của issue (ví dụ: PROJ-123)
+- See [llms-install.md](./llms-install.md) for detailed setup instructions for Git, Node.js, Docker, and Cline configuration.
+- Ensure your Atlassian API token has sufficient permissions.  
+  - See "API Token Permissions Note" in [llms-install.md](./llms-install.md).
+- Be aware of security implications when using LLMs with configuration files containing tokens.
+- If you encounter permission errors, verify the permissions of the user who created the token.
 
-#### `searchIssues`
-Tìm kiếm issues trong Jira theo JQL (Jira Query Language).
-- **Tham số**:
-  - `jql*`: JQL query để tìm kiếm issues (ví dụ: project = PROJ AND status = "In Progress")
-  - `maxResults`: Số lượng kết quả tối đa
-  - `fields`: Các trường cần trả về
+## Troubleshooting
 
-#### `createIssue`
-Tạo issue mới trong Jira.
-- **Tham số**:
-  - `projectKey*`: Key của project (ví dụ: PROJ)
-  - `summary*`: Tiêu đề của issue
-  - `issueType`: Loại issue (ví dụ: Bug, Task, Story)
-  - `description`: Mô tả của issue
-  - `priority`: Mức độ ưu tiên (ví dụ: High, Medium, Low)
-  - `assignee`: Username của người được gán
-  - `labels`: Các nhãn gán cho issue
+If you experience connection issues:
 
-#### `updateIssue`
-Cập nhật thông tin của một issue trong Jira.
-- **Tham số**:
-  - `issueIdOrKey*`: ID hoặc key của issue cần cập nhật (ví dụ: PROJ-123)
-  - `summary`: Tiêu đề mới của issue
-  - `description`: Mô tả mới của issue
-  - `priority`: Mức độ ưu tiên mới (ví dụ: High, Medium, Low)
-  - `labels`: Các nhãn mới gán cho issue
-  - `customFields`: Các trường tùy chỉnh cần cập nhật
-
-#### `transitionIssue`
-Chuyển trạng thái của một issue trong Jira.
-- **Tham số**:
-  - `issueIdOrKey*`: ID hoặc key của issue (ví dụ: PROJ-123)
-  - `transitionId*`: ID của transition cần áp dụng
-  - `comment`: Comment khi thực hiện transition
-
-#### `assignIssue`
-Gán issue trong Jira cho một người dùng.
-- **Tham số**:
-  - `issueIdOrKey*`: ID hoặc key của issue (ví dụ: PROJ-123)
-  - `accountId`: Account ID của người được gán (để trống để bỏ gán)
-
-### Confluence API
-
-#### `getPage`
-Lấy thông tin chi tiết về một trang trong Confluence.
-- **Tham số**:
-  - `pageId*`: ID của trang Confluence
-  - `expand`: Các thuộc tính bổ sung cần lấy
-
-#### `searchPages`
-Tìm kiếm trang trong Confluence theo CQL (Confluence Query Language).
-- **Tham số**:
-  - `cql*`: CQL query để tìm kiếm trang (ví dụ: space = "DEV" AND title ~ "API")
-  - `limit`: Số lượng kết quả tối đa
-  - `expand`: Các thuộc tính bổ sung cần lấy
-
-#### `createPage`
-Tạo trang mới trong Confluence.
-- **Tham số**:
-  - `spaceKey*`: Key của space để tạo trang (ví dụ: DEV, HR)
-  - `title*`: Tiêu đề của trang
-  - `content*`: Nội dung của trang (ở định dạng Confluence storage/HTML)
-  - `parentId`: ID của trang cha (nếu muốn tạo trang con)
-
-#### `updatePage`
-Cập nhật nội dung và thông tin của một trang trong Confluence.
-- **Tham số**:
-  - `pageId*`: ID của trang cần cập nhật
-  - `title`: Tiêu đề mới của trang
-  - `content`: Nội dung mới của trang (ở định dạng storage/HTML)
-  - `version*`: Số phiên bản hiện tại của trang (cần thiết để tránh xung đột)
-  - `addLabels`: Các nhãn mới cần thêm vào trang
-  - `removeLabels`: Các nhãn cần xóa khỏi trang
-
-#### `getSpaces`
-Lấy danh sách spaces trong Confluence.
-- **Tham số**:
-  - `limit`: Số lượng spaces tối đa để lấy
-  - `type`: Loại space để lọc
-  - `status`: Trạng thái của space
-  - `expand`: Các thuộc tính bổ sung cần lấy
-
-#### `addComment`
-Thêm comment vào trang Confluence.
-- **Tham số**:
-  - `pageId*`: ID của trang cần thêm comment
-  - `content*`: Nội dung của comment (ở định dạng Confluence storage/HTML)
-
-## Khắc phục sự cố
-
-Nếu bạn gặp vấn đề khi kết nối đến MCP Server, hãy kiểm tra:
-
-1. Container Docker đang chạy:
+1. Verify Docker container is running (if using Docker):
    ```bash
    docker ps --filter "name=mcp-atlassian"
    ```
-
-2. Logs của container:
+2. Check container logs:
    ```bash
    docker logs mcp-atlassian
    ```
-
-3. Cấu hình Atlassian API token có đúng không:
-   - Đảm bảo tài khoản Atlassian có quyền truy cập vào các API cần thiết
-   - Kiểm tra token còn hiệu lực
-
-4. Kiểm tra kết nối với API Atlassian:
+3. Test Atlassian API connection:
    ```bash
    curl -u "your-email@example.com:your-api-token" -H "Content-Type: application/json" https://your-site.atlassian.net/rest/api/3/project
    ```
+
+## Contribute & Support
+
+- Contribute by opening Pull Requests or Issues on GitHub.
+- Join the MCP/Cline community for additional support.
+
+---
+
+**MCP Atlassian Server** is ready for one-click installation from Cline Marketplace!  
+**See detailed instructions in [llms-install.md](./llms-install.md)**
+
+> While the server uses the open MCP standard, it is primarily designed and tested for Cline users.

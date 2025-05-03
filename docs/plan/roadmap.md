@@ -13,12 +13,13 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [x] Chuẩn hóa các thông báo lỗi, log messages sang tiếng Anh với format nhất quán
 - [x] Chuyển đổi tên biến/hàm có tiếng Việt (nếu có) sang tiếng Anh
 - [x] Đảm bảo tất cả error response và API messages đều bằng tiếng Anh
-- [ ] Tạo file llms-install.md theo chuẩn hướng dẫn marketplace
+- [x] Tạo file llms-install.md theo chuẩn hướng dẫn marketplace
 - [x] Kiểm tra lại code base đảm bảo không còn nội dung tiếng Việt
 
 > **Ghi chú tiến độ:**
 > - Đã hoàn thành chuyển đổi toàn bộ codebase (resource, tool, utils, entrypoint) sang tiếng Anh.
 > - Không còn nội dung tiếng Việt trong code, comment, message, log, error message ở các file đã chuyển đổi.
+> - Đã hoàn thành file llms-install.md (bản tiếng Anh, chuẩn marketplace, nhấn mạnh ưu tiên cho Cline).
 > - Sẵn sàng cho các bước tiếp theo: kiểm thử, chuẩn bị tài liệu, hình ảnh, script cài đặt, và submit lên marketplace.
 
 ### 1. Chuẩn bị repository theo yêu cầu marketplace
