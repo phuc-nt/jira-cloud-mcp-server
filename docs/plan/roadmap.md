@@ -7,7 +7,7 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 ### 0. Chuyển đổi ngôn ngữ sang tiếng Anh cho phiên bản quốc tế
 - [x] Chuyển đổi tất cả comment trong code sang tiếng Anh
 - [x] Chuyển đổi tất cả message dành cho end user sang tiếng Anh
-- [ ] Dịch README.md sang tiếng Anh với đầy đủ hướng dẫn cài đặt và cấu hình
+- [x] Dịch README.md sang tiếng Anh với đầy đủ hướng dẫn cài đặt và cấu hình (đã đồng bộ với llms-install.md, loại bỏ trùng lặp)
 - [ ] Dịch tất cả documentation files trong thư mục docs/
 - [x] Chuyển đổi schema descriptions và metadata trong các resource/tool sang tiếng Anh
 - [x] Chuẩn hóa các thông báo lỗi, log messages sang tiếng Anh với format nhất quán
@@ -20,13 +20,14 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 > - Đã hoàn thành chuyển đổi toàn bộ codebase (resource, tool, utils, entrypoint) sang tiếng Anh.
 > - Không còn nội dung tiếng Việt trong code, comment, message, log, error message ở các file đã chuyển đổi.
 > - Đã hoàn thành file llms-install.md (bản tiếng Anh, chuẩn marketplace, nhấn mạnh ưu tiên cho Cline).
+> - README.md và llms-install.md đã đồng bộ nội dung, loại bỏ trùng lặp, cảnh báo rõ Docker là experimental.
 > - Sẵn sàng cho các bước tiếp theo: kiểm thử, chuẩn bị tài liệu, hình ảnh, script cài đặt, và submit lên marketplace.
 
 ### 1. Chuẩn bị repository theo yêu cầu marketplace
-- [ ] Đảm bảo repository đã công khai trên GitHub
-- [ ] Cập nhật README.md tiếng Anh với "Quick Start" rõ ràng, hướng dẫn cài đặt theo từng bước
-- [ ] Thêm hướng dẫn chi tiết về cấu hình Cline cho cả Docker và Node.js local
-- [ ] Tạo file `llms-install.md` với hướng dẫn cài đặt chi tiết cho AI
+- [x] Đảm bảo repository đã công khai trên GitHub
+- [x] Cập nhật README.md tiếng Anh với "Quick Start" rõ ràng, hướng dẫn cài đặt theo từng bước
+- [x] Thêm hướng dẫn chi tiết về cấu hình Cline cho cả Docker (cảnh báo experimental) và Node.js local
+- [x] Tạo file `llms-install.md` với hướng dẫn cài đặt chi tiết cho AI
 
 ### 2. Tối ưu hóa cài đặt "một nhấp chuột"
 - [ ] Viết script tự động cài đặt/build với ít tham số nhập vào nhất có thể

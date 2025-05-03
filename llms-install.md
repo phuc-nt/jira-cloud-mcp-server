@@ -1,6 +1,6 @@
-# MCP Atlassian Server Installation Guide for AI
+# MCP Atlassian Server (by phuc-nt) Installation Guide for AI
 
-> **Important Note:** MCP Atlassian Server is primarily developed and optimized for use with the Cline AI assistant. While it follows the MCP standard and can work with other compatible MCP clients, the best performance and experience are achieved with Cline.
+> **Important Note:** MCP Atlassian Server (by phuc-nt) is primarily developed and optimized for use with the Cline AI assistant. While it follows the MCP standard and can work with other compatible MCP clients, the best performance and experience are achieved with Cline.
 
 ## System Requirements
 - macOS 10.15+ or Windows 10+
@@ -175,6 +175,8 @@ Replace:
 
 ## Step 6: Docker Configuration (Optional)
 
+> **Warning**: Docker configuration is experimental and has not been thoroughly tested yet. For the most reliable experience, use the Node.js setup described above.
+
 If you want to use Docker instead of local Node.js:
 
 ### Install Docker
@@ -214,11 +216,11 @@ After configuration, test the connection by asking Cline a question related to J
 - "List all projects in Jira"
 - "Search for Confluence pages about [topic]"
 
-Cline is optimized to work with this MCP Atlassian Server and will automatically use the most appropriate resources and tools for your queries.
+Cline is optimized to work with this MCP Atlassian Server (by phuc-nt) and will automatically use the most appropriate resources and tools for your queries.
 
 ## Introduction & Usage Scenarios
 
-### Capabilities of MCP Atlassian Server
+### Capabilities of MCP Atlassian Server (by phuc-nt)
 
 This MCP Server connects AI to Atlassian systems (Jira and Confluence), enabling:
 
