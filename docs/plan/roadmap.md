@@ -28,6 +28,7 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [x] Cập nhật README.md tiếng Anh với "Quick Start" rõ ràng, hướng dẫn cài đặt theo từng bước
 - [x] Thêm hướng dẫn chi tiết về cấu hình Cline cho cả Docker (cảnh báo experimental) và Node.js local
 - [x] Tạo file `llms-install.md` với hướng dẫn cài đặt chi tiết cho AI
+- [x] Bổ sung demo GIF vào README.md, tăng trải nghiệm showup cho user phổ thông
 
 ### 2. Tối ưu hóa cài đặt "một nhấp chuột"
 - [ ] Viết script tự động cài đặt/build với ít tham số nhập vào nhất có thể
