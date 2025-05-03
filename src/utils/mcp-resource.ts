@@ -5,10 +5,10 @@ import { Logger } from './logger.js';
 const logger = Logger.getLogger('MCPResource');
 
 /**
- * Tạo resource response với nội dung JSON
- * @param uri URI của resource
- * @param data Dữ liệu JSON để trả về
- * @returns Đối tượng resource response chuẩn MCP
+ * Create a resource response with JSON content
+ * @param uri Resource URI
+ * @param data JSON data to return
+ * @returns Standard MCP resource response object
  */
 export function createJsonResource(uri: string, data: any) {
   return {
@@ -23,10 +23,10 @@ export function createJsonResource(uri: string, data: any) {
 }
 
 /**
- * Tạo resource response với nội dung text
- * @param uri URI của resource
- * @param data Dữ liệu text để trả về
- * @returns Đối tượng resource response chuẩn MCP
+ * Create a resource response with text content
+ * @param uri Resource URI
+ * @param data Text data to return
+ * @returns Standard MCP resource response object
  */
 export function createTextResource(uri: string, data: string) {
   return {
@@ -41,14 +41,14 @@ export function createTextResource(uri: string, data: string) {
 }
 
 /**
- * Định nghĩa kiểu cho handler function của resource
+ * Define type for resource handler function
  */
 export type ResourceHandlerFunction = (
   params: any, 
   context: { config: AtlassianConfig; uri: string }
 ) => Promise<any>;
 
-// Cấu hình Atlassian từ biến môi trường
+// Atlassian config from environment variables
 const getAtlassianConfigFromEnv = (): AtlassianConfig => {
   const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
   const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
@@ -69,53 +69,53 @@ const getAtlassianConfigFromEnv = (): AtlassianConfig => {
 };
 
 /**
- * Đăng ký resource với MCP Server
+ * Register a resource with MCP Server
  * @param server MCP Server instance
- * @param resourceName Tên resource
- * @param resourceUri URI pattern của resource
- * @param description Mô tả về resource
- * @param handler Hàm xử lý request cho resource
+ * @param resourceName Resource name
+ * @param resourceUri Resource URI pattern
+ * @param description Resource description
+ * @param handler Request handler function for the resource
  */
 export function registerResource(
   server: McpServer, 
   resourceName: string,
-  resourceUri: string | any, // chấp nhận ResourceTemplate
+  resourceUri: string | any, // accept ResourceTemplate
   description: string, 
   handler: ResourceHandlerFunction
 ) {
   logger.info(`Registering resource: ${resourceName} (${resourceUri instanceof Object && 'pattern' in resourceUri ? resourceUri.pattern : resourceUri})`);
   
-  // Đăng ký resource với MCP Server theo đúng định nghĩa API
+  // Register resource with MCP Server according to API definition
   server.resource(resourceName, resourceUri, 
-    // Callback function cho ReadResourceCallback
+    // Callback function for ReadResourceCallback
     async (uri, extra) => {
       try {
         logger.info(`Handling resource request for: ${uri.href}`);
         
-        // Lấy cấu hình Atlassian từ extra.context nếu có, ngược lại lấy từ biến môi trường
+        // Get Atlassian config from extra.context if available, otherwise from environment variables
         let config: AtlassianConfig;
         try {
-          // Truy cập an toàn vào context
+          // Safe access to context
           if (extra && typeof extra === 'object' && 'context' in extra && extra.context) {
             config = (extra.context as any).atlassianConfig as AtlassianConfig;
             
-            // Nếu không có atlassianConfig trong context, tạo từ biến môi trường
+            // If atlassianConfig not found in context, create from env vars
             if (!config) {
               logger.warn(`atlassianConfig not found in context for resource: ${uri.href}, using env vars instead`);
               config = getAtlassianConfigFromEnv();
             }
           } else {
-            // Nếu không có context, tạo từ biến môi trường
+            // If no context, create from env vars
             logger.warn(`context not found in extra for resource: ${uri.href}, using env vars instead`);
             config = getAtlassianConfigFromEnv();
           }
         } catch (err) {
-          // Fallback: tạo từ biến môi trường
+          // Fallback: create from env vars
           logger.warn(`Error accessing context for resource: ${uri.href}, using env vars instead`);
           config = getAtlassianConfigFromEnv();
         }
         
-        // Gọi handler function với params và context
+        // Call handler function with params and context
         const result = await handler({}, { config, uri: uri.href });
         logger.debug(`Resource result for ${uri.href}:`, result);
         

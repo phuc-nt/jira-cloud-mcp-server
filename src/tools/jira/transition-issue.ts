@@ -5,14 +5,14 @@ import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
 
-// Khởi tạo logger
+// Initialize logger
 const logger = Logger.getLogger('JiraTools:transitionIssue');
 
-// Schema cho tham số đầu vào
+// Input parameter schema
 export const transitionIssueSchema = z.object({
-  issueIdOrKey: z.string().describe('ID hoặc key của issue (ví dụ: PROJ-123)'),
-  transitionId: z.string().describe('ID của transition cần áp dụng'),
-  comment: z.string().optional().describe('Comment khi thực hiện transition')
+  issueIdOrKey: z.string().describe('ID or key of the issue (e.g., PROJ-123)'),
+  transitionId: z.string().describe('ID of the transition to apply'),
+  comment: z.string().optional().describe('Comment when performing the transition')
 });
 
 type TransitionIssueParams = z.infer<typeof transitionIssueSchema>;
@@ -24,7 +24,7 @@ interface TransitionIssueResult {
   message: string;
 }
 
-// Hàm xử lý chính để chuyển trạng thái issue
+// Main handler to transition an issue
 export async function transitionIssueHandler(
   params: TransitionIssueParams,
   config: AtlassianConfig
@@ -32,7 +32,7 @@ export async function transitionIssueHandler(
   try {
     logger.info(`Transitioning issue ${params.issueIdOrKey} with transition ${params.transitionId}`);
     
-    // Gọi hàm transitionIssue thay vì callJiraApi
+    // Call transitionIssue instead of callJiraApi
     const result = await transitionIssue(
       config,
       params.issueIdOrKey,
@@ -54,25 +54,25 @@ export async function transitionIssueHandler(
     logger.error(`Error transitioning issue ${params.issueIdOrKey}:`, error);
     throw new ApiError(
       ApiErrorType.SERVER_ERROR,
-      `Không thể chuyển trạng thái issue: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to transition issue: ${error instanceof Error ? error.message : String(error)}`,
       500
     );
   }
 }
 
-// Tạo và đăng ký tool với MCP Server
+// Register the tool with MCP Server
 export const registerTransitionIssueTool = (server: McpServer) => {
   server.tool(
     'transitionIssue',
-    'Chuyển trạng thái của một issue trong Jira',
+    'Transition the status of a Jira issue',
     transitionIssueSchema.shape,
     async (params: TransitionIssueParams, context: Record<string, any>): Promise<McpResponse> => {
       try {
-        // Lấy cấu hình Atlassian từ context (cập nhật cách truy cập)
+        // Get Atlassian config from context
         const config = (context as any).atlassianConfig as AtlassianConfig;
         
         if (!config) {
-          return createErrorResponse('Cấu hình Atlassian không hợp lệ hoặc không tìm thấy');
+          return createErrorResponse('Invalid or missing Atlassian configuration');
         }
         
         const result = await transitionIssueHandler(params, config);
@@ -96,7 +96,7 @@ export const registerTransitionIssueTool = (server: McpServer) => {
         }
         
         return createErrorResponse(
-          `Lỗi khi chuyển trạng thái issue: ${error instanceof Error ? error.message : String(error)}`
+          `Error while transitioning issue: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }

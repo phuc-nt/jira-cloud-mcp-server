@@ -1,14 +1,14 @@
 /**
- * Interface Jira API
- * Định nghĩa các cấu trúc dữ liệu cho Jira API
+ * Jira API Interface
+ * Define data structures for Jira API
  */
 
 /**
- * Interface định nghĩa các kiểu dữ liệu cho Jira API
+ * Interface defining data types for Jira API
  */
 
 /**
- * Định nghĩa thông tin người dùng Jira
+ * Define Jira user information
  */
 export interface JiraUser {
   accountId: string;
@@ -27,7 +27,7 @@ export interface JiraUser {
 }
 
 /**
- * Định nghĩa thông tin dự án Jira
+ * Define Jira project information
  */
 export interface JiraProject {
   id: string;
@@ -46,7 +46,7 @@ export interface JiraProject {
 }
 
 /**
- * Định nghĩa loại issue
+ * Define issue type
  */
 export interface JiraIssueType {
   id: string;
@@ -61,7 +61,7 @@ export interface JiraIssueType {
 }
 
 /**
- * Định nghĩa trạng thái issue
+ * Define issue status
  */
 export interface JiraStatus {
   id: string;
@@ -78,7 +78,7 @@ export interface JiraStatus {
 }
 
 /**
- * Định nghĩa trường custom field
+ * Define custom field
  */
 export interface JiraCustomField {
   id: string;
@@ -98,7 +98,7 @@ export interface JiraCustomField {
 }
 
 /**
- * Định nghĩa priority của issue
+ * Define issue priority
  */
 export interface JiraPriority {
   id: string;
@@ -108,7 +108,7 @@ export interface JiraPriority {
 }
 
 /**
- * Định nghĩa người tạo/cập nhật
+ * Define creator/updater
  */
 export interface JiraUserDetails {
   self: string;
@@ -118,7 +118,7 @@ export interface JiraUserDetails {
 }
 
 /**
- * Định nghĩa thông tin version/cập nhật
+ * Define version/update information
  */
 export interface JiraVersionInfo {
   by: JiraUserDetails;
@@ -126,7 +126,7 @@ export interface JiraVersionInfo {
 }
 
 /**
- * Định nghĩa nội dung rich text
+ * Define rich text content
  */
 export interface JiraContent {
   type: string;
@@ -136,7 +136,7 @@ export interface JiraContent {
 }
 
 /**
- * Định nghĩa định dạng nội dung
+ * Define content format
  */
 export interface JiraBody {
   type: string;
@@ -145,7 +145,7 @@ export interface JiraBody {
 }
 
 /**
- * Định nghĩa comment
+ * Define comment
  */
 export interface JiraComment {
   id: string;
@@ -162,7 +162,7 @@ export interface JiraComment {
 }
 
 /**
- * Định nghĩa danh sách comment
+ * Define comment list
  */
 export interface JiraComments {
   comments: JiraComment[];
@@ -172,7 +172,7 @@ export interface JiraComments {
 }
 
 /**
- * Định nghĩa trạng thái chuyển đổi
+ * Define transition status
  */
 export interface JiraTransition {
   id: string;
@@ -186,7 +186,7 @@ export interface JiraTransition {
 }
 
 /**
- * Định nghĩa kết quả trạng thái chuyển đổi
+ * Define transition result
  */
 export interface JiraTransitionsResult {
   transitions: {

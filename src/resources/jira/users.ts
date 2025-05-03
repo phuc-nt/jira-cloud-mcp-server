@@ -7,7 +7,7 @@ import { createJsonResource } from '../../utils/mcp-resource.js';
 const logger = Logger.getLogger('JiraResource:Users');
 
 /**
- * Hàm helper để lấy danh sách users từ Jira (hỗ trợ phân trang)
+ * Helper function to get the list of users from Jira (supports pagination)
  */
 async function getUsers(config: AtlassianConfig, startAt = 0, maxResults = 20, accountId?: string, username?: string): Promise<any[]> {
   try {
@@ -22,7 +22,7 @@ async function getUsers(config: AtlassianConfig, startAt = 0, maxResults = 20, a
     if (!baseUrl.startsWith('https://')) {
       baseUrl = `https://${baseUrl}`;
     }
-    // Chỉ filter theo accountId hoặc username
+    // Only filter by accountId or username
     let url = `${baseUrl}/rest/api/2/user/search?startAt=${startAt}&maxResults=${maxResults}`;
     if (accountId && accountId.trim()) {
       url += `&accountId=${encodeURIComponent(accountId.trim())}`;
@@ -46,7 +46,7 @@ async function getUsers(config: AtlassianConfig, startAt = 0, maxResults = 20, a
 }
 
 /**
- * Hàm helper để lấy thông tin chi tiết user từ Jira
+ * Helper function to get user details from Jira
  */
 async function getUser(config: AtlassianConfig, accountId: string): Promise<any> {
   try {
@@ -80,25 +80,25 @@ async function getUser(config: AtlassianConfig, accountId: string): Promise<any>
 }
 
 /**
- * Đăng ký các resources liên quan đến Jira users
+ * Register Jira user-related resources
  * @param server MCP Server instance
  */
 export function registerUserResources(server: McpServer) {
   logger.info('Registering Jira user resources...');
 
-  // Resource: Thông tin chi tiết user
+  // Resource: User details
   server.resource(
     'jira-user-details',
     new ResourceTemplate('jira://users/{accountId}', { list: undefined }),
     async (uri, { accountId }, extra) => {
       let normalizedAccountId = '';
       try {
-        // Lấy config từ context hoặc env
+        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback lấy từ env
+          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -109,12 +109,12 @@ export function registerUserResources(server: McpServer) {
           };
         }
         if (!accountId) {
-          throw new Error('Thiếu accountId trong URI');
+          throw new Error('Missing accountId in URI');
         }
         normalizedAccountId = Array.isArray(accountId) ? accountId[0] : accountId;
         logger.info(`Getting details for Jira user: ${normalizedAccountId}`);
         const user = await getUser(config, normalizedAccountId);
-        // Định dạng lại dữ liệu trả về
+        // Format returned data
         const formattedUser = {
           accountId: user.accountId,
           displayName: user.displayName,
@@ -126,7 +126,7 @@ export function registerUserResources(server: McpServer) {
         };
         return createJsonResource(uri.href, {
           user: formattedUser,
-          message: `Thông tin chi tiết user ${normalizedAccountId}`
+          message: `User details for ${normalizedAccountId}`
         });
       } catch (error) {
         logger.error(`Error getting Jira user ${normalizedAccountId}:`, error);
@@ -135,7 +135,7 @@ export function registerUserResources(server: McpServer) {
     }
   );
 
-  // Resource: Danh sách user assignable cho project
+  // Resource: List of assignable users for a project
   server.resource(
     'jira-users-assignable',
     new ResourceTemplate('jira://users/assignable/{projectKey}', { list: undefined }),
@@ -154,7 +154,7 @@ export function registerUserResources(server: McpServer) {
             apiToken: ATLASSIAN_API_TOKEN
           };
         }
-        if (!projectKey) throw new Error('Thiếu projectKey');
+        if (!projectKey) throw new Error('Missing projectKey');
         const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
         const headers = {
           'Authorization': `Basic ${auth}`,
@@ -186,7 +186,7 @@ export function registerUserResources(server: McpServer) {
           users: formattedUsers,
           count: formattedUsers.length,
           projectKey,
-          message: `Có ${formattedUsers.length} user assignable cho project ${projectKey}`
+          message: `${formattedUsers.length} assignable user(s) for project ${projectKey}`
         });
       } catch (error) {
         logger.error(`Error getting assignable users for project:`, error);
@@ -195,7 +195,7 @@ export function registerUserResources(server: McpServer) {
     }
   );
 
-  // Resource: Danh sách user theo role trong project
+  // Resource: List of users by role in a project
   server.resource(
     'jira-users-role',
     new ResourceTemplate('jira://users/role/{projectKey}/{roleId}', { list: undefined }),
@@ -214,7 +214,7 @@ export function registerUserResources(server: McpServer) {
             apiToken: ATLASSIAN_API_TOKEN
           };
         }
-        if (!projectKey || !roleId) throw new Error('Thiếu projectKey hoặc roleId');
+        if (!projectKey || !roleId) throw new Error('Missing projectKey or roleId');
         const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
         const headers = {
           'Authorization': `Basic ${auth}`,
@@ -236,7 +236,7 @@ export function registerUserResources(server: McpServer) {
           throw new Error(`Jira API error: ${responseText}`);
         }
         const data = await response.json();
-        // Lấy user từ actors
+        // Get users from actors
         const users = (data.actors || []).filter((a: any) => a.type === 'atlassian-user');
         const formattedUsers = users.map((user: any) => ({
           accountId: user.actorUser?.accountId || user.accountId,
@@ -249,7 +249,7 @@ export function registerUserResources(server: McpServer) {
           count: formattedUsers.length,
           projectKey,
           roleId,
-          message: `Có ${formattedUsers.length} user trong role ${roleId} của project ${projectKey}`
+          message: `${formattedUsers.length} user(s) in role ${roleId} of project ${projectKey}`
         });
       } catch (error) {
         logger.error(`Error getting users in role for project:`, error);

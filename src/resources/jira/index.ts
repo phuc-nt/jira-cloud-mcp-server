@@ -7,13 +7,13 @@ import { Logger } from '../../utils/logger.js';
 const logger = Logger.getLogger('JiraResources');
 
 /**
- * Đăng ký tất cả Jira resources với MCP Server
+ * Register all Jira resources with MCP Server
  * @param server MCP Server instance
  */
 export function registerJiraResources(server: McpServer) {
   logger.info('Registering Jira resources...');
   
-  // Đăng ký resources cụ thể của Jira
+  // Register specific Jira resources
   registerIssueResources(server);
   registerProjectResources(server);
   registerUserResources(server);

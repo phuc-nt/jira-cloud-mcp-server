@@ -6,15 +6,15 @@ import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
 
-// Khởi tạo logger
+// Initialize logger
 const logger = Logger.getLogger('ConfluenceTools:createPage');
 
-// Schema cho tham số đầu vào
+// Input parameter schema
 export const createPageSchema = z.object({
-  spaceKey: z.string().describe('Key của space để tạo trang (ví dụ: DEV, HR)'),
-  title: z.string().describe('Tiêu đề của trang'),
-  content: z.string().describe('Nội dung của trang (ở định dạng Confluence storage/HTML)'),
-  parentId: z.string().optional().describe('ID của trang cha (nếu muốn tạo trang con)')
+  spaceKey: z.string().describe('Space key to create the page in (e.g., DEV, HR)'),
+  title: z.string().describe('Title of the page'),
+  content: z.string().describe('Content of the page (in Confluence storage/HTML format)'),
+  parentId: z.string().optional().describe('ID of the parent page (if creating a child page)')
 });
 
 type CreatePageParams = z.infer<typeof createPageSchema>;
@@ -28,7 +28,7 @@ interface CreatePageResult {
   success: boolean;
 }
 
-// Hàm xử lý chính để tạo trang mới
+// Main handler to create a new page
 export async function createPageHandler(
   params: CreatePageParams,
   config: AtlassianConfig
@@ -36,7 +36,7 @@ export async function createPageHandler(
   try {
     logger.info(`Creating new page "${params.title}" in space ${params.spaceKey}`);
     
-    // Chuẩn bị dữ liệu cho API call
+    // Prepare data for API call
     const requestData: any = {
       type: 'page',
       title: params.title,
@@ -51,7 +51,7 @@ export async function createPageHandler(
       }
     };
     
-    // Nếu có parentId, thêm trang này như là con của trang đó
+    // If parentId is provided, set this page as a child
     if (params.parentId) {
       requestData.ancestors = [
         {
@@ -60,7 +60,7 @@ export async function createPageHandler(
       ];
     }
     
-    // Gọi Confluence API để tạo trang
+    // Call Confluence API to create the page
     const response = await callConfluenceApi<any>(
       config,
       '/content',
@@ -68,7 +68,7 @@ export async function createPageHandler(
       requestData
     );
     
-    // Tạo kết quả trả về cho Tool
+    // Build result for the Tool
     return {
       id: response.id,
       key: response.key || '',
@@ -85,31 +85,31 @@ export async function createPageHandler(
     logger.error(`Error creating page in space ${params.spaceKey}:`, error);
     throw new ApiError(
       ApiErrorType.SERVER_ERROR,
-      `Không thể tạo trang: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to create page: ${error instanceof Error ? error.message : String(error)}`,
       500
     );
   }
 }
 
-// Tạo và đăng ký tool với MCP Server
+// Register the tool with MCP Server
 export const registerCreatePageTool = (server: McpServer) => {
   server.tool(
     'createPage',
-    'Tạo trang mới trong Confluence',
+    'Create a new page in Confluence',
     createPageSchema.shape,
     async (params: CreatePageParams, context: Record<string, any>): Promise<McpResponse> => {
       try {
-        // Lấy cấu hình Atlassian từ context (cập nhật cách truy cập)
+        // Get Atlassian config from context
         const config = (context as any).atlassianConfig as AtlassianConfig;
         
         if (!config) {
-          return createErrorResponse('Cấu hình Atlassian không hợp lệ hoặc không tìm thấy');
+          return createErrorResponse('Invalid or missing Atlassian configuration');
         }
         
         const result = await createPageHandler(params, config);
         
         return createTextResponse(
-          `Đã tạo trang "${result.title}" thành công trong space ${params.spaceKey}. URL: ${config.baseUrl}/wiki/spaces/${params.spaceKey}/pages/${result.id}/${encodeURIComponent(result.title.replace(/ /g, '+'))}`,
+          `Page "${result.title}" created successfully in space ${params.spaceKey}. URL: ${config.baseUrl}/wiki/spaces/${params.spaceKey}/pages/${result.id}/${encodeURIComponent(result.title.replace(/ /g, '+'))}`,
           {
             id: result.id,
             title: result.title,
@@ -128,7 +128,7 @@ export const registerCreatePageTool = (server: McpServer) => {
         }
         
         return createErrorResponse(
-          `Lỗi khi tạo trang: ${error instanceof Error ? error.message : String(error)}`
+          `Error while creating page: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }

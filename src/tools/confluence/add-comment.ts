@@ -6,13 +6,13 @@ import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
 
-// Khởi tạo logger
+// Initialize logger
 const logger = Logger.getLogger('ConfluenceTools:addComment');
 
-// Schema cho tham số đầu vào
+// Input parameter schema
 export const addCommentSchema = z.object({
-  pageId: z.string().describe('ID của trang cần thêm comment'),
-  content: z.string().describe('Nội dung của comment (ở định dạng Confluence storage/HTML)')
+  pageId: z.string().describe('ID of the page to add a comment to'),
+  content: z.string().describe('Content of the comment (in Confluence storage/HTML format)')
 });
 
 type AddCommentParams = z.infer<typeof addCommentSchema>;
@@ -22,7 +22,7 @@ interface AddCommentResult {
   status: string;
 }
 
-// Hàm xử lý chính để thêm comment vào trang
+// Main handler to add a comment to a page
 export async function addCommentHandler(
   params: AddCommentParams,
   config: AtlassianConfig
@@ -30,7 +30,7 @@ export async function addCommentHandler(
   try {
     logger.info(`Adding comment to page: ${params.pageId}`);
     
-    // Chuẩn bị dữ liệu cho API call
+    // Prepare data for API call
     const requestData = {
       type: 'comment',
       container: {
@@ -45,7 +45,7 @@ export async function addCommentHandler(
       }
     };
     
-    // Gọi Confluence API để thêm comment
+    // Call Confluence API to add comment
     const response = await callConfluenceApi<any>(
       config,
       '/content',
@@ -53,7 +53,7 @@ export async function addCommentHandler(
       requestData
     );
     
-    // Trả về kết quả
+    // Return result
     return {
       commentId: response.id,
       status: response.status
@@ -66,32 +66,32 @@ export async function addCommentHandler(
     logger.error(`Error adding comment to page ${params.pageId}:`, error);
     throw new ApiError(
       ApiErrorType.SERVER_ERROR,
-      `Không thể thêm comment: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to add comment: ${error instanceof Error ? error.message : String(error)}`,
       500
     );
   }
 }
 
-// Tạo và đăng ký tool với MCP Server
+// Register the tool with MCP Server
 export const registerAddCommentTool = (server: McpServer) => {
   server.tool(
     'addComment',
-    'Thêm comment vào trang Confluence',
+    'Add a comment to a Confluence page',
     addCommentSchema.shape,
     async (params: AddCommentParams, context: Record<string, any>): Promise<McpResponse> => {
       try {
-        // Lấy cấu hình Atlassian từ context (cập nhật cách truy cập)
+        // Get Atlassian config from context
         const config = (context as any).atlassianConfig as AtlassianConfig;
         
         if (!config) {
-          return createErrorResponse('Cấu hình Atlassian không hợp lệ hoặc không tìm thấy');
+          return createErrorResponse('Invalid or missing Atlassian configuration');
         }
         
         const result = await addCommentHandler(params, config);
         
-        // Trả về kết quả theo định dạng MCP Response
+        // Return result in MCP Response format
         return createTextResponse(
-          `Đã thêm comment thành công với ID: ${result.commentId}`,
+          `Comment added successfully with ID: ${result.commentId}`,
           { commentId: result.commentId, status: result.status }
         );
       } catch (error) {
@@ -104,7 +104,7 @@ export const registerAddCommentTool = (server: McpServer) => {
         }
         
         return createErrorResponse(
-          `Lỗi khi thêm comment: ${error instanceof Error ? error.message : String(error)}`
+          `Error while adding comment: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }

@@ -7,7 +7,7 @@ import { createJsonResource } from '../../utils/mcp-resource.js';
 const logger = Logger.getLogger('ConfluenceResource:Spaces');
 
 /**
- * Hàm helper để lấy danh sách spaces từ Confluence (hỗ trợ phân trang)
+ * Helper function to get the list of spaces from Confluence (supports pagination)
  */
 async function getSpaces(config: AtlassianConfig, start = 0, limit = 20): Promise<any> {
   try {
@@ -22,7 +22,7 @@ async function getSpaces(config: AtlassianConfig, start = 0, limit = 20): Promis
     if (!baseUrl.startsWith('https://')) {
       baseUrl = `https://${baseUrl}`;
     }
-    // Đảm bảo có /wiki cho API Confluence Cloud
+    // Ensure /wiki for Confluence Cloud API
     if (!baseUrl.endsWith('/wiki')) {
       baseUrl = `${baseUrl}/wiki`;
     }
@@ -44,7 +44,7 @@ async function getSpaces(config: AtlassianConfig, start = 0, limit = 20): Promis
 }
 
 /**
- * Hàm helper để lấy thông tin chi tiết space từ Confluence
+ * Helper function to get space details from Confluence
  */
 async function getSpace(config: AtlassianConfig, spaceKey: string): Promise<any> {
   try {
@@ -80,7 +80,7 @@ async function getSpace(config: AtlassianConfig, spaceKey: string): Promise<any>
 }
 
 /**
- * Hàm helper để lấy danh sách pages trong một space từ Confluence (hỗ trợ phân trang)
+ * Helper function to get the list of pages in a space from Confluence (supports pagination)
  */
 async function getSpacePages(config: AtlassianConfig, spaceKey: string, start = 0, limit = 20): Promise<any> {
   try {
@@ -116,24 +116,24 @@ async function getSpacePages(config: AtlassianConfig, spaceKey: string, start = 
 }
 
 /**
- * Đăng ký các resources liên quan đến Confluence spaces
+ * Register Confluence space-related resources
  * @param server MCP Server instance
  */
 export function registerSpaceResources(server: McpServer) {
   logger.info('Registering Confluence space resources...');
 
-  // Resource: Danh sách spaces (hỗ trợ phân trang)
+  // Resource: List of spaces (supports pagination)
   server.resource(
     'confluence-spaces-list',
     new ResourceTemplate('confluence://spaces', { list: undefined }),
     async (uri, params, extra) => {
       try {
-        // Lấy config từ context hoặc env
+        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback lấy từ env
+          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -143,12 +143,12 @@ export function registerSpaceResources(server: McpServer) {
             apiToken: ATLASSIAN_API_TOKEN
           };
         }
-        // Lấy tham số phân trang nếu có
+        // Get pagination params if any
         const start = params && params.start ? parseInt(Array.isArray(params.start) ? params.start[0] : params.start, 10) : 0;
         const limit = params && params.limit ? parseInt(Array.isArray(params.limit) ? params.limit[0] : params.limit, 10) : 20;
         logger.info(`Getting Confluence spaces list: start=${start}, limit=${limit}`);
         const data = await getSpaces(config, start, limit);
-        // Định dạng lại danh sách spaces
+        // Format the list of spaces
         const formattedSpaces = (data.results || []).map((space: any) => ({
           key: space.key,
           name: space.name,
@@ -161,7 +161,7 @@ export function registerSpaceResources(server: McpServer) {
           total: data.size,
           start,
           limit,
-          message: `Tìm thấy ${data.size} spaces, hiển thị từ ${start + 1} đến ${start + formattedSpaces.length}`
+          message: `Found ${data.size} space(s), showing from ${start + 1} to ${start + formattedSpaces.length}`
         });
       } catch (error) {
         logger.error(`Error getting Confluence spaces list:`, error);
@@ -170,19 +170,19 @@ export function registerSpaceResources(server: McpServer) {
     }
   );
 
-  // Resource: Chi tiết space
+  // Resource: Space details
   server.resource(
     'confluence-space-details',
     new ResourceTemplate('confluence://spaces/{spaceKey}', { list: undefined }),
     async (uri, { spaceKey }, extra) => {
       let normalizedSpaceKey = '';
       try {
-        // Lấy config từ context hoặc env
+        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback lấy từ env
+          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -193,12 +193,12 @@ export function registerSpaceResources(server: McpServer) {
           };
         }
         if (!spaceKey) {
-          throw new Error('Thiếu spaceKey trong URI');
+          throw new Error('Missing spaceKey in URI');
         }
         normalizedSpaceKey = Array.isArray(spaceKey) ? spaceKey[0] : spaceKey;
         logger.info(`Getting details for Confluence space: ${normalizedSpaceKey}`);
         const space = await getSpace(config, normalizedSpaceKey);
-        // Định dạng lại dữ liệu trả về
+        // Format returned data
         const formattedSpace = {
           key: space.key,
           name: space.name,
@@ -209,7 +209,7 @@ export function registerSpaceResources(server: McpServer) {
         };
         return createJsonResource(uri.href, {
           space: formattedSpace,
-          message: `Thông tin chi tiết space ${normalizedSpaceKey}`
+          message: `Space details for ${normalizedSpaceKey}`
         });
       } catch (error) {
         logger.error(`Error getting Confluence space details for ${normalizedSpaceKey}:`, error);
@@ -218,19 +218,19 @@ export function registerSpaceResources(server: McpServer) {
     }
   );
 
-  // Resource: Danh sách pages trong một space
+  // Resource: List of pages in a space
   server.resource(
     'confluence-space-pages',
     new ResourceTemplate('confluence://spaces/{spaceKey}/pages', { list: undefined }),
     async (uri, { spaceKey, start, limit }, extra) => {
       let normalizedSpaceKey = '';
       try {
-        // Lấy config từ context hoặc env
+        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback lấy từ env
+          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -241,14 +241,14 @@ export function registerSpaceResources(server: McpServer) {
           };
         }
         if (!spaceKey) {
-          throw new Error('Thiếu spaceKey trong URI');
+          throw new Error('Missing spaceKey in URI');
         }
         normalizedSpaceKey = Array.isArray(spaceKey) ? spaceKey[0] : spaceKey;
         const startVal = start ? parseInt(Array.isArray(start) ? start[0] : start, 10) : 0;
         const limitVal = limit ? parseInt(Array.isArray(limit) ? limit[0] : limit, 10) : 20;
         logger.info(`Getting pages for Confluence space: ${normalizedSpaceKey}, start=${startVal}, limit=${limitVal}`);
         const data = await getSpacePages(config, normalizedSpaceKey, startVal, limitVal);
-        // Định dạng lại danh sách pages
+        // Format the list of pages
         const formattedPages = (data.results || []).map((page: any) => ({
           id: page.id,
           title: page.title,
@@ -260,7 +260,7 @@ export function registerSpaceResources(server: McpServer) {
           total: data.size,
           start: startVal,
           limit: limitVal,
-          message: `Tìm thấy ${data.size} pages trong space ${normalizedSpaceKey}, hiển thị từ ${startVal + 1} đến ${startVal + formattedPages.length}`
+          message: `Found ${data.size} page(s) in space ${normalizedSpaceKey}, showing from ${startVal + 1} to ${startVal + formattedPages.length}`
         });
       } catch (error) {
         logger.error(`Error getting Confluence pages in space ${normalizedSpaceKey}:`, error);

@@ -5,17 +5,17 @@ import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
 
-// Khởi tạo logger
+// Initialize logger
 const logger = Logger.getLogger('JiraTools:updateIssue');
 
-// Schema cho tham số đầu vào
+// Input parameter schema
 export const updateIssueSchema = z.object({
-  issueIdOrKey: z.string().describe('ID hoặc key của issue cần cập nhật (ví dụ: PROJ-123)'),
-  summary: z.string().optional().describe('Tiêu đề mới của issue'),
-  description: z.string().optional().describe('Mô tả mới của issue'),
-  priority: z.string().optional().describe('Mức độ ưu tiên mới (ví dụ: High, Medium, Low)'),
-  labels: z.array(z.string()).optional().describe('Các nhãn mới gán cho issue'),
-  customFields: z.record(z.any()).optional().describe('Các trường tùy chỉnh cần cập nhật')
+  issueIdOrKey: z.string().describe('ID or key of the issue to update (e.g., PROJ-123)'),
+  summary: z.string().optional().describe('New summary of the issue'),
+  description: z.string().optional().describe('New description of the issue'),
+  priority: z.string().optional().describe('New priority (e.g., High, Medium, Low)'),
+  labels: z.array(z.string()).optional().describe('New labels for the issue'),
+  customFields: z.record(z.any()).optional().describe('Custom fields to update')
 });
 
 type UpdateIssueParams = z.infer<typeof updateIssueSchema>;
@@ -26,7 +26,7 @@ interface UpdateIssueResult {
   message: string;
 }
 
-// Hàm tạo Atlassian Document Format (ADF) từ text đơn giản
+// Helper to create Atlassian Document Format (ADF) from plain text
 function textToAdf(text: string) {
   return {
     version: 1,
@@ -45,7 +45,7 @@ function textToAdf(text: string) {
   };
 }
 
-// Hàm xử lý chính để cập nhật issue
+// Main handler to update an issue
 export async function updateIssueHandler(
   params: UpdateIssueParams,
   config: AtlassianConfig
@@ -53,10 +53,10 @@ export async function updateIssueHandler(
   try {
     logger.info(`Updating issue: ${params.issueIdOrKey}`);
     
-    // Chuẩn bị dữ liệu cho API call
+    // Prepare data for API call
     const fields: Record<string, any> = {};
     
-    // Thêm các trường cần cập nhật vào fields
+    // Add fields to update
     if (params.summary) {
       fields.summary = params.summary;
     }
@@ -75,23 +75,23 @@ export async function updateIssueHandler(
       fields.labels = params.labels;
     }
     
-    // Thêm các trường tùy chỉnh nếu có
+    // Add custom fields if provided
     if (params.customFields) {
       Object.entries(params.customFields).forEach(([key, value]) => {
         fields[key] = value;
       });
     }
     
-    // Kiểm tra xem có trường nào cần cập nhật không
+    // Check if any field is provided
     if (Object.keys(fields).length === 0) {
       return {
         issueIdOrKey: params.issueIdOrKey,
         success: false,
-        message: 'Không có trường nào được cung cấp để cập nhật'
+        message: 'No fields provided to update'
       };
     }
     
-    // Gọi hàm updateIssue thay vì callJiraApi
+    // Call updateIssue instead of callJiraApi
     const result = await updateIssue(
       config,
       params.issueIdOrKey,
@@ -111,25 +111,25 @@ export async function updateIssueHandler(
     logger.error(`Error updating issue ${params.issueIdOrKey}:`, error);
     throw new ApiError(
       ApiErrorType.SERVER_ERROR,
-      `Không thể cập nhật issue: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to update issue: ${error instanceof Error ? error.message : String(error)}`,
       500
     );
   }
 }
 
-// Tạo và đăng ký tool với MCP Server
+// Register the tool with MCP Server
 export const registerUpdateIssueTool = (server: McpServer) => {
   server.tool(
     'updateIssue',
-    'Cập nhật thông tin của một issue trong Jira',
+    'Update information of a Jira issue',
     updateIssueSchema.shape,
     async (params: UpdateIssueParams, context: Record<string, any>): Promise<McpResponse> => {
       try {
-        // Lấy cấu hình Atlassian từ context (sử dụng cách truy cập mới)
+        // Get Atlassian config from context
         const config = (context as any).atlassianConfig as AtlassianConfig;
         
         if (!config) {
-          return createErrorResponse('Cấu hình Atlassian không hợp lệ hoặc không tìm thấy');
+          return createErrorResponse('Invalid or missing Atlassian configuration');
         }
         
         const result = await updateIssueHandler(params, config);
@@ -152,7 +152,7 @@ export const registerUpdateIssueTool = (server: McpServer) => {
         }
         
         return createErrorResponse(
-          `Lỗi khi cập nhật issue: ${error instanceof Error ? error.message : String(error)}`
+          `Error while updating issue: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }

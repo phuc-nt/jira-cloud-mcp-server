@@ -8,7 +8,7 @@ import fetch from 'cross-fetch';
 const logger = Logger.getLogger('JiraResource:Projects');
 
 /**
- * Tạo headers cơ bản cho Atlassian API với Basic Authentication
+ * Create basic headers for Atlassian API with Basic Authentication
  */
 function createBasicHeaders(email: string, apiToken: string) {
   const auth = Buffer.from(`${email}:${apiToken}`).toString('base64');
@@ -21,31 +21,31 @@ function createBasicHeaders(email: string, apiToken: string) {
 }
 
 /**
- * Hàm helper để lấy danh sách projects
+ * Helper function to get the list of projects
  */
 async function getProjects(config: AtlassianConfig): Promise<any[]> {
   try {
     const headers = createBasicHeaders(config.email, config.apiToken);
     
-    // Chuẩn hóa baseUrl
+    // Normalize baseUrl
     let baseUrl = config.baseUrl;
     if (!baseUrl.startsWith('https://')) {
       baseUrl = `https://${baseUrl}`;
     }
     
-    // URL API để lấy danh sách projects
+    // API URL to get the list of projects
     const url = `${baseUrl}/rest/api/2/project`;
     
     logger.debug(`Getting projects with direct fetch: ${url}`);
     
-    // Sử dụng fetch
+    // Use fetch
     const response = await fetch(url, {
       method: 'GET',
       headers,
       credentials: 'omit'
     });
     
-    // Kiểm tra status code
+    // Check status code
     if (!response.ok) {
       const statusCode = response.status;
       const responseText = await response.text();
@@ -54,7 +54,7 @@ async function getProjects(config: AtlassianConfig): Promise<any[]> {
       
       throw new ApiError(
         ApiErrorType.SERVER_ERROR,
-        `Lỗi Jira API: ${responseText}`,
+        `Jira API error: ${responseText}`,
         statusCode,
         new Error(responseText)
       );
@@ -72,7 +72,7 @@ async function getProjects(config: AtlassianConfig): Promise<any[]> {
     
     throw new ApiError(
       ApiErrorType.UNKNOWN_ERROR,
-      `Lỗi khi lấy danh sách projects: ${error instanceof Error ? error.message : String(error)}`,
+      `Error getting projects: ${error instanceof Error ? error.message : String(error)}`,
       500,
       error instanceof Error ? error : new Error(String(error))
     );
@@ -80,31 +80,31 @@ async function getProjects(config: AtlassianConfig): Promise<any[]> {
 }
 
 /**
- * Hàm helper để lấy thông tin chi tiết project
+ * Helper function to get project details
  */
 async function getProject(config: AtlassianConfig, projectKey: string): Promise<any> {
   try {
     const headers = createBasicHeaders(config.email, config.apiToken);
     
-    // Chuẩn hóa baseUrl
+    // Normalize baseUrl
     let baseUrl = config.baseUrl;
     if (!baseUrl.startsWith('https://')) {
       baseUrl = `https://${baseUrl}`;
     }
     
-    // URL API để lấy thông tin project
+    // API URL to get project details
     const url = `${baseUrl}/rest/api/2/project/${projectKey}`;
     
     logger.debug(`Getting project details with direct fetch: ${url}`);
     
-    // Sử dụng fetch
+    // Use fetch
     const response = await fetch(url, {
       method: 'GET',
       headers,
       credentials: 'omit'
     });
     
-    // Kiểm tra status code
+    // Check status code
     if (!response.ok) {
       const statusCode = response.status;
       const responseText = await response.text();
@@ -114,7 +114,7 @@ async function getProject(config: AtlassianConfig, projectKey: string): Promise<
       if (statusCode === 404) {
         throw new ApiError(
           ApiErrorType.NOT_FOUND_ERROR,
-          `Project ${projectKey} không tìm thấy`,
+          `Project ${projectKey} not found`,
           statusCode,
           new Error(responseText)
         );
@@ -122,7 +122,7 @@ async function getProject(config: AtlassianConfig, projectKey: string): Promise<
       
       throw new ApiError(
         ApiErrorType.SERVER_ERROR,
-        `Lỗi Jira API: ${responseText}`,
+        `Jira API error: ${responseText}`,
         statusCode,
         new Error(responseText)
       );
@@ -140,7 +140,7 @@ async function getProject(config: AtlassianConfig, projectKey: string): Promise<
     
     throw new ApiError(
       ApiErrorType.UNKNOWN_ERROR,
-      `Lỗi khi lấy thông tin project: ${error instanceof Error ? error.message : String(error)}`,
+      `Error getting project: ${error instanceof Error ? error.message : String(error)}`,
       500,
       error instanceof Error ? error : new Error(String(error))
     );
@@ -148,24 +148,24 @@ async function getProject(config: AtlassianConfig, projectKey: string): Promise<
 }
 
 /**
- * Đăng ký các resources liên quan đến Jira projects
+ * Register resources related to Jira projects
  * @param server MCP Server instance
  */
 export function registerProjectResources(server: McpServer) {
-  // Resource: Danh sách tất cả dự án
+  // Resource: List all projects
   registerResource(
     server,
     'jira-projects-list',
     new ResourceTemplate('jira://projects', { list: undefined }),
-    'Danh sách tất cả các dự án trong Jira',
+    'List of all projects in Jira',
     async (params, { config, uri }) => {
       logger.info('Getting list of Jira projects');
       
       try {
-        // Lấy danh sách dự án từ Jira API
+        // Get the list of projects from Jira API
         const projects = await getProjects(config);
         
-        // Chuyển đổi response thành định dạng thân thiện hơn
+        // Convert response to a more friendly format
         const formattedProjects = projects.map((project: any) => ({
           id: project.id,
           key: project.key,
@@ -175,11 +175,11 @@ export function registerProjectResources(server: McpServer) {
           lead: project.lead?.displayName || 'Unknown'
         }));
         
-        // Trả về đúng định dạng MCP resource
+        // Return in MCP resource format
         return createJsonResource(uri, {
           projects: formattedProjects,
           count: formattedProjects.length,
-          message: `Tìm thấy ${formattedProjects.length} dự án`
+          message: `Found ${formattedProjects.length} projects`
         });
       } catch (error) {
         logger.error('Error getting Jira projects:', error);
@@ -188,35 +188,35 @@ export function registerProjectResources(server: McpServer) {
     }
   );
   
-  // Resource: Thông tin chi tiết về một dự án
+  // Resource: Project details
   registerResource(
     server,
     'jira-project-details',
     new ResourceTemplate('jira://projects/{projectKey}', { list: undefined }),
-    'Thông tin chi tiết về một dự án trong Jira',
+    'Details of a project in Jira',
     async (params, { config, uri }) => {
-      // Lấy projectKey từ URI pattern
+      // Get projectKey from URI pattern
       let projectKey = '';
       if (params && 'projectKey' in params) {
         projectKey = params.projectKey;
       } else {
-        // Trích xuất từ URI path nếu params không có
+        // Extract from URI path if params does not have it
         const uriParts = uri.split('/');
         projectKey = uriParts[uriParts.length - 1];
       }
       if (!projectKey) {
         throw new ApiError(
           ApiErrorType.VALIDATION_ERROR,
-          'Project key không được cung cấp',
+          'Project key not provided',
           400,
           new Error('Missing project key parameter')
         );
       }
       logger.info(`Getting details for Jira project: ${projectKey}`);
       try {
-        // Lấy thông tin dự án từ Jira API
+        // Get project info from Jira API
         const project = await getProject(config, projectKey);
-        // Chuyển đổi response thành định dạng thân thiện hơn
+        // Convert response to a more friendly format
         const formattedProject = {
           id: project.id,
           key: project.key,
@@ -227,10 +227,10 @@ export function registerProjectResources(server: McpServer) {
           projectCategory: project.projectCategory?.name || 'Uncategorized',
           projectType: project.projectTypeKey
         };
-        // Trả về đúng định dạng MCP resource
+        // Return in MCP resource format
         return createJsonResource(uri, {
           project: formattedProject,
-          message: `Thông tin chi tiết dự án ${projectKey}`
+          message: `Details of project ${projectKey}`
         });
       } catch (error) {
         logger.error(`Error getting Jira project ${projectKey}:`, error);
@@ -239,23 +239,23 @@ export function registerProjectResources(server: McpServer) {
     }
   );
 
-  // Resource: Danh sách role của một project
+  // Resource: List roles of a project
   registerResource(
     server,
     'jira-project-roles',
     new ResourceTemplate('jira://projects/{projectKey}/roles', { list: undefined }),
-    'Danh sách role của một project trong Jira',
+    'List of roles of a project in Jira',
     async (params, { config, uri }) => {
       let projectKey = '';
       if (params && 'projectKey' in params) {
         projectKey = Array.isArray(params.projectKey) ? params.projectKey[0] : params.projectKey;
       } else {
-        // Trích xuất từ URI path nếu params không có
+        // Extract from URI path if params does not have it
         const uriParts = uri.split('/');
         projectKey = uriParts[uriParts.length - 2];
       }
       if (!projectKey) {
-        throw new Error('Thiếu projectKey');
+        throw new Error('Missing projectKey');
       }
       logger.info(`Getting roles for Jira project: ${projectKey}`);
       try {
@@ -278,7 +278,7 @@ export function registerProjectResources(server: McpServer) {
           throw new Error(`Jira API error: ${responseText}`);
         }
         const data = await response.json();
-        // data là object: key là roleName, value là URL chứa roleId
+        // data is an object: key is roleName, value is URL containing roleId
         const roles = Object.entries(data).map(([roleName, url]) => {
           const urlStr = String(url);
           const match = urlStr.match(/\/role\/(\d+)$/);
@@ -292,7 +292,7 @@ export function registerProjectResources(server: McpServer) {
           roles,
           count: roles.length,
           projectKey,
-          message: `Có ${roles.length} role trong project ${projectKey}`
+          message: `There are ${roles.length} roles in project ${projectKey}`
         });
       } catch (error) {
         logger.error(`Error getting roles for Jira project ${projectKey}:`, error);

@@ -7,7 +7,7 @@ import { createJsonResource } from '../../utils/mcp-resource.js';
 const logger = Logger.getLogger('JiraResource:Issues');
 
 /**
- * Hàm helper để lấy thông tin chi tiết issue từ Jira
+ * Helper function to get issue details from Jira
  */
 async function getIssue(config: AtlassianConfig, issueKey: string): Promise<any> {
   try {
@@ -40,7 +40,7 @@ async function getIssue(config: AtlassianConfig, issueKey: string): Promise<any>
 }
 
 /**
- * Hàm helper để lấy danh sách issues từ Jira (hỗ trợ phân trang)
+ * Helper function to get a list of issues from Jira (supports pagination)
  */
 async function getIssues(config: AtlassianConfig, startAt = 0, maxResults = 20): Promise<any> {
   try {
@@ -73,7 +73,7 @@ async function getIssues(config: AtlassianConfig, startAt = 0, maxResults = 20):
 }
 
 /**
- * Hàm helper để tìm kiếm issues theo JQL từ Jira (hỗ trợ phân trang)
+ * Helper function to search issues by JQL from Jira (supports pagination)
  */
 async function searchIssuesByJql(config: AtlassianConfig, jql: string, startAt = 0, maxResults = 20): Promise<any> {
   try {
@@ -106,7 +106,7 @@ async function searchIssuesByJql(config: AtlassianConfig, jql: string, startAt =
 }
 
 /**
- * Hàm helper để lấy danh sách transitions của một issue từ Jira
+ * Helper function to get a list of transitions for an issue from Jira
  */
 async function getIssueTransitions(config: AtlassianConfig, issueKey: string): Promise<any> {
   try {
@@ -139,7 +139,7 @@ async function getIssueTransitions(config: AtlassianConfig, issueKey: string): P
 }
 
 /**
- * Hàm helper để lấy danh sách comments của một issue từ Jira
+ * Helper function to get a list of comments for an issue from Jira
  */
 async function getIssueComments(config: AtlassianConfig, issueKey: string): Promise<any[]> {
   try {
@@ -172,25 +172,25 @@ async function getIssueComments(config: AtlassianConfig, issueKey: string): Prom
 }
 
 /**
- * Đăng ký các resources liên quan đến Jira issues
+ * Register resources related to Jira issues
  * @param server MCP Server instance
  */
 export function registerIssueResources(server: McpServer) {
   logger.info('Registering Jira issue resources...');
 
-  // Resource: Thông tin chi tiết về một issue
+  // Resource: Issue details
   server.resource(
     'jira-issue-details',
     new ResourceTemplate('jira://issues/{issueKey}', { list: undefined }),
     async (uri, { issueKey }, extra) => {
       let normalizedIssueKey = '';
       try {
-        // Lấy config từ context hoặc env (tương tự các resource khác)
+        // Get config from context or env (similar to other resources)
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback lấy từ env
+          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -201,13 +201,13 @@ export function registerIssueResources(server: McpServer) {
           };
         }
         if (!issueKey) {
-          throw new Error('Thiếu issueKey trong URI');
+          throw new Error('Missing issueKey in URI');
         }
-        // Đảm bảo issueKey là string
+        // Ensure issueKey is a string
         normalizedIssueKey = Array.isArray(issueKey) ? issueKey[0] : issueKey;
         logger.info(`Getting details for Jira issue: ${normalizedIssueKey}`);
         const issue = await getIssue(config, normalizedIssueKey);
-        // Định dạng lại dữ liệu trả về
+        // Format returned data
         const formattedIssue = {
           key: issue.key,
           summary: issue.fields.summary,
@@ -219,7 +219,7 @@ export function registerIssueResources(server: McpServer) {
         };
         return createJsonResource(uri.href, {
           issue: formattedIssue,
-          message: `Thông tin chi tiết issue ${normalizedIssueKey}`
+          message: `Details of issue ${normalizedIssueKey}`
         });
       } catch (error) {
         logger.error(`Error getting Jira issue ${normalizedIssueKey}:`, error);
@@ -228,18 +228,18 @@ export function registerIssueResources(server: McpServer) {
     }
   );
 
-  // Resource: Danh sách tất cả issues (hỗ trợ phân trang)
+  // Resource: List all issues (supports pagination)
   server.resource(
     'jira-issues-list',
     new ResourceTemplate('jira://issues', { list: undefined }),
     async (uri, params, extra) => {
       try {
-        // Lấy config từ context hoặc env
+        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback lấy từ env
+          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -249,12 +249,12 @@ export function registerIssueResources(server: McpServer) {
             apiToken: ATLASSIAN_API_TOKEN
           };
         }
-        // Lấy tham số phân trang nếu có
+        // Get pagination params if any
         const startAt = params && params.startAt ? parseInt(Array.isArray(params.startAt) ? params.startAt[0] : params.startAt, 10) : 0;
         const maxResults = params && params.maxResults ? parseInt(Array.isArray(params.maxResults) ? params.maxResults[0] : params.maxResults, 10) : 20;
         logger.info(`Getting Jira issues list: startAt=${startAt}, maxResults=${maxResults}`);
         const data = await getIssues(config, startAt, maxResults);
-        // Định dạng lại danh sách issues
+        // Format issues list
         const formattedIssues = (data.issues || []).map((issue: any) => ({
           key: issue.key,
           summary: issue.fields.summary,
@@ -267,7 +267,7 @@ export function registerIssueResources(server: McpServer) {
           total: data.total,
           startAt: data.startAt,
           maxResults: data.maxResults,
-          message: `Tìm thấy ${data.total} issues, hiển thị từ ${data.startAt + 1} đến ${data.startAt + formattedIssues.length}`
+          message: `Found ${data.total} issues, displaying from ${data.startAt + 1} to ${data.startAt + formattedIssues.length}`
         });
       } catch (error) {
         logger.error(`Error getting Jira issues list:`, error);
@@ -276,18 +276,18 @@ export function registerIssueResources(server: McpServer) {
     }
   );
 
-  // Resource: Tìm kiếm issues theo JQL (hỗ trợ phân trang)
+  // Resource: Search issues by JQL (supports pagination)
   server.resource(
     'jira-issues-search-jql',
     new ResourceTemplate('jira://issues?jql={jql}', { list: undefined }),
     async (uri, params, extra) => {
       try {
-        // Lấy config từ context hoặc env
+        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback lấy từ env
+          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -297,16 +297,16 @@ export function registerIssueResources(server: McpServer) {
             apiToken: ATLASSIAN_API_TOKEN
           };
         }
-        // Lấy tham số JQL và phân trang
+        // Get JQL and pagination params
         const jql = params && params.jql ? (Array.isArray(params.jql) ? params.jql[0] : params.jql) : '';
         if (!jql) {
-          throw new Error('Thiếu tham số jql trong URI');
+          throw new Error('Missing jql parameter in URI');
         }
         const startAt = params && params.startAt ? parseInt(Array.isArray(params.startAt) ? params.startAt[0] : params.startAt, 10) : 0;
         const maxResults = params && params.maxResults ? parseInt(Array.isArray(params.maxResults) ? params.maxResults[0] : params.maxResults, 10) : 20;
         logger.info(`Searching Jira issues by JQL: jql="${jql}", startAt=${startAt}, maxResults=${maxResults}`);
         const data = await searchIssuesByJql(config, jql, startAt, maxResults);
-        // Định dạng lại danh sách issues
+        // Format issues list
         const formattedIssues = (data.issues || []).map((issue: any) => ({
           key: issue.key,
           summary: issue.fields.summary,
@@ -319,7 +319,7 @@ export function registerIssueResources(server: McpServer) {
           total: data.total,
           startAt: data.startAt,
           maxResults: data.maxResults,
-          message: `Tìm thấy ${data.total} issues theo JQL, hiển thị từ ${data.startAt + 1} đến ${data.startAt + formattedIssues.length}`
+          message: `Found ${data.total} issues by JQL, displaying from ${data.startAt + 1} to ${data.startAt + formattedIssues.length}`
         });
       } catch (error) {
         logger.error(`Error searching Jira issues by JQL:`, error);
@@ -328,19 +328,19 @@ export function registerIssueResources(server: McpServer) {
     }
   );
 
-  // Resource: Danh sách transitions của một issue
+  // Resource: List transitions of an issue
   server.resource(
     'jira-issue-transitions',
     new ResourceTemplate('jira://issues/{issueKey}/transitions', { list: undefined }),
     async (uri, { issueKey }, extra) => {
       let normalizedIssueKey = '';
       try {
-        // Lấy config từ context hoặc env
+        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback lấy từ env
+          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -351,12 +351,12 @@ export function registerIssueResources(server: McpServer) {
           };
         }
         if (!issueKey) {
-          throw new Error('Thiếu issueKey trong URI');
+          throw new Error('Missing issueKey in URI');
         }
         normalizedIssueKey = Array.isArray(issueKey) ? issueKey[0] : issueKey;
         logger.info(`Getting transitions for Jira issue: ${normalizedIssueKey}`);
         const transitions = await getIssueTransitions(config, normalizedIssueKey);
-        // Định dạng lại danh sách transitions
+        // Format transitions list
         const formattedTransitions = transitions.map((t: any) => ({
           id: t.id,
           name: t.name,
@@ -366,7 +366,7 @@ export function registerIssueResources(server: McpServer) {
         return createJsonResource(uri.href, {
           transitions: formattedTransitions,
           count: formattedTransitions.length,
-          message: `Có ${formattedTransitions.length} trạng thái có thể chuyển cho issue ${normalizedIssueKey}`
+          message: `There are ${formattedTransitions.length} possible transitions for issue ${normalizedIssueKey}`
         });
       } catch (error) {
         logger.error(`Error getting Jira issue transitions for ${normalizedIssueKey}:`, error);
@@ -375,19 +375,19 @@ export function registerIssueResources(server: McpServer) {
     }
   );
 
-  // Resource: Danh sách comments của một issue
+  // Resource: List comments of an issue
   server.resource(
     'jira-issue-comments',
     new ResourceTemplate('jira://issues/{issueKey}/comments', { list: undefined }),
     async (uri, { issueKey }, extra) => {
       let normalizedIssueKey = '';
       try {
-        // Lấy config từ context hoặc env
+        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback lấy từ env
+          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -398,12 +398,12 @@ export function registerIssueResources(server: McpServer) {
           };
         }
         if (!issueKey) {
-          throw new Error('Thiếu issueKey trong URI');
+          throw new Error('Missing issueKey in URI');
         }
         normalizedIssueKey = Array.isArray(issueKey) ? issueKey[0] : issueKey;
         logger.info(`Getting comments for Jira issue: ${normalizedIssueKey}`);
         const comments = await getIssueComments(config, normalizedIssueKey);
-        // Định dạng lại danh sách comments
+        // Format comments list
         const formattedComments = comments.map((c: any) => ({
           id: c.id,
           author: c.author?.displayName || '',
@@ -414,7 +414,7 @@ export function registerIssueResources(server: McpServer) {
         return createJsonResource(uri.href, {
           comments: formattedComments,
           count: formattedComments.length,
-          message: `Có ${formattedComments.length} bình luận cho issue ${normalizedIssueKey}`
+          message: `There are ${formattedComments.length} comments for issue ${normalizedIssueKey}`
         });
       } catch (error) {
         logger.error(`Error getting Jira issue comments for ${normalizedIssueKey}:`, error);

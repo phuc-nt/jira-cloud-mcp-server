@@ -5,13 +5,13 @@ import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
 
-// Khởi tạo logger
+// Initialize logger
 const logger = Logger.getLogger('JiraTools:assignIssue');
 
-// Schema cho tham số đầu vào
+// Input parameter schema
 export const assignIssueSchema = z.object({
-  issueIdOrKey: z.string().describe('ID hoặc key của issue (ví dụ: PROJ-123)'),
-  accountId: z.string().optional().describe('Account ID của người được gán (để trống để bỏ gán)')
+  issueIdOrKey: z.string().describe('ID or key of the issue (e.g., PROJ-123)'),
+  accountId: z.string().optional().describe('Account ID of the assignee (leave blank to unassign)')
 });
 
 type AssignIssueParams = z.infer<typeof assignIssueSchema>;
@@ -23,7 +23,7 @@ interface AssignIssueResult {
   message: string;
 }
 
-// Hàm xử lý chính để gán issue
+// Main handler to assign an issue
 export async function assignIssueHandler(
   params: AssignIssueParams,
   config: AtlassianConfig
@@ -31,21 +31,21 @@ export async function assignIssueHandler(
   try {
     logger.info(`Assigning issue ${params.issueIdOrKey} to ${params.accountId || 'no one'}`);
     
-    // Gọi hàm assignIssue thay vì callJiraApi
+    // Call assignIssue instead of callJiraApi
     const result = await assignIssue(
       config,
       params.issueIdOrKey,
       params.accountId || null
     );
     
-    // Trả về kết quả
+    // Return result
     return {
       issueIdOrKey: params.issueIdOrKey,
       success: result.success,
       assignee: params.accountId || null,
       message: params.accountId 
-        ? `Đã gán issue ${params.issueIdOrKey} cho người dùng có account ID: ${params.accountId}`
-        : `Đã bỏ gán issue ${params.issueIdOrKey}`
+        ? `Issue ${params.issueIdOrKey} assigned to user with account ID: ${params.accountId}`
+        : `Issue ${params.issueIdOrKey} unassigned`
     };
   } catch (error) {
     if (error instanceof ApiError) {
@@ -55,25 +55,25 @@ export async function assignIssueHandler(
     logger.error(`Error assigning issue ${params.issueIdOrKey}:`, error);
     throw new ApiError(
       ApiErrorType.SERVER_ERROR,
-      `Không thể gán issue: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to assign issue: ${error instanceof Error ? error.message : String(error)}`,
       500
     );
   }
 }
 
-// Tạo và đăng ký tool với MCP Server
+// Register the tool with MCP Server
 export const registerAssignIssueTool = (server: McpServer) => {
   server.tool(
     'assignIssue',
-    'Gán issue trong Jira cho một người dùng',
+    'Assign a Jira issue to a user',
     assignIssueSchema.shape,
     async (params: AssignIssueParams, context: Record<string, any>): Promise<McpResponse> => {
       try {
-        // Lấy cấu hình Atlassian từ context (cập nhật cách truy cập)
+        // Get Atlassian config from context
         const config = (context as any).atlassianConfig as AtlassianConfig;
         
         if (!config) {
-          return createErrorResponse('Cấu hình Atlassian không hợp lệ hoặc không tìm thấy');
+          return createErrorResponse('Invalid or missing Atlassian configuration');
         }
         
         const result = await assignIssueHandler(params, config);
@@ -97,7 +97,7 @@ export const registerAssignIssueTool = (server: McpServer) => {
         }
         
         return createErrorResponse(
-          `Lỗi khi gán issue: ${error instanceof Error ? error.message : String(error)}`
+          `Error while assigning issue: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }

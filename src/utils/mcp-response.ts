@@ -1,5 +1,5 @@
 /**
- * Utilities để tạo các phản hồi chuẩn MCP Protocol
+ * Utilities for creating standard MCP Protocol responses
  */
 
 export interface McpResponse {
@@ -21,10 +21,10 @@ export type McpContent =
     };
 
 /**
- * Tạo response text chuẩn cho MCP
- * @param text Nội dung text
- * @param additionalProps Thuộc tính bổ sung (không bắt buộc)
- * @returns Đối tượng response chuẩn MCP
+ * Create a standard MCP text response
+ * @param text Text content
+ * @param additionalProps Additional properties (optional)
+ * @returns Standard MCP response object
  */
 export function createTextResponse(text: string, additionalProps: Record<string, unknown> = {}): McpResponse {
   return {
@@ -36,36 +36,36 @@ export function createTextResponse(text: string, additionalProps: Record<string,
 }
 
 /**
- * Chuyển đổi kết quả thành response text chuẩn cho MCP
- * @param result Kết quả cần chuyển đổi
- * @returns Đối tượng response chuẩn MCP
+ * Convert a result to a standard MCP text response
+ * @param result Result to convert
+ * @returns Standard MCP response object
  */
 export function createResponseFromResult(result: unknown): McpResponse {
-  // Nếu kết quả là null hoặc undefined
+  // If result is null or undefined
   if (result === null || result === undefined) {
     return createTextResponse("No result");
   }
 
-  // Nếu kết quả đã là McpResponse
+  // If result is already an McpResponse
   if (typeof result === 'object' && result !== null && 'content' in result) {
     return result as McpResponse;
   }
 
-  // Nếu kết quả là một object
+  // If result is an object
   if (typeof result === 'object') {
     const resultStr = JSON.stringify(result, null, 2);
     return createTextResponse(resultStr, result as Record<string, unknown>);
   }
 
-  // Nếu kết quả là kiểu dữ liệu nguyên thủy
+  // If result is a primitive type
   return createTextResponse(String(result));
 }
 
 /**
- * Tạo response lỗi chuẩn cho MCP
- * @param errorMessage Thông báo lỗi
- * @param additionalProps Thuộc tính bổ sung (không bắt buộc)
- * @returns Đối tượng response lỗi chuẩn MCP
+ * Create a standard MCP error response
+ * @param errorMessage Error message
+ * @param additionalProps Additional properties (optional)
+ * @returns Standard MCP error response object
  */
 export function createErrorResponse(errorMessage: string, additionalProps: Record<string, unknown> = {}): McpResponse {
   return {

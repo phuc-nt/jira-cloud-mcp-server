@@ -1,9 +1,9 @@
 import dotenv from 'dotenv';
 
-// Tải biến môi trường
+// Load environment variables
 dotenv.config();
 
-// Định nghĩa các cấp độ log
+// Define log levels
 export enum LogLevel {
   ERROR = 0,
   WARN = 1,
@@ -11,7 +11,7 @@ export enum LogLevel {
   DEBUG = 3
 }
 
-// Định nghĩa màu cho output
+// Define colors for output
 const COLORS = {
   RESET: '\x1b[0m',
   RED: '\x1b[31m',
@@ -20,7 +20,7 @@ const COLORS = {
   GRAY: '\x1b[90m'
 };
 
-// Lấy cấp độ log từ biến môi trường
+// Get log level from environment variable
 const getLogLevelFromEnv = (): LogLevel => {
   const logLevel = process.env.LOG_LEVEL?.toLowerCase();
   switch (logLevel) {
@@ -33,7 +33,7 @@ const getLogLevelFromEnv = (): LogLevel => {
     case 'error':
       return LogLevel.ERROR;
     default:
-      return LogLevel.INFO; // Mặc định là INFO
+      return LogLevel.INFO; // Default is INFO
   }
 };
 
@@ -45,17 +45,17 @@ export class Logger {
   private moduleName: string;
 
   /**
-   * Khởi tạo logger
-   * @param moduleName Tên module sử dụng logger
+   * Initialize logger
+   * @param moduleName Module name using the logger
    */
   constructor(moduleName: string) {
     this.moduleName = moduleName;
   }
 
   /**
-   * Log lỗi
-   * @param message Nội dung log
-   * @param data Dữ liệu bổ sung (tùy chọn)
+   * Log error
+   * @param message Log message
+   * @param data Additional data (optional)
    */
   error(message: string, data?: any): void {
     if (Logger.logLevel >= LogLevel.ERROR) {
@@ -65,9 +65,9 @@ export class Logger {
   }
 
   /**
-   * Log cảnh báo
-   * @param message Nội dung log
-   * @param data Dữ liệu bổ sung (tùy chọn)
+   * Log warning
+   * @param message Log message
+   * @param data Additional data (optional)
    */
   warn(message: string, data?: any): void {
     if (Logger.logLevel >= LogLevel.WARN) {
@@ -77,9 +77,9 @@ export class Logger {
   }
 
   /**
-   * Log thông tin
-   * @param message Nội dung log
-   * @param data Dữ liệu bổ sung (tùy chọn)
+   * Log info
+   * @param message Log message
+   * @param data Additional data (optional)
    */
   info(message: string, data?: any): void {
     if (Logger.logLevel >= LogLevel.INFO) {
@@ -90,8 +90,8 @@ export class Logger {
 
   /**
    * Log debug
-   * @param message Nội dung log
-   * @param data Dữ liệu bổ sung (tùy chọn)
+   * @param message Log message
+   * @param data Additional data (optional)
    */
   debug(message: string, data?: any): void {
     if (Logger.logLevel >= LogLevel.DEBUG) {
@@ -101,17 +101,17 @@ export class Logger {
   }
 
   /**
-   * Tạo một instance của logger
-   * @param moduleName Tên module sử dụng logger
-   * @returns Instance của logger
+   * Create a logger instance
+   * @param moduleName Module name using the logger
+   * @returns Logger instance
    */
   static getLogger(moduleName: string): Logger {
     return new Logger(moduleName);
   }
 
   /**
-   * Thiết lập cấp độ log
-   * @param level Cấp độ log mới
+   * Set log level
+   * @param level New log level
    */
   static setLogLevel(level: LogLevel): void {
     Logger.logLevel = level;

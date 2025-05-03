@@ -1,10 +1,10 @@
 /**
- * Interface Confluence API
- * Định nghĩa các cấu trúc dữ liệu cho Confluence API
+ * Confluence API Interface
+ * Define data structures for Confluence API
  */
 
 /**
- * Thông tin người dùng Confluence
+ * Confluence user information
  */
 export interface ConfluenceUser {
   accountId: string;
@@ -20,7 +20,7 @@ export interface ConfluenceUser {
 }
 
 /**
- * Thông tin về Space
+ * Space information
  */
 export interface ConfluenceSpace {
   id: string;
@@ -33,7 +33,7 @@ export interface ConfluenceSpace {
 }
 
 /**
- * Thông tin về version
+ * Version information
  */
 export interface ConfluenceVersion {
   by: ConfluenceUser;
@@ -45,12 +45,12 @@ export interface ConfluenceVersion {
 }
 
 /**
- * Loại nội dung Confluence
+ * Confluence content type
  */
 export type ConfluenceContentType = 'page' | 'blogpost' | 'comment' | 'attachment';
 
 /**
- * Nội dung body của content
+ * Content body
  */
 export interface ConfluenceBody {
   storage: {
@@ -61,7 +61,7 @@ export interface ConfluenceBody {
 }
 
 /**
- * Thông tin về một content trong Confluence
+ * Content information in Confluence
  */
 export interface ConfluenceContent {
   id: string;
@@ -144,7 +144,7 @@ export interface ConfluenceContent {
 }
 
 /**
- * Tham số cho việc tạo nội dung mới
+ * Parameters for creating new content
  */
 export interface CreateContentParams {
   type: ConfluenceContentType;
@@ -165,7 +165,7 @@ export interface CreateContentParams {
 }
 
 /**
- * Tham số cho việc cập nhật nội dung
+ * Parameters for updating content
  */
 export interface UpdateContentParams {
   type?: ConfluenceContentType;
@@ -183,7 +183,7 @@ export interface UpdateContentParams {
 }
 
 /**
- * Tham số tìm kiếm không gian
+ * Parameters for searching spaces
  */
 export interface SearchSpacesParams {
   keys?: string[];
@@ -196,7 +196,7 @@ export interface SearchSpacesParams {
 }
 
 /**
- * Kết quả tìm kiếm không gian
+ * Search result for spaces
  */
 export interface SearchSpacesResult {
   results: ConfluenceSpace[];
@@ -207,7 +207,7 @@ export interface SearchSpacesResult {
 }
 
 /**
- * Tham số tìm kiếm nội dung
+ * Parameters for searching content
  */
 export interface SearchContentParams {
   cql: string;
@@ -218,7 +218,7 @@ export interface SearchContentParams {
 }
 
 /**
- * Kết quả tìm kiếm nội dung
+ * Search result for content
  */
 export interface SearchContentResult {
   results: ConfluenceContent[];
@@ -232,7 +232,7 @@ export interface SearchContentResult {
 }
 
 /**
- * Thông tin về một comment
+ * Information about a comment
  */
 export interface ConfluenceComment {
   id: string;
@@ -251,7 +251,7 @@ export interface ConfluenceComment {
 }
 
 /**
- * Tham số cho việc tạo comment
+ * Parameters for creating a comment
  */
 export interface CreateCommentParams {
   body: {

@@ -16,6 +16,13 @@ export function createErrorResponse(error: Error | string) {
   };
 }
 
+/**
+ * Register a tool with the MCP server
+ * @param server MCP Server instance
+ * @param name Tool name
+ * @param schema Tool schema
+ * @param handler Tool handler function
+ */
 export function registerTool(
   server: any,
   name: string,

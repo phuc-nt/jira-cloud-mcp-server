@@ -6,6 +6,10 @@ import { registerCreatePageTool } from './confluence/create-page.js';
 import { registerUpdatePageTool } from './confluence/update-page.js';
 import { registerAddCommentTool } from './confluence/add-comment.js';
 
+/**
+ * Register all tools with MCP Server
+ * @param server MCP Server instance
+ */
 export function registerAllTools(server: any) {
   registerCreateIssueTool(server);
   registerUpdateIssueTool(server);

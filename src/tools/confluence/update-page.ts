@@ -6,17 +6,17 @@ import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
 
-// Khởi tạo logger
+// Initialize logger
 const logger = Logger.getLogger('ConfluenceTools:updatePage');
 
-// Schema cho tham số đầu vào
+// Input parameter schema
 export const updatePageSchema = z.object({
-  pageId: z.string().describe('ID của trang cần cập nhật'),
-  title: z.string().optional().describe('Tiêu đề mới của trang'),
-  content: z.string().optional().describe('Nội dung mới của trang (ở định dạng storage/HTML)'),
-  version: z.number().describe('Số phiên bản hiện tại của trang (cần thiết để tránh xung đột)'),
-  addLabels: z.array(z.string()).optional().describe('Các nhãn mới cần thêm vào trang'),
-  removeLabels: z.array(z.string()).optional().describe('Các nhãn cần xóa khỏi trang')
+  pageId: z.string().describe('ID of the page to update'),
+  title: z.string().optional().describe('New title of the page'),
+  content: z.string().optional().describe('New content of the page (in storage/HTML format)'),
+  version: z.number().describe('Current version number of the page (required to avoid conflicts)'),
+  addLabels: z.array(z.string()).optional().describe('Labels to add to the page'),
+  removeLabels: z.array(z.string()).optional().describe('Labels to remove from the page')
 });
 
 type UpdatePageParams = z.infer<typeof updatePageSchema>;
@@ -33,7 +33,7 @@ interface UpdatePageResult {
   labelsRemoved?: string[];
 }
 
-// Hàm xử lý chính để cập nhật trang
+// Main handler to update a page
 export async function updatePageHandler(
   params: UpdatePageParams,
   config: AtlassianConfig
@@ -41,23 +41,23 @@ export async function updatePageHandler(
   try {
     logger.info(`Updating page with ID: ${params.pageId}`);
     
-    // Gọi API để lấy thông tin hiện tại của trang
+    // Call API to get current page info
     const currentPage = await callConfluenceApi<any>(
       config,
       `/content/${params.pageId}?expand=body.storage,version`,
       'GET'
     );
     
-    // Kiểm tra version số
+    // Check version number
     if (currentPage.version.number !== params.version) {
       throw new ApiError(
         ApiErrorType.VALIDATION_ERROR,
-        `Xung đột phiên bản. Trang đã được cập nhật lên phiên bản ${currentPage.version.number}, bạn đang sử dụng phiên bản ${params.version}`,
+        `Version conflict. The page has been updated to version ${currentPage.version.number}, you are using version ${params.version}`,
         409
       );
     }
     
-    // Chuẩn bị dữ liệu cho API call
+    // Prepare data for API call
     const requestData: any = {
       type: 'page',
       title: params.title || currentPage.title,
@@ -72,7 +72,7 @@ export async function updatePageHandler(
       }
     };
     
-    // Nếu không có cả title và content, trả về lỗi
+    // If no title, content, addLabels, or removeLabels, return error
     if (!params.title && !params.content && !params.addLabels?.length && !params.removeLabels?.length) {
       return {
         id: params.pageId,
@@ -81,11 +81,11 @@ export async function updatePageHandler(
         self: currentPage._links.self,
         webui: currentPage._links.webui,
         success: false,
-        message: 'Không có thông tin nào được cung cấp để cập nhật'
+        message: 'No information provided to update'
       };
     }
     
-    // Gọi Confluence API để cập nhật trang
+    // Call Confluence API to update the page
     const response = await callConfluenceApi<any>(
       config,
       `/content/${params.pageId}`,
@@ -93,11 +93,11 @@ export async function updatePageHandler(
       requestData
     );
     
-    // Xử lý nhãn nếu có
+    // Handle labels if provided
     let labelsAdded: string[] = [];
     let labelsRemoved: string[] = [];
     
-    // Thêm nhãn mới nếu có
+    // Add new labels if provided
     if (params.addLabels && params.addLabels.length > 0) {
       const labelsData = params.addLabels.map(label => ({ name: label }));
       
@@ -111,7 +111,7 @@ export async function updatePageHandler(
       labelsAdded = params.addLabels;
     }
     
-    // Xóa nhãn nếu có
+    // Remove labels if provided
     if (params.removeLabels && params.removeLabels.length > 0) {
       for (const label of params.removeLabels) {
         await callConfluenceApi(
@@ -124,16 +124,16 @@ export async function updatePageHandler(
       labelsRemoved = params.removeLabels;
     }
     
-    // Tạo message dựa trên các thao tác đã thực hiện
+    // Build message based on actions performed
     const actions = [];
-    if (params.title) actions.push('tiêu đề');
-    if (params.content) actions.push('nội dung');
-    if (labelsAdded.length > 0) actions.push('thêm nhãn');
-    if (labelsRemoved.length > 0) actions.push('xóa nhãn');
+    if (params.title) actions.push('title');
+    if (params.content) actions.push('content');
+    if (labelsAdded.length > 0) actions.push('add label');
+    if (labelsRemoved.length > 0) actions.push('remove label');
     
-    const message = `Đã cập nhật ${actions.join(', ')} của trang thành công`;
+    const message = `Successfully updated page: ${actions.join(', ')}`;
     
-    // Trả về kết quả
+    // Return result
     const result: UpdatePageResult = {
       id: response.id,
       title: response.title,
@@ -161,25 +161,25 @@ export async function updatePageHandler(
     logger.error(`Error updating page ${params.pageId}:`, error);
     throw new ApiError(
       ApiErrorType.SERVER_ERROR,
-      `Không thể cập nhật trang: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to update page: ${error instanceof Error ? error.message : String(error)}`,
       500
     );
   }
 }
 
-// Tạo và đăng ký tool với MCP Server
+// Register the tool with MCP Server
 export const registerUpdatePageTool = (server: McpServer) => {
   server.tool(
     'updatePage',
-    'Cập nhật nội dung và thông tin của một trang trong Confluence',
+    'Update the content and information of a Confluence page',
     updatePageSchema.shape,
     async (params: UpdatePageParams, context: Record<string, any>): Promise<McpResponse> => {
       try {
-        // Lấy cấu hình Atlassian từ context (cập nhật cách truy cập)
+        // Get Atlassian config from context
         const config = (context as any).atlassianConfig as AtlassianConfig;
         
         if (!config) {
-          return createErrorResponse('Cấu hình Atlassian không hợp lệ hoặc không tìm thấy');
+          return createErrorResponse('Invalid or missing Atlassian configuration');
         }
         
         const result = await updatePageHandler(params, config);
@@ -207,7 +207,7 @@ export const registerUpdatePageTool = (server: McpServer) => {
         }
         
         return createErrorResponse(
-          `Lỗi khi cập nhật trang: ${error instanceof Error ? error.message : String(error)}`
+          `Error while updating page: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }

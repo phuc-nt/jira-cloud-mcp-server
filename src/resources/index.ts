@@ -6,16 +6,16 @@ import { Logger } from '../utils/logger.js';
 const logger = Logger.getLogger('MCPResources');
 
 /**
- * Đăng ký tất cả resources (Jira và Confluence) với MCP Server
+ * Register all resources (Jira and Confluence) with MCP Server
  * @param server MCP Server instance
  */
 export function registerAllResources(server: McpServer) {
   logger.info('Registering all MCP resources...');
   
-  // Đăng ký tất cả resources của Jira
+  // Register all Jira resources
   registerJiraResources(server);
   
-  // Đăng ký tất cả resources của Confluence
+  // Register all Confluence resources
   registerConfluenceResources(server);
   
   logger.info('All MCP resources registered successfully');

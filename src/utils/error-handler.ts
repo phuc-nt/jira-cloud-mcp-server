@@ -1,10 +1,10 @@
 import { Logger } from './logger.js';
 
-// Khởi tạo logger
+// Initialize logger
 const logger = Logger.getLogger('ErrorHandler');
 
 /**
- * Loại lỗi API
+ * API Error Type
  */
 export enum ApiErrorType {
   AUTHENTICATION_ERROR = 'AUTHENTICATION_ERROR',
@@ -18,7 +18,7 @@ export enum ApiErrorType {
 }
 
 /**
- * Lỗi API
+ * API Error
  */
 export class ApiError extends Error {
   readonly type: ApiErrorType;
@@ -27,11 +27,11 @@ export class ApiError extends Error {
   readonly originalError?: Error;
 
   /**
-   * Khởi tạo ApiError
-   * @param type Loại lỗi
-   * @param message Thông báo lỗi
+   * Initialize ApiError
+   * @param type Error type
+   * @param message Error message
    * @param statusCode HTTP status code
-   * @param originalError Lỗi gốc (nếu có)
+   * @param originalError Original error (optional)
    */
   constructor(
     type: ApiErrorType,
@@ -43,10 +43,10 @@ export class ApiError extends Error {
     this.name = 'ApiError';
     this.type = type;
     this.statusCode = statusCode;
-    this.code = type; // Sử dụng ApiErrorType làm code
+    this.code = type; // Use ApiErrorType as code
     this.originalError = originalError;
 
-    // Ghi log lỗi
+    // Log error
     logger.error(`${type}: ${message}`, {
       statusCode,
       code: this.code,
@@ -55,8 +55,8 @@ export class ApiError extends Error {
   }
 
   /**
-   * Chuyển đổi ApiError thành chuỗi JSON
-   * @returns Chuỗi JSON biểu diễn lỗi
+   * Convert ApiError to JSON string
+   * @returns JSON representation of the error
    */
   toJSON(): Record<string, any> {
     return {
@@ -70,12 +70,12 @@ export class ApiError extends Error {
 }
 
 /**
- * Xử lý lỗi từ Atlassian API
- * @param error Lỗi cần xử lý
- * @returns ApiError đã được chuẩn hóa
+ * Handle error from Atlassian API
+ * @param error Error to handle
+ * @returns Normalized ApiError
  */
 export function handleAtlassianError(error: any): ApiError {
-  // Xử lý lỗi HTTP từ Atlassian API
+  // Handle HTTP error from Atlassian API
   if (error.response) {
     const { status, data } = error.response;
     
@@ -83,35 +83,35 @@ export function handleAtlassianError(error: any): ApiError {
       case 400:
         return new ApiError(
           ApiErrorType.VALIDATION_ERROR,
-          data.message || 'Dữ liệu không hợp lệ',
+          data.message || 'Invalid data',
           400,
           error
         );
       case 401:
         return new ApiError(
           ApiErrorType.AUTHENTICATION_ERROR,
-          'Xác thực không thành công. Vui lòng kiểm tra API token',
+          'Authentication failed. Please check your API token.',
           401,
           error
         );
       case 403:
         return new ApiError(
           ApiErrorType.AUTHORIZATION_ERROR,
-          'Không có quyền truy cập vào tài nguyên này',
+          'You do not have permission to access this resource.',
           403,
           error
         );
       case 404:
         return new ApiError(
           ApiErrorType.NOT_FOUND_ERROR,
-          'Không tìm thấy tài nguyên yêu cầu',
+          'Requested resource not found.',
           404,
           error
         );
       case 429:
         return new ApiError(
           ApiErrorType.RATE_LIMIT_ERROR,
-          'Đã vượt quá giới hạn yêu cầu. Vui lòng thử lại sau',
+          'Rate limit exceeded. Please try again later.',
           429,
           error
         );
@@ -121,43 +121,43 @@ export function handleAtlassianError(error: any): ApiError {
       case 504:
         return new ApiError(
           ApiErrorType.SERVER_ERROR,
-          'Lỗi máy chủ Atlassian',
+          'Atlassian server error.',
           status,
           error
         );
       default:
         return new ApiError(
           ApiErrorType.UNKNOWN_ERROR,
-          `Lỗi không xác định (${status})`,
+          `Unknown error (${status})`,
           status,
           error
         );
     }
   }
 
-  // Xử lý lỗi mạng
+  // Handle network error
   if (error.request) {
     return new ApiError(
       ApiErrorType.NETWORK_ERROR,
-      'Không thể kết nối đến Atlassian API',
+      'Cannot connect to Atlassian API.',
       0,
       error
     );
   }
 
-  // Các lỗi khác
+  // Other errors
   return new ApiError(
     ApiErrorType.UNKNOWN_ERROR,
-    error.message || 'Lỗi không xác định',
+    error.message || 'Unknown error',
     500,
     error
   );
 }
 
 /**
- * Hàm tiện ích để xử lý lỗi khi gọi API
- * @param fn Hàm cần xử lý lỗi
- * @returns Hàm đã được xử lý lỗi
+ * Utility function to handle errors when calling API
+ * @param fn Function to handle errors for
+ * @returns Function with error handling
  */
 export function withErrorHandling<T>(fn: () => Promise<T>): Promise<T> {
   return fn().catch(error => {

@@ -108,7 +108,7 @@ server.tool(
       
       // Gọi handler xử lý logic
       const result = await createIssueHandler(params, config);
-      
+
       // Trả về kết quả
       return createTextResponse(
         `Đã tạo issue thành công với key: ${result.key}`,
@@ -230,7 +230,7 @@ const server = new McpServer(
     }
   }
 );
-
+    
 // Đăng ký các resources, tools...
 import { registerJiraResources } from './resources/jira/index.js';
 import { registerConfluenceResources } from './resources/confluence/index.js';
@@ -426,7 +426,7 @@ describe('Jira Workflow Integration', () => {
 
 MCP Inspector là công cụ giúp kiểm thử trực quan các capability của MCP Server:
 
-```bash
+   ```bash
 # Cài đặt MCP Inspector
 npm install -g @anthropic/mcp-inspector
 

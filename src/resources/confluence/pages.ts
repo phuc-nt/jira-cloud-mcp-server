@@ -7,7 +7,7 @@ import { createJsonResource } from '../../utils/mcp-resource.js';
 const logger = Logger.getLogger('ConfluenceResource:Pages');
 
 /**
- * Hàm helper để lấy thông tin chi tiết page từ Confluence
+ * Helper function to get page details from Confluence
  */
 async function getPage(config: AtlassianConfig, pageId: string): Promise<any> {
   try {
@@ -43,7 +43,7 @@ async function getPage(config: AtlassianConfig, pageId: string): Promise<any> {
 }
 
 /**
- * Hàm helper để tìm kiếm pages theo CQL từ Confluence (hỗ trợ phân trang)
+ * Helper function to search pages by CQL from Confluence (supports pagination)
  */
 async function searchPagesByCql(config: AtlassianConfig, cql: string, start = 0, limit = 20): Promise<any> {
   try {
@@ -79,7 +79,7 @@ async function searchPagesByCql(config: AtlassianConfig, cql: string, start = 0,
 }
 
 /**
- * Hàm helper để lấy danh sách children của page
+ * Helper function to get the list of children pages
  */
 async function getPageChildren(config: AtlassianConfig, pageId: string): Promise<any> {
   try {
@@ -115,7 +115,7 @@ async function getPageChildren(config: AtlassianConfig, pageId: string): Promise
 }
 
 /**
- * Hàm helper để lấy danh sách comments của page
+ * Helper function to get the list of comments for a page
  */
 async function getPageComments(config: AtlassianConfig, pageId: string): Promise<any> {
   try {
@@ -151,25 +151,25 @@ async function getPageComments(config: AtlassianConfig, pageId: string): Promise
 }
 
 /**
- * Đăng ký các resources liên quan đến Confluence pages
+ * Register Confluence page-related resources
  * @param server MCP Server instance
  */
 export function registerPageResources(server: McpServer) {
   logger.info('Registering Confluence page resources...');
 
-  // Resource: Chi tiết page
+  // Resource: Page details
   server.resource(
     'confluence-page-details',
     new ResourceTemplate('confluence://pages/{pageId}', { list: undefined }),
     async (uri, { pageId }, extra) => {
       let normalizedPageId = '';
       try {
-        // Lấy config từ context hoặc env
+        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback lấy từ env
+          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -180,12 +180,12 @@ export function registerPageResources(server: McpServer) {
           };
         }
         if (!pageId) {
-          throw new Error('Thiếu pageId trong URI');
+          throw new Error('Missing pageId in URI');
         }
         normalizedPageId = Array.isArray(pageId) ? pageId[0] : pageId;
         logger.info(`Getting details for Confluence page: ${normalizedPageId}`);
         const page = await getPage(config, normalizedPageId);
-        // Định dạng lại dữ liệu trả về
+        // Format returned data
         const formattedPage = {
           id: page.id,
           title: page.title,
@@ -197,7 +197,7 @@ export function registerPageResources(server: McpServer) {
         };
         return createJsonResource(uri.href, {
           page: formattedPage,
-          message: `Thông tin chi tiết page ${normalizedPageId}`
+          message: `Page details for ${normalizedPageId}`
         });
       } catch (error) {
         logger.error(`Error getting Confluence page details for ${normalizedPageId}:`, error);
@@ -206,18 +206,18 @@ export function registerPageResources(server: McpServer) {
     }
   );
 
-  // Resource: Tìm kiếm pages theo CQL
+  // Resource: Search pages by CQL
   server.resource(
     'confluence-pages-search-cql',
     new ResourceTemplate('confluence://pages?cql={cql}', { list: undefined }),
     async (uri, params, extra) => {
       try {
-        // Lấy config từ context hoặc env
+        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback lấy từ env
+          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -229,13 +229,13 @@ export function registerPageResources(server: McpServer) {
         }
         const cql = params && params.cql ? (Array.isArray(params.cql) ? params.cql[0] : params.cql) : '';
         if (!cql) {
-          throw new Error('Thiếu tham số cql trong URI');
+          throw new Error('Missing cql parameter in URI');
         }
         const start = params && params.start ? parseInt(Array.isArray(params.start) ? params.start[0] : params.start, 10) : 0;
         const limit = params && params.limit ? parseInt(Array.isArray(params.limit) ? params.limit[0] : params.limit, 10) : 20;
         logger.info(`Searching Confluence pages by CQL: cql="${cql}", start=${start}, limit=${limit}`);
         const data = await searchPagesByCql(config, cql, start, limit);
-        // Định dạng lại danh sách pages
+        // Format the list of pages
         const formattedPages = (data.results || []).map((page: any) => ({
           id: page.id,
           title: page.title,
@@ -247,7 +247,7 @@ export function registerPageResources(server: McpServer) {
           total: data.size,
           start,
           limit,
-          message: `Tìm thấy ${data.size} pages theo CQL, hiển thị từ ${start + 1} đến ${start + formattedPages.length}`
+          message: `Found ${data.size} page(s) by CQL, showing from ${start + 1} to ${start + formattedPages.length}`
         });
       } catch (error) {
         logger.error(`Error searching Confluence pages by CQL:`, error);
@@ -256,19 +256,19 @@ export function registerPageResources(server: McpServer) {
     }
   );
 
-  // Resource: Danh sách children của page
+  // Resource: List of children pages
   server.resource(
     'confluence-page-children',
     new ResourceTemplate('confluence://pages/{pageId}/children', { list: undefined }),
     async (uri, { pageId }, extra) => {
       let normalizedPageId = '';
       try {
-        // Lấy config từ context hoặc env
+        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback lấy từ env
+          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -279,12 +279,12 @@ export function registerPageResources(server: McpServer) {
           };
         }
         if (!pageId) {
-          throw new Error('Thiếu pageId trong URI');
+          throw new Error('Missing pageId in URI');
         }
         normalizedPageId = Array.isArray(pageId) ? pageId[0] : pageId;
         logger.info(`Getting children for Confluence page: ${normalizedPageId}`);
         const data = await getPageChildren(config, normalizedPageId);
-        // Định dạng lại danh sách children
+        // Format the list of children
         const formattedChildren = (data.results || []).map((child: any) => ({
           id: child.id,
           title: child.title,
@@ -294,7 +294,7 @@ export function registerPageResources(server: McpServer) {
         return createJsonResource(uri.href, {
           children: formattedChildren,
           count: formattedChildren.length,
-          message: `Có ${formattedChildren.length} trang con cho page ${normalizedPageId}`
+          message: `${formattedChildren.length} child page(s) for page ${normalizedPageId}`
         });
       } catch (error) {
         logger.error(`Error getting Confluence page children for ${normalizedPageId}:`, error);
@@ -303,19 +303,19 @@ export function registerPageResources(server: McpServer) {
     }
   );
 
-  // Resource: Danh sách comments của page
+  // Resource: List of comments for a page
   server.resource(
     'confluence-page-comments',
     new ResourceTemplate('confluence://pages/{pageId}/comments', { list: undefined }),
     async (uri, { pageId }, extra) => {
       let normalizedPageId = '';
       try {
-        // Lấy config từ context hoặc env
+        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback lấy từ env
+          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -326,12 +326,12 @@ export function registerPageResources(server: McpServer) {
           };
         }
         if (!pageId) {
-          throw new Error('Thiếu pageId trong URI');
+          throw new Error('Missing pageId in URI');
         }
         normalizedPageId = Array.isArray(pageId) ? pageId[0] : pageId;
         logger.info(`Getting comments for Confluence page: ${normalizedPageId}`);
         const data = await getPageComments(config, normalizedPageId);
-        // Định dạng lại danh sách comments
+        // Format the list of comments
         const formattedComments = (data.results || []).map((comment: any) => ({
           id: comment.id,
           author: comment.creator?.displayName || '',
@@ -342,7 +342,7 @@ export function registerPageResources(server: McpServer) {
         return createJsonResource(uri.href, {
           comments: formattedComments,
           count: formattedComments.length,
-          message: `Có ${formattedComments.length} bình luận cho page ${normalizedPageId}`
+          message: `${formattedComments.length} comment(s) for page ${normalizedPageId}`
         });
       } catch (error) {
         logger.error(`Error getting Confluence page comments for ${normalizedPageId}:`, error);

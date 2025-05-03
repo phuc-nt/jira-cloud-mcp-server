@@ -12,13 +12,13 @@ import { Logger } from './utils/logger.js';
 import { AtlassianConfig } from './utils/atlassian-api.js';
 import { registerJiraResources } from './resources/jira/index.js';
 
-// Tải biến môi trường
+// Load environment variables
 dotenv.config();
 
-// Khởi tạo logger
+// Initialize logger
 const logger = Logger.getLogger('MCP:Server');
 
-// Lấy cấu hình Atlassian từ biến môi trường
+// Get Atlassian config from environment variables
 const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME;
 const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL;
 const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN;
@@ -28,7 +28,7 @@ if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
   process.exit(1);
 }
 
-// Tạo cấu hình Atlassian
+// Create Atlassian config
 const atlassianConfig: AtlassianConfig = {
   baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
     ? `https://${ATLASSIAN_SITE_NAME}` 
@@ -39,27 +39,27 @@ const atlassianConfig: AtlassianConfig = {
 
 logger.info('Initializing MCP Atlassian Server...');
 
-// Khởi tạo MCP server với capabilities
+// Initialize MCP server with capabilities
 const server = new McpServer({
   name: process.env.MCP_SERVER_NAME || 'mcp-atlassian-integration',
   version: process.env.MCP_SERVER_VERSION || '1.0.0',
   capabilities: {
-    resources: {},  // Khai báo hỗ trợ resources capability
+    resources: {},  // Declare support for resources capability
     tools: {}
   }
 });
 
-// Log thông tin cấu hình để debug
+// Log config info for debugging
 logger.info(`Atlassian config available: ${JSON.stringify(atlassianConfig, null, 2)}`);
 
-// Định nghĩa một hàm wrapper mới để xử lý context
+// Define a wrapper function to handle context
 const wrapToolHandler = (registerToolFn: (server: McpServer) => void) => {
-  // Tạo một server proxy để bắt lệnh đăng ký
+  // Create a server proxy to intercept tool registration
   const proxyServer: any = {
     tool: (name: string, description: string, schema: any, handler: any) => {
-      // Đăng ký lại tool với handler mới xử lý context
+      // Re-register tool with new handler that handles context
       server.tool(name, description, schema, async (params: any, context: any) => {
-        // Context được cung cấp trực tiếp cho handler
+        // Context is provided directly to the handler
         context.atlassianConfig = atlassianConfig;
         
         logger.debug(`Tool ${name} called with context keys: [${Object.keys(context)}]`);
@@ -77,11 +77,11 @@ const wrapToolHandler = (registerToolFn: (server: McpServer) => void) => {
     }
   };
   
-  // Gọi hàm đăng ký với server proxy
+  // Call the registration function with the proxy server
   registerToolFn(proxyServer);
 };
 
-// Đăng ký tất cả các tools với wrapper
+// Register all tools with wrapper
 // Jira tools
 wrapToolHandler(registerCreateIssueTool);
 wrapToolHandler(registerUpdateIssueTool);
@@ -92,35 +92,31 @@ wrapToolHandler(registerAssignIssueTool);
 wrapToolHandler(registerCreatePageTool);
 wrapToolHandler(registerAddCommentTool);
 
-// Đăng ký tất cả resources
+// Register all resources
 logger.info('Registering MCP Resources...');
-// registerAllResources(server); // Đã bao gồm registerJiraResources bên trong, tránh trùng lặp
+// registerAllResources(server); // Already includes registerJiraResources inside, avoid duplication
 registerJiraResources(server);
 
-// Khởi động server dựa trên loại transport được cấu hình
+// Start the server based on configured transport type
 async function startServer() {
   try {
-    // Luôn sử dụng STDIO transport cho độ tin cậy cao nhất
+    // Always use STDIO transport for highest reliability
     const stdioTransport = new StdioServerTransport();
     await server.connect(stdioTransport);
     logger.info('MCP Atlassian Server started with STDIO transport');
-
-    // In thông tin khởi động
+    // Print startup info
     logger.info(`MCP Server Name: ${process.env.MCP_SERVER_NAME || 'mcp-atlassian-integration'}`);
     logger.info(`MCP Server Version: ${process.env.MCP_SERVER_VERSION || '1.0.0'}`);
     logger.info(`Connected to Atlassian site: ${ATLASSIAN_SITE_NAME}`);
     logger.info('Registered tools:');
-
     // Jira tools
     logger.info('- createIssue (Jira)');
     logger.info('- updateIssue (Jira)');
     logger.info('- transitionIssue (Jira)');
     logger.info('- assignIssue (Jira)');
-
     // Confluence tools
     logger.info('- createPage (Confluence)');
     logger.info('- addComment (Confluence)');
-    
     // Resources
     logger.info('Registered resources:');
     logger.info('- jira://projects');
@@ -131,5 +127,5 @@ async function startServer() {
   }
 }
 
-// Khởi động server
+// Start server
 startServer(); 

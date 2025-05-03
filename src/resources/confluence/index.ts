@@ -6,13 +6,13 @@ import { Logger } from '../../utils/logger.js';
 const logger = Logger.getLogger('ConfluenceResources');
 
 /**
- * Đăng ký tất cả Confluence resources với MCP Server
+ * Register all Confluence resources with MCP Server
  * @param server MCP Server instance
  */
 export function registerConfluenceResources(server: McpServer) {
   logger.info('Registering Confluence resources...');
   
-  // Đăng ký resources cụ thể của Confluence
+  // Register specific Confluence resources
   registerSpaceResources(server);
   registerPageResources(server);
   

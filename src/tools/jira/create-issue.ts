@@ -6,18 +6,18 @@ import { Logger } from '../../utils/logger.js';
 import { JiraIssueType } from '../../utils/jira-interfaces.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
 
-// Khởi tạo logger
+// Initialize logger
 const logger = Logger.getLogger('JiraTools:createIssue');
 
-// Schema cho tham số đầu vào
+// Input parameter schema
 export const createIssueSchema = z.object({
-  projectKey: z.string().describe('Key của project (ví dụ: PROJ)'),
-  summary: z.string().describe('Tiêu đề của issue'),
-  issueType: z.string().default('Task').describe('Loại issue (ví dụ: Bug, Task, Story)'),
-  description: z.string().optional().describe('Mô tả của issue'),
-  priority: z.string().optional().describe('Mức độ ưu tiên (ví dụ: High, Medium, Low)'),
-  assignee: z.string().optional().describe('Username của người được gán'),
-  labels: z.array(z.string()).optional().describe('Các nhãn gán cho issue')
+  projectKey: z.string().describe('Project key (e.g., PROJ)'),
+  summary: z.string().describe('Issue summary'),
+  issueType: z.string().default('Task').describe('Issue type (e.g., Bug, Task, Story)'),
+  description: z.string().optional().describe('Issue description'),
+  priority: z.string().optional().describe('Priority (e.g., High, Medium, Low)'),
+  assignee: z.string().optional().describe('Assignee username'),
+  labels: z.array(z.string()).optional().describe('Labels for the issue')
 });
 
 type CreateIssueParams = z.infer<typeof createIssueSchema>;
@@ -29,7 +29,7 @@ interface CreateIssueResult {
   success: boolean;
 }
 
-// Hàm tạo Atlassian Document Format (ADF) từ text đơn giản
+// Helper to create Atlassian Document Format (ADF) from plain text
 function textToAdf(text: string) {
   return {
     version: 1,
@@ -48,7 +48,7 @@ function textToAdf(text: string) {
   };
 }
 
-// Hàm xử lý chính để tạo issue mới
+// Main handler to create a new issue
 export async function createIssueHandler(
   params: CreateIssueParams,
   config: AtlassianConfig
@@ -56,29 +56,29 @@ export async function createIssueHandler(
   try {
     logger.info(`Creating new issue in project: ${params.projectKey}`);
     
-    // Xây dựng additionalFields từ các tham số tùy chọn
+    // Build additionalFields from optional parameters
     const additionalFields: Record<string, any> = {};
     
-    // Thêm priority nếu có
+    // Add priority if provided
     if (params.priority) {
       additionalFields.priority = {
         name: params.priority
       };
     }
     
-    // Thêm assignee nếu có
+    // Add assignee if provided
     if (params.assignee) {
       additionalFields.assignee = {
         name: params.assignee
       };
     }
     
-    // Thêm labels nếu có
+    // Add labels if provided
     if (params.labels && params.labels.length > 0) {
       additionalFields.labels = params.labels;
     }
     
-    // Gọi hàm createIssue thay vì callJiraApi
+    // Call createIssue instead of callJiraApi
     const newIssue = await createIssue(
       config,
       params.projectKey,
@@ -88,7 +88,7 @@ export async function createIssueHandler(
       additionalFields
     );
     
-    // Trả về kết quả
+    // Return result
     return {
       id: newIssue.id,
       key: newIssue.key,
@@ -103,33 +103,33 @@ export async function createIssueHandler(
     logger.error(`Error creating issue in project ${params.projectKey}:`, error);
     throw new ApiError(
       ApiErrorType.SERVER_ERROR,
-      `Không thể tạo issue: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to create issue: ${error instanceof Error ? error.message : String(error)}`,
       500
     );
   }
 }
 
-// Tạo và đăng ký tool với MCP Server
+// Register the tool with MCP Server
 export const registerCreateIssueTool = (server: McpServer) => {
   server.tool(
     'createIssue',
-    'Tạo issue mới trong Jira',
+    'Create a new issue in Jira',
     createIssueSchema.shape,
     async (params: CreateIssueParams, context: Record<string, any>): Promise<McpResponse> => {
       try {
-        // Lấy cấu hình Atlassian từ context (cập nhật cách lấy context)
+        // Get Atlassian config from context
         const config = (context as any).atlassianConfig as AtlassianConfig;
         
         if (!config) {
-          return createErrorResponse('Cấu hình Atlassian không hợp lệ hoặc không tìm thấy');
+          return createErrorResponse('Invalid or missing Atlassian configuration');
         }
         
-        // Tạo issue mới
+        // Create new issue
         const result = await createIssueHandler(params, config);
         
-        // Tạo response theo chuẩn MCP
+        // Return MCP-compliant response
         return createTextResponse(
-          `Đã tạo issue thành công: ${result.key}`,
+          `Issue created successfully: ${result.key}`,
           {
             id: result.id,
             key: result.key,
@@ -147,7 +147,7 @@ export const registerCreateIssueTool = (server: McpServer) => {
         }
         
         return createErrorResponse(
-          `Lỗi khi tạo issue: ${error instanceof Error ? error.message : String(error)}`
+          `Error while creating issue: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }
