@@ -1,0 +1,50 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - atlassianSiteName
+      - atlassianUserEmail
+      - atlassianApiToken
+    properties:
+      atlassianSiteName:
+        type: string
+        description: Your Atlassian site name or URL (e.g., example.atlassian.net or
+          https://example.atlassian.net)
+      atlassianUserEmail:
+        type: string
+        description: Email address associated with your Atlassian account
+      atlassianApiToken:
+        type: string
+        description: API token for Atlassian authentication
+      mcpServerName:
+        type: string
+        default: mcp-atlassian-integration
+        description: Optional custom name for the MCP server
+      mcpServerVersion:
+        type: string
+        default: 1.0.0
+        description: Optional custom version for the MCP server
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({
+      command: 'node',
+      args: ['dist/index.js'],
+      env: {
+        ATLASSIAN_SITE_NAME: config.atlassianSiteName,
+        ATLASSIAN_USER_EMAIL: config.atlassianUserEmail,
+        ATLASSIAN_API_TOKEN: config.atlassianApiToken,
+        MCP_SERVER_NAME: config.mcpServerName,
+        MCP_SERVER_VERSION: config.mcpServerVersion
+      }
+    })
+  exampleConfig:
+    atlassianSiteName: example.atlassian.net
+    atlassianUserEmail: user@example.com
+    atlassianApiToken: your-api-token
+    mcpServerName: my-atlassian-mcp
+    mcpServerVersion: 1.2.3
