@@ -39,9 +39,9 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 
 ### 3. Chuẩn bị tài liệu và hình ảnh quảng bá
 - [x] Thiết kế logo PNG 400×400 cho MCP Atlassian Server (đã có logo webp và PNG chuẩn marketplace)
-- [ ] Viết mô tả ngắn nhưng hấp dẫn về lợi ích MCP Atlassian Server
+- [x] Viết mô tả ngắn nhưng hấp dẫn về lợi ích MCP Atlassian Server
 - [x] Tạo 1-2 ảnh demo chức năng chính (đã có GIF demo lớn trong README.md)
-- [ ] Chuẩn bị bài viết nộp lên marketplace với nội dung đầy đủ theo template
+- [x] Chuẩn bị bài viết nộp lên marketplace với nội dung đầy đủ theo template
 
 ### 4. Test và đảm bảo chất lượng
 - [ ] Test toàn diện chức năng với Cline local
