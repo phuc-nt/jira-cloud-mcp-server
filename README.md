@@ -5,6 +5,7 @@
 </p>
 
 [![MCP Atlassian Server (by phuc-nt)](https://img.shields.io/badge/MCP%20Marketplace--Pending%20Review-orange)](https://github.com/phuc-nt/mcp-atlassian-server)
+[![smithery badge](https://smithery.ai/badge/@phuc-nt/mcp-atlassian-server)](https://smithery.ai/server/@phuc-nt/mcp-atlassian-server)
 
 ## Introduction
 
@@ -60,6 +61,14 @@ The guide includes:
 - Configuring Cline AI assistant to connect with Atlassian
 - Getting and setting up Atlassian API tokens
 - Security recommendations and best practices
+
+### Installing via Smithery
+
+To install Atlassian Integration Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@phuc-nt/mcp-atlassian-server):
+
+```bash
+npx -y @smithery/cli install @phuc-nt/mcp-atlassian-server --client claude
+```
 
 ## Feature Overview
 
