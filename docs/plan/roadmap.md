@@ -44,10 +44,10 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [x] Chuẩn bị bài viết nộp lên marketplace với nội dung đầy đủ theo template
 
 ### 4. Test và đảm bảo chất lượng
-- [ ] Test toàn diện chức năng với Cline local
-- [ ] Test cấu hình Docker và Node.js local theo hướng dẫn trong README
-- [ ] Đảm bảo không có lỗi nào trong quá trình cài đặt tự động
-- [ ] Mô phỏng user flow từ cài đặt đến sử dụng đầu tiên
+- [x] Test toàn diện chức năng với Cline local
+- [x] Test cấu hình Docker và Node.js local theo hướng dẫn trong README
+- [x] Đảm bảo không có lỗi nào trong quá trình cài đặt tự động
+- [x] Mô phỏng user flow từ cài đặt đến sử dụng đầu tiên
 
 ### 5. Thực hiện submit lên marketplace
 - [ ] Tạo issue trên Cline MCP Marketplace repository

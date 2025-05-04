@@ -280,3 +280,11 @@ This MCP Server connects AI to Atlassian systems (Jira and Confluence), enabling
 4. **Access Rights**: Ensure the configured Atlassian account has access to the projects and spaces you want to interact with.
 
 After installation, you can use Cline to interact with Jira and Confluence naturally, making project management and documentation more efficient.
+
+## Tested Installation & Usage
+
+For a real-world test report of installing and using MCP Atlassian Server (by phuc-nt) with Cline, see:
+
+[docs/test-reports/cline-installation-test-2025-05-04.md](./docs/test-reports/cline-installation-test-2025-05-04.md)
+
+This report includes step-by-step results, troubleshooting notes, and tips for successful setup and usage with Cline.
