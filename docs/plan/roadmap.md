@@ -50,7 +50,7 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [x] Mô phỏng user flow từ cài đặt đến sử dụng đầu tiên
 
 ### 5. Thực hiện submit lên marketplace
-- [ ] Tạo issue trên Cline MCP Marketplace repository
+- [x] Tạo issue trên Cline MCP Marketplace repository ([#292](https://github.com/cline/mcp-marketplace/issues/292))
 - [ ] Đính kèm thông tin cần thiết: GitHub URL, logo, mô tả
 - [ ] Theo dõi phản hồi và sẵn sàng cập nhật theo yêu cầu
 - [ ] Xác nhận lại người dùng có thể cài đặt dễ dàng từ marketplace
