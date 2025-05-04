@@ -59,47 +59,20 @@ The guide includes:
 - Getting and setting up Atlassian API tokens
 - Security recommendations and best practices
 
-## Complete Feature List
+## Feature Overview
 
-### Jira Resources (Read-only data)
-- View issue details, list, and search by JQL
-- View issue transitions and comments
-- View project list, project details, and project roles
-- View user details, assignable users, and users by role
+> For detailed documentation of all Resources and Tools, see [Resources & Tools Reference](./docs/introduction/resources-and-tools.md)
 
-### Confluence Resources (Read-only data)
-- View space list and space details
-- View pages in a space, page details, and search pages by CQL
-- View child pages and page comments
-
-### Jira Tools (Actions)
-- Create, update, transition, and assign issues
-
-### Confluence Tools (Actions)
-- Create new pages and add comments to pages
-
-## Upcoming Features
-
-### Additional Resources
-- Jira: Filters, Boards, Dashboards, Sprints, Backlog Management
-- Confluence: Labels, Attachments, Content Versions History
-- Deeper Atlassian UI integration, macros, advanced templates
-
-### Enhanced Functionality
-- Smart caching, advanced JQL/CQL, richer metadata
-- Advanced page creation, versioning, templates
-- Developer tooling, improved error handling
-
-### User Experience
-- Personalization (favorite projects, spaces), aliases, export/import config, one-click setup
-
-### Prompt
-- Define reusable, versioned conversation templates for AI
-- Support complex workflows and consistent agent responses
-
-### Sampling
-- Let the server request the client AI to generate smart content (summaries, analysis, suggestions)
-- Leverage client-side LLM for privacy, personalization, and powerful completions
+| Type      | Group       | Feature                                         | Description                                      | Status |
+|-----------|-------------|-------------------------------------------------|--------------------------------------------------|--------|
+| Resource  | Jira        | View issues, projects, users, comments, roles   | Query Jira data (JQL, details, lists)            | ✔      |
+| Resource  | Jira        | Filters, Boards, Dashboards, Sprints            | Advanced management for developers               | 🚧     |
+| Resource  | Confluence  | View spaces, pages, child pages, comments       | Query Confluence data                            | ✔      |
+| Resource  | Confluence  | Labels, Attachments, Content Versions           | Advanced document management                     | 🚧     |
+| Resource  | Other       | Smart caching, advanced JQL/CQL, templates      | Performance, experience, UI integration          | 🚧     |
+| Tool      | Jira        | Create, update, transition issues               | Direct actions on Jira                           | ✔      |
+| Tool      | Confluence  | Create pages, comments                          | Direct actions on Confluence                     | ✔      |
+| Tool      | Other       | Prompts, Sampling, Personalization              | AI optimization, personalization, advanced flows | 🚧     |
 
 ## Request Flow
 
