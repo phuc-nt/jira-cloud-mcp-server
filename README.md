@@ -50,12 +50,14 @@ graph TD
 
 ## Installation & Setup
 
-For detailed installation and setup instructions, please refer to our [installation guide](./llms-install.md).
+For detailed installation and setup instructions, please refer to our [installation guide for AI assistants](./llms-install.md). This guide is specially formatted for AI/LLM assistants like Cline to read and automatically set up the MCP Atlassian Server.
+
+> **Note for Cline users**: The installation guide (llms-install.md) is optimized for Cline AI to understand and execute. You can simply ask Cline to "Install MCP Atlassian Server (by phuc-nt)" and it will be able to parse the instructions and help you set up everything step-by-step.
 
 The guide includes:
 - Prerequisites and system requirements
 - Step-by-step setup for Node.js environments
-- Configuring Cline AI assistant
+- Configuring Cline AI assistant to connect with Atlassian
 - Getting and setting up Atlassian API tokens
 - Security recommendations and best practices
 
