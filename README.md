@@ -1,16 +1,18 @@
 # MCP Atlassian Server (by phuc-nt)
 
+<p align="center">
+  <img src="assets/atlassian_logo_icon.png" alt="Atlassian Logo" width="120" />
+</p>
+
 [![MCP Atlassian Server (by phuc-nt)](https://img.shields.io/badge/MCP%20Marketplace-Ready-brightgreen)](https://github.com/phuc-nt/mcp-atlassian-server)
-
-## Introduction Demo
-
-![Introduction Demo](assets/introduce.gif)
 
 ## Introduction
 
 **MCP Atlassian Server (by phuc-nt)** is a Model Context Protocol (MCP) server that connects AI agents like Cline, Claude Desktop, or Cursor to Atlassian Jira and Confluence, enabling them to query data and perform actions through a standardized interface.
 
 > **Note:** This server is primarily designed and optimized for use with Cline, though it follows the MCP standard and can work with other MCP-compatible clients.
+
+![Introduction Demo](assets/introduce.gif)
 
 - **Key Features:**  
   - Connect AI agents to Atlassian Jira and Confluence

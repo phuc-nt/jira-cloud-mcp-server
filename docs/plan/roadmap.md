@@ -21,6 +21,7 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 > - Không còn nội dung tiếng Việt trong code, comment, message, log, error message ở các file đã chuyển đổi.
 > - Đã hoàn thành file llms-install.md (bản tiếng Anh, chuẩn marketplace, nhấn mạnh ưu tiên cho Cline).
 > - README.md và llms-install.md đã đồng bộ nội dung, loại bỏ trùng lặp, cảnh báo rõ Docker là experimental.
+> - Đã bổ sung demo GIF vào README.md, có sơ đồ kiến trúc và flow, tài liệu đã rõ ràng, thân thiện.
 > - Sẵn sàng cho các bước tiếp theo: kiểm thử, chuẩn bị tài liệu, hình ảnh, script cài đặt, và submit lên marketplace.
 
 ### 1. Chuẩn bị repository theo yêu cầu marketplace
@@ -37,9 +38,9 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [ ] Tạo cơ chế tự validate thông tin đăng nhập Atlassian trong quá trình cài đặt
 
 ### 3. Chuẩn bị tài liệu và hình ảnh quảng bá
-- [ ] Thiết kế logo PNG 400×400 cho MCP Atlassian Server
+- [x] Thiết kế logo PNG 400×400 cho MCP Atlassian Server (đã có logo webp và PNG chuẩn marketplace)
 - [ ] Viết mô tả ngắn nhưng hấp dẫn về lợi ích MCP Atlassian Server
-- [ ] Tạo 1-2 ảnh demo chức năng chính (optional)
+- [x] Tạo 1-2 ảnh demo chức năng chính (đã có GIF demo lớn trong README.md)
 - [ ] Chuẩn bị bài viết nộp lên marketplace với nội dung đầy đủ theo template
 
 ### 4. Test và đảm bảo chất lượng
