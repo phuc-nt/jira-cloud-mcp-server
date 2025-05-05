@@ -67,11 +67,10 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [ ] Đảm bảo các lỗi mạng, lỗi xác thực được trả về rõ ràng, dễ debug cho user cá nhân
 
 ### 3. Mở rộng resource cho Jira/Confluence (ưu tiên các API có ích cho developer cá nhân)
-- [x] **In Progress** - Bổ sung resource cho các đối tượng thường dùng: Filters, Boards, Dashboards, Sprints
+- [x] **Done** - Sửa lỗi encode JQL có ký tự đặc biệt/dấu cách trong resource issues (tham khảo [test-report.md](../test-reports/cline-test-2025-04-20.md))
 - [ ] Cho phép truyền query params (filter, limit, sort) cho các resource dạng danh sách
 - [ ] Chuẩn hóa metadata trả về (ví dụ: tổng số, phân trang, link đến Atlassian UI)
 - [ ] Bổ sung schema (metadata) cho tất cả resource MCP để client (Cline) hiển thị đúng kiểu dữ liệu trả về. Tham khảo hướng dẫn chi tiết: [dev-guide/schema-metadata.md](../dev-guide/schema-metadata.md)
-- [x] **In Progress** - Sửa lỗi encode JQL có ký tự đặc biệt/dấu cách trong resource issues (tham khảo [test-report.md](../test-reports/cline-test-2025-04-20.md))
 - [x] **In Progress** - Cải thiện tool createPage để hỗ trợ content phức tạp và parentId (tham khảo [test-report.md](../test-reports/cline-test-2025-04-20.md))
 - [ ] Bổ sung validation chi tiết cho các tham số tool
 
