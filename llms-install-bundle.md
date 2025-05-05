@@ -1,102 +1,29 @@
-# MCP Atlassian Server (by phuc-nt) Installation Guide for AI
+# MCP Atlassian Server (by phuc-nt) - Bundle Installation Guide for AI
 
-> **Important Note:** MCP Atlassian Server (by phuc-nt) is primarily developed and optimized for use with the Cline AI assistant. While it follows the MCP standard and can work with other compatible MCP clients, the best performance and experience are achieved with Cline.
+> **Important Note:** This is a pre-built bundle version of MCP Atlassian Server. No compilation or dependency installation required - just extract and run!
 
 ## System Requirements
 - macOS 10.15+ or Windows 10+
+- Node.js v16+ (only for running the server, not for building)
 - Atlassian Cloud account and API token
 - Cline AI assistant (main supported client)
 
-## Prerequisite Tools Check & Installation
-
-### Check Installed Tools
-
-Verify that Git, Node.js, and npm are installed:
-
+## Step 1: Extract the Bundle
 ```bash
-git --version
-node --version
-npm --version
+# Extract the downloaded bundle
+unzip mcp-atlassian-server-bundle.zip
+
+# Navigate to the extracted directory
+cd mcp-atlassian-server-bundle
 ```
 
-If the above commands show version numbers, you have the required tools. If not, follow the steps below:
-
-### Install Git
-
-#### macOS
-**Method 1**: Using Homebrew (recommended)
-```bash
-# Install Homebrew if not available
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Install Git
-brew install git
-```
-
-**Method 2**: Install Xcode Command Line Tools
-```bash
-xcode-select --install
-```
-
-#### Windows
-1. Download the Git installer from [git-scm.com](https://git-scm.com/download/win)
-2. Run the installer with default options
-3. After installation, open Command Prompt or PowerShell and check: `git --version`
-
-### Install Node.js and npm
-
-#### macOS
-**Method 1**: Using Homebrew (recommended)
-```bash
-brew install node
-```
-
-**Method 2**: Using nvm (Node Version Manager)
-```bash
-# Install nvm
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-
-# Install Node.js LTS
-nvm install --lts
-```
-
-#### Windows
-1. Download Node.js installer from [nodejs.org](https://nodejs.org/) (choose LTS version)
-2. Run the installer with default options
-3. After installation, open Command Prompt or PowerShell and check:
-   ```
-   node --version
-   npm --version
-   ```
-
-## Step 1: Clone the Repository
-```bash
-# macOS/Linux
-git clone https://github.com/phuc-nt/mcp-atlassian-server.git
-cd mcp-atlassian-server
-
-# Windows
-git clone https://github.com/phuc-nt/mcp-atlassian-server.git
-cd mcp-atlassian-server
-```
-
-## Step 2: Install Dependencies
-```bash
-npm install
-```
-
-## Step 3: Build the Project
-```bash
-npm run build
-```
-
-## Step 4: Configure Cline
+## Step 2: Configure Cline
 
 MCP Atlassian Server is specifically designed for seamless integration with Cline. Below is the guide to configure Cline to connect to the server:
 
 ### Determine the Full Path
 
-First, determine the full path to your project directory:
+First, determine the full path to your extracted bundle directory:
 
 ```bash
 # macOS/Linux
@@ -119,7 +46,7 @@ Then, add the following configuration to your `cline_mcp_settings.json` file:
       "timeout": 60,
       "command": "node",
       "args": [
-        "/full/path/to/mcp-atlassian-server/dist/index.js"
+        "/full/path/to/mcp-atlassian-server-bundle/dist/index.js"
       ],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site.atlassian.net",
@@ -138,9 +65,9 @@ Replace:
 - `your-email@example.com` with your Atlassian email
 - `your-api-token` with your Atlassian API token
 
-> **Note for Windows**: The path on Windows may look like `C:\\Users\\YourName\\mcp-atlassian-server\\dist\\index.js` (use `\\` instead of `/`).
+> **Note for Windows**: The path on Windows may look like `C:\\Users\\YourName\\mcp-atlassian-server-bundle\\dist\\index.js` (use `\\` instead of `/`).
 
-## Step 5: Get Atlassian API Token
+## Step 3: Get Atlassian API Token
 1. Go to https://id.atlassian.com/manage-profile/security/api-tokens
 2. Click "Create API token", name it (e.g., "MCP Server")
 3. Copy the token immediately (it will not be shown again)
@@ -173,43 +100,17 @@ Replace:
 
 > **Important**: If you do not ask the LLM to read the config file, your API token will only be used locally and will not be sent anywhere.
 
-## Step 6: Docker Configuration (Optional)
+## Step 4: Run the Server (Optional Testing)
 
-> **Warning**: Docker configuration is experimental and has not been thoroughly tested yet. For the most reliable experience, use the Node.js setup described above.
+You can test the server locally before configuring Cline by running:
 
-If you want to use Docker instead of local Node.js:
-
-### Install Docker
-- **macOS**: Download and install [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop)
-- **Windows**: Download and install [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop)
-
-After installing Docker, add this configuration to `cline_mcp_settings.json`:
-
-```json
-{
-  "mcpServers": {
-    "atlassian-docker": {
-      "disabled": false,
-      "timeout": 60,
-      "command": "docker",
-      "args": [
-        "run",
-        "--rm",
-        "-i",
-        "-e", "ATLASSIAN_SITE_NAME",
-        "-e", "ATLASSIAN_USER_EMAIL",
-        "-e", "ATLASSIAN_API_TOKEN",
-        "your-docker-image"
-      ],
-      "env": {
-        "ATLASSIAN_SITE_NAME": "your-site.atlassian.net",
-        "ATLASSIAN_USER_EMAIL": "your-email@example.com",
-        "ATLASSIAN_API_TOKEN": "your-api-token"
-      }
-    }
-  }
-}
+```bash
+node dist/index.js
 ```
+
+You should see output confirming the server is running. Press Ctrl+C to stop.
+
+> **Note**: You don't need to manually run the server when using with Cline - Cline will automatically start and manage the server process.
 
 ## Verify Installation
 After configuration, test the connection by asking Cline a question related to Jira or Confluence, for example:
@@ -267,11 +168,13 @@ This MCP Server connects AI to Atlassian systems (Jira and Confluence), enabling
    ```
 
 3. **Documentation with Confluence**
+   ```
    "Create a new Confluence page named 'Meeting Notes 2025-05-03'"
    "Update the Confluence page about API Documentation with new examples and add label 'documentation'"
    "Add the label 'documentation' to the page about architecture"
    "Remove the label 'draft' from the page 'Meeting Notes'"
    "Add a comment to the Confluence page about API Documentation"
+   ```
 
 4. **Analysis and Reporting**
    ```
@@ -285,18 +188,10 @@ This MCP Server connects AI to Atlassian systems (Jira and Confluence), enabling
 
 2. **Create Confluence Page**: When creating a Confluence page, use simple HTML content and do not specify parentId to avoid errors.
 
-3. **Create Issue**: When creating new issues, only provide the minimum required fields (projectKey, summary) for best success.
+3. **Update Confluence Page**: When updating a page, always include the current version number to avoid conflicts. You can also update labels (add/remove) and must use valid storage format for content.
 
-4. **Access Rights**: Ensure the configured Atlassian account has access to the projects and spaces you want to interact with.
+4. **Create Issue**: When creating new issues, only provide the minimum required fields (projectKey, summary) for best success.
 
-5. **Update Confluence Page**: When updating a page, always include the current version number to avoid conflicts. You can also update labels (add/remove) and must use valid storage format for content.
+5. **Access Rights**: Ensure the configured Atlassian account has access to the projects and spaces you want to interact with.
 
-After installation, you can use Cline to interact with Jira and Confluence naturally, making project management and documentation more efficient.
-
-## Tested Installation & Usage
-
-For a real-world test report of installing and using MCP Atlassian Server (by phuc-nt) with Cline, see:
-
-[docs/test-reports/cline-installation-test-2025-05-04.md](./docs/test-reports/cline-installation-test-2025-05-04.md)
-
-This report includes step-by-step results, troubleshooting notes, and tips for successful setup and usage with Cline.
+After installation, you can use Cline to interact with Jira and Confluence naturally, making project management and documentation more efficient. 

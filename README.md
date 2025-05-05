@@ -82,7 +82,7 @@ npx -y @smithery/cli install @phuc-nt/mcp-atlassian-server --client claude
 | Resource  | Confluence  | Labels, Attachments, Content Versions           | Advanced document management                     | 🚧     |
 | Resource  | Other       | Smart caching, advanced JQL/CQL, templates      | Performance, experience, UI integration          | 🚧     |
 | Tool      | Jira        | Create, update, transition issues               | Direct actions on Jira                           | ✔      |
-| Tool      | Confluence  | Create pages, comments                          | Direct actions on Confluence                     | ✔      |
+| Tool      | Confluence  | Create pages, update pages (title, content, version, labels), manage labels, add comments | Direct actions on Confluence (create, update, add/remove labels, comment) | ✔      |
 | Tool      | Other       | Prompts, Sampling, Personalization              | AI optimization, personalization, advanced flows | 🚧     |
 
 ## Request Flow
@@ -124,6 +124,9 @@ Try asking Cline these queries after installation:
 
 3. **Documentation with Confluence**
    - "Create a Confluence page titled 'Meeting Notes'"
+   - "Update the Confluence page 'API Documentation' with new examples and labels"
+   - "Add the label 'documentation' to the page about architecture"
+   - "Remove the label 'draft' from the page 'Meeting Notes'"
    - "Add a comment to the Confluence page about API Documentation"
 
 4. **Analysis and Reporting**
@@ -138,9 +141,11 @@ Try asking Cline these queries after installation:
 
 2. **Create Confluence Page**: When creating a Confluence page, use simple HTML content and do not specify parentId to avoid errors.
 
-3. **Create Issue**: When creating new issues, only provide the minimum required fields (projectKey, summary) for best success.
+3. **Update Confluence Page**: When updating a page, always include the current version number to avoid conflicts. You can also update labels (add/remove) and must use valid storage format for content.
 
-4. **Access Rights**: Ensure the configured Atlassian account has access to the projects and spaces you want to interact with.
+4. **Create Issue**: When creating new issues, only provide the minimum required fields (projectKey, summary) for best success.
+
+5. **Access Rights**: Ensure the configured Atlassian account has access to the projects and spaces you want to interact with.
 
 ## Security Note
 
