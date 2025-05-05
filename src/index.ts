@@ -7,6 +7,7 @@ import { registerTransitionIssueTool } from './tools/jira/transition-issue.js';
 import { registerAssignIssueTool } from './tools/jira/assign-issue.js';
 import { registerCreatePageTool } from './tools/confluence/create-page.js';
 import { registerAddCommentTool } from './tools/confluence/add-comment.js';
+import { registerUpdatePageTool } from './tools/confluence/update-page.js';
 import { registerAllResources } from './resources/index.js';
 import { Logger } from './utils/logger.js';
 import { AtlassianConfig } from './utils/atlassian-api.js';
@@ -91,6 +92,7 @@ wrapToolHandler(registerAssignIssueTool);
 // Confluence tools
 wrapToolHandler(registerCreatePageTool);
 wrapToolHandler(registerAddCommentTool);
+wrapToolHandler(registerUpdatePageTool);
 
 // Register all resources
 logger.info('Registering MCP Resources...');
@@ -116,6 +118,7 @@ async function startServer() {
     // Confluence tools
     logger.info('- createPage (Confluence)');
     logger.info('- addComment (Confluence)');
+    logger.info('- updatePage (Confluence)');
     // Resources
     logger.info('Registered resources:');
     logger.info('- jira://projects');

@@ -35,7 +35,42 @@ export async function createPageHandler(
 ): Promise<CreatePageResult> {
   try {
     logger.info(`Creating new page "${params.title}" in space ${params.spaceKey}`);
-    
+
+    // Validate parentId nếu có
+    if (params.parentId) {
+      // Gọi API kiểm tra parentId có tồn tại và thuộc cùng space không
+      try {
+        const parentPage = await callConfluenceApi<any>(
+          config,
+          `/content/${params.parentId}?expand=space`,
+          'GET'
+        );
+        if (!parentPage || !parentPage.space || parentPage.space.key !== params.spaceKey) {
+          throw new ApiError(
+            ApiErrorType.VALIDATION_ERROR,
+            `Parent page not found or does not belong to space ${params.spaceKey}`,
+            400
+          );
+        }
+      } catch (err) {
+        logger.error(`Parent page validation failed:`, err);
+        throw new ApiError(
+          ApiErrorType.VALIDATION_ERROR,
+          `Parent page not found or does not belong to space ${params.spaceKey}`,
+          400
+        );
+      }
+    }
+
+    // Validate content storage format cơ bản (chỉ kiểm tra có tag XML hoặc <p>...)
+    if (!params.content.trim().startsWith('<')) {
+      throw new ApiError(
+        ApiErrorType.VALIDATION_ERROR,
+        'Content must be in Confluence storage format (XML-like HTML). See documentation for details.',
+        400
+      );
+    }
+
     // Prepare data for API call
     const requestData: any = {
       type: 'page',
@@ -50,7 +85,7 @@ export async function createPageHandler(
         }
       }
     };
-    
+
     // If parentId is provided, set this page as a child
     if (params.parentId) {
       requestData.ancestors = [
@@ -59,7 +94,7 @@ export async function createPageHandler(
         }
       ];
     }
-    
+
     // Call Confluence API to create the page
     const response = await callConfluenceApi<any>(
       config,
@@ -67,7 +102,7 @@ export async function createPageHandler(
       'POST',
       requestData
     );
-    
+
     // Build result for the Tool
     return {
       id: response.id,
@@ -81,11 +116,15 @@ export async function createPageHandler(
     if (error instanceof ApiError) {
       throw error;
     }
-    
     logger.error(`Error creating page in space ${params.spaceKey}:`, error);
+    // Cải thiện thông báo lỗi
+    let message = `Failed to create page: ${error instanceof Error ? error.message : String(error)}`;
+    if (message.includes('storage format')) {
+      message += ' (Tip: Use storage format. You can get a sample by calling GET /rest/api/content/{pageId}?expand=body.storage)';
+    }
     throw new ApiError(
       ApiErrorType.SERVER_ERROR,
-      `Failed to create page: ${error instanceof Error ? error.message : String(error)}`,
+      message,
       500
     );
   }

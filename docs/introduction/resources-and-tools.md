@@ -314,7 +314,36 @@ Tools are action endpoints that can create, update, or modify data in Atlassian.
   - Use simple HTML content for best results
   - Avoid specifying parentId for initial testing
 
-#### 2. Add Comment
+#### 2. Update Page
+
+- **Name**: `updatePage` (hoặc `editPage`)
+- **Description**: Cập nhật nội dung, tiêu đề, version, và labels cho một trang Confluence đã có
+- **Required Parameters**:
+  - `pageId`: ID của trang cần cập nhật
+  - `title`: Tiêu đề mới của trang (bắt buộc, do API Atlassian yêu cầu)
+  - `content`: Nội dung mới của trang (HTML hoặc storage format)
+  - `version`: Số version hiện tại của trang (bắt buộc, để tránh conflict)
+- **Optional Parameters**:
+  - `labels`: Danh sách label mới (thay thế toàn bộ labels hiện tại)
+- **Example Usage**:
+  ```json
+  {
+    "pageId": "123456",
+    "title": "Updated Meeting Notes",
+    "content": "<p>Updated discussion points...</p>",
+    "version": 3,
+    "labels": ["meeting", "2024"]
+  }
+  ```
+- **Notes**:
+  - Luôn lấy version hiện tại của trang trước khi cập nhật (dùng resource `confluence://pages/{pageId}`)
+  - Nếu không truyền đúng version, API sẽ báo lỗi conflict
+  - Trường labels là tuỳ chọn, nếu không truyền sẽ giữ nguyên labels cũ
+  - Nội dung nên dùng HTML hoặc storage format chuẩn của Confluence (có thể lấy từ resource page mẫu)
+  - Khi cập nhật labels, toàn bộ labels cũ sẽ bị thay thế
+  - Nếu chỉ muốn cập nhật một trường (ví dụ chỉ đổi title), vẫn phải truyền đủ các trường bắt buộc (title, content, version)
+
+#### 3. Add Comment
 
 - **Name**: `addComment`
 - **Description**: Add a comment to a Confluence page

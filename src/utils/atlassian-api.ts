@@ -294,6 +294,16 @@ export async function callConfluenceApi<T>(
         );
       }
     }
+    // Nếu là DELETE và không có content, chỉ trả về true
+    if (method === 'DELETE') {
+      const text = await response.text();
+      if (!text) return true as any;
+      try {
+        return JSON.parse(text) as T;
+      } catch {
+        return true as any;
+      }
+    }
     const responseData = await response.json();
     return responseData as T;
   } catch (error: any) {

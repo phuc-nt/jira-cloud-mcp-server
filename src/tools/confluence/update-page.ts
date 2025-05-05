@@ -114,13 +114,14 @@ export async function updatePageHandler(
     // Remove labels if provided
     if (params.removeLabels && params.removeLabels.length > 0) {
       for (const label of params.removeLabels) {
-        await callConfluenceApi(
+        const res = await callConfluenceApi(
           config,
           `/content/${params.pageId}/label?name=${encodeURIComponent(label)}`,
           'DELETE'
         );
+        // Không parse JSON khi DELETE label (response body rỗng)
+        // Chỉ cần kiểm tra status code trong callConfluenceApi
       }
-      
       labelsRemoved = params.removeLabels;
     }
     

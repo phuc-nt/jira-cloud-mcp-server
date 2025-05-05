@@ -25,7 +25,7 @@ async function getPage(config: AtlassianConfig, pageId: string): Promise<any> {
     if (!baseUrl.endsWith('/wiki')) {
       baseUrl = `${baseUrl}/wiki`;
     }
-    const url = `${baseUrl}/rest/api/content/${encodeURIComponent(pageId)}?expand=body.storage,version,space`;
+    const url = `${baseUrl}/rest/api/content/${encodeURIComponent(pageId)}?expand=body.storage,version,space,metadata.labels`;
     logger.debug(`Getting Confluence page details: ${url}`);
     const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
     if (!response.ok) {
@@ -193,7 +193,10 @@ export function registerPageResources(server: McpServer) {
           spaceKey: page.space?.key || '',
           version: page.version?.number || 1,
           body: page.body?.storage?.value || '',
-          url: `${config.baseUrl}/wiki/pages/${page.id}`
+          url: `${config.baseUrl}/wiki/pages/${page.id}`,
+          labels: Array.isArray(page.metadata?.labels?.results)
+            ? page.metadata.labels.results.map((l: any) => l.name)
+            : []
         };
         return createJsonResource(uri.href, {
           page: formattedPage,

@@ -298,10 +298,12 @@ export function registerIssueResources(server: McpServer) {
           };
         }
         // Get JQL and pagination params
-        const jql = params && params.jql ? (Array.isArray(params.jql) ? params.jql[0] : params.jql) : '';
+        let jql = params && params.jql ? (Array.isArray(params.jql) ? params.jql[0] : params.jql) : '';
         if (!jql) {
           throw new Error('Missing jql parameter in URI');
         }
+        // Đảm bảo JQL là raw text, nếu đã encode thì decode trước
+        try { jql = decodeURIComponent(jql); } catch {}
         const startAt = params && params.startAt ? parseInt(Array.isArray(params.startAt) ? params.startAt[0] : params.startAt, 10) : 0;
         const maxResults = params && params.maxResults ? parseInt(Array.isArray(params.maxResults) ? params.maxResults[0] : params.maxResults, 10) : 20;
         logger.info(`Searching Jira issues by JQL: jql="${jql}", startAt=${startAt}, maxResults=${maxResults}`);

@@ -68,11 +68,26 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 
 ### 3. Mở rộng resource cho Jira/Confluence (ưu tiên các API có ích cho developer cá nhân)
 - [x] **Done** - Sửa lỗi encode JQL có ký tự đặc biệt/dấu cách trong resource issues (tham khảo [test-report.md](../test-reports/cline-test-2025-04-20.md))
+- [x] **Done** - Cải thiện tool createPage: validate parentId, content storage format, thông báo lỗi rõ ràng
+- [x] **Done** - Tool updatePage: fix lỗi xóa label (DELETE trả về body rỗng, không parse JSON)
 - [ ] Cho phép truyền query params (filter, limit, sort) cho các resource dạng danh sách
 - [ ] Chuẩn hóa metadata trả về (ví dụ: tổng số, phân trang, link đến Atlassian UI)
 - [ ] Bổ sung schema (metadata) cho tất cả resource MCP để client (Cline) hiển thị đúng kiểu dữ liệu trả về. Tham khảo hướng dẫn chi tiết: [dev-guide/schema-metadata.md](../dev-guide/schema-metadata.md)
-- [x] **In Progress** - Cải thiện tool createPage để hỗ trợ content phức tạp và parentId (tham khảo [test-report.md](../test-reports/cline-test-2025-04-20.md))
 - [ ] Bổ sung validation chi tiết cho các tham số tool
+- [ ] **Jira: Filters** – Truy vấn danh sách filter, chi tiết filter, filter cá nhân
+- [ ] **Jira: Boards** – Truy vấn board, board config, board issues
+- [ ] **Jira: Dashboards** – Truy vấn dashboard, widget, dashboard cá nhân
+- [ ] **Jira: Sprints** – Truy vấn sprint, backlog, active sprint, sprint report
+- [ ] **Jira: Backlog Management** – Truy vấn backlog, thao tác với backlog (nếu có)
+- [ ] **Confluence: Labels, Attachments, Content Versions** – Quản lý tài liệu nâng cao
+
+### 3.1. Mở rộng tool cho Jira/Confluence
+- [ ] **Tool: Create/Update/Delete Filter** – Tạo, cập nhật, xóa filter cá nhân
+- [ ] **Tool: Board Actions** – Thêm/xóa issue vào board, cấu hình board
+- [ ] **Tool: Sprint Actions** – Tạo, bắt đầu, đóng sprint, di chuyển issue giữa các sprint
+- [ ] **Tool: Backlog Actions** – Thêm/xóa issue vào backlog, sắp xếp backlog
+- [ ] **Tool: Dashboard Actions** – Tạo, cập nhật dashboard, thêm widget
+- [ ] **Tool: Confluence Label/Attachment/Version** – Thêm/xóa label, upload/download attachment, xem lịch sử version
 
 ### 4. Cải thiện developer experience cho local dev
 - [ ] Viết script tự động build và tạo symlink cho Cline nhận diện nhanh (không cần docker nếu chưa cần)
@@ -135,4 +150,10 @@ Roadmap này tập trung vào các ưu tiên sau:
 4. **Knowledge Sharing**: Chia sẻ kiến thức và xây dựng cộng đồng xung quanh MCP
 5. **Incremental Growth**: Phát triển dần dần dựa trên phản hồi thực tế
 
-Các phase tiếp theo sẽ liên tục được cập nhật dựa trên tiến độ thực tế và phản hồi từ cộng đồng. 
+Các phase tiếp theo sẽ liên tục được cập nhật dựa trên tiến độ thực tế và phản hồi từ cộng đồng.
+
+## History
+
+### 2025-06-xx
+- Khi gọi API Atlassian (Confluence) với DELETE, response body thường rỗng. Nếu cố parse JSON sẽ lỗi "Unexpected end of JSON input". **Best practice:** chỉ parse JSON khi chắc chắn có body, hoặc kiểm tra text trước.
+- Khi trả về resource page, nên expand metadata.labels và trả về danh sách label cho client. 
