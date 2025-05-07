@@ -1,0 +1,216 @@
+/**
+ * Schema definitions for Jira resources
+ */
+import { standardMetadataSchema } from './common.js';
+
+/**
+ * Schema for Jira issue
+ */
+export const issueSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", description: "Issue ID" },
+    key: { type: "string", description: "Issue key (e.g., PROJ-123)" },
+    summary: { type: "string", description: "Issue title/summary" },
+    description: { type: "string", description: "Issue description", nullable: true },
+    status: { 
+      type: "object", 
+      properties: {
+        name: { type: "string", description: "Status name" },
+        id: { type: "string", description: "Status ID" }
+      }
+    },
+    assignee: {
+      type: "object",
+      properties: {
+        displayName: { type: "string", description: "Assignee's display name" },
+        accountId: { type: "string", description: "Assignee's account ID" }
+      },
+      nullable: true
+    },
+    reporter: {
+      type: "object",
+      properties: {
+        displayName: { type: "string", description: "Reporter's display name" },
+        accountId: { type: "string", description: "Reporter's account ID" }
+      },
+      nullable: true
+    },
+    priority: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Priority name" },
+        id: { type: "string", description: "Priority ID" }
+      },
+      nullable: true
+    },
+    created: { type: "string", format: "date-time", description: "Creation date" },
+    updated: { type: "string", format: "date-time", description: "Last update date" },
+    issueType: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Issue type name" },
+        id: { type: "string", description: "Issue type ID" }
+      }
+    },
+    projectKey: { type: "string", description: "Project key" },
+    projectName: { type: "string", description: "Project name" }
+  },
+  required: ["id", "key", "summary", "status", "issueType", "projectKey"]
+};
+
+/**
+ * Schema for Jira issues list
+ */
+export const issuesListSchema = {
+  type: "object",
+  properties: {
+    metadata: standardMetadataSchema,
+    issues: {
+      type: "array",
+      items: issueSchema
+    }
+  },
+  required: ["metadata", "issues"]
+};
+
+/**
+ * Schema for Jira transitions
+ */
+export const transitionSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", description: "Transition ID" },
+    name: { type: "string", description: "Transition name" },
+    to: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Status ID after transition" },
+        name: { type: "string", description: "Status name after transition" }
+      }
+    }
+  },
+  required: ["id", "name"]
+};
+
+/**
+ * Schema for Jira transitions list
+ */
+export const transitionsListSchema = {
+  type: "object",
+  properties: {
+    issueKey: { type: "string", description: "Issue key" },
+    transitions: {
+      type: "array",
+      items: transitionSchema
+    }
+  },
+  required: ["issueKey", "transitions"]
+};
+
+/**
+ * Schema for Jira project
+ */
+export const projectSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", description: "Project ID" },
+    key: { type: "string", description: "Project key" },
+    name: { type: "string", description: "Project name" },
+    projectTypeKey: { type: "string", description: "Project type" },
+    url: { type: "string", description: "Project URL" },
+    lead: {
+      type: "object",
+      properties: {
+        displayName: { type: "string", description: "Project lead's display name" },
+        accountId: { type: "string", description: "Project lead's account ID" }
+      },
+      nullable: true
+    }
+  },
+  required: ["id", "key", "name"]
+};
+
+/**
+ * Schema for Jira projects list
+ */
+export const projectsListSchema = {
+  type: "object",
+  properties: {
+    metadata: standardMetadataSchema,
+    projects: {
+      type: "array",
+      items: projectSchema
+    }
+  },
+  required: ["metadata", "projects"]
+};
+
+/**
+ * Schema for Jira user
+ */
+export const userSchema = {
+  type: "object",
+  properties: {
+    accountId: { type: "string", description: "User account ID" },
+    displayName: { type: "string", description: "User display name" },
+    emailAddress: { type: "string", description: "User email address", nullable: true },
+    active: { type: "boolean", description: "Whether the user is active" },
+    avatarUrl: { type: "string", description: "URL to user avatar" },
+    timeZone: { type: "string", description: "User timezone", nullable: true },
+    locale: { type: "string", description: "User locale", nullable: true }
+  },
+  required: ["accountId", "displayName", "active"]
+};
+
+/**
+ * Schema for Jira users list
+ */
+export const usersListSchema = {
+  type: "object",
+  properties: {
+    metadata: standardMetadataSchema,
+    users: {
+      type: "array",
+      items: userSchema
+    }
+  },
+  required: ["metadata", "users"]
+};
+
+/**
+ * Schema for Jira comment
+ */
+export const commentSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", description: "Comment ID" },
+    body: { type: "string", description: "Comment body" },
+    author: {
+      type: "object",
+      properties: {
+        displayName: { type: "string", description: "Author's display name" },
+        accountId: { type: "string", description: "Author's account ID" }
+      }
+    },
+    created: { type: "string", format: "date-time", description: "Creation date" },
+    updated: { type: "string", format: "date-time", description: "Last update date" }
+  },
+  required: ["id", "body", "author", "created"]
+};
+
+/**
+ * Schema for Jira comments list
+ */
+export const commentsListSchema = {
+  type: "object",
+  properties: {
+    metadata: standardMetadataSchema,
+    comments: {
+      type: "array",
+      items: commentSchema
+    },
+    issueKey: { type: "string", description: "Issue key" }
+  },
+  required: ["metadata", "comments", "issueKey"]
+}; 

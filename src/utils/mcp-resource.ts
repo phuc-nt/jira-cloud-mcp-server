@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { AtlassianConfig } from './atlassian-api.js';
 import { Logger } from './logger.js';
+import { StandardMetadata, createStandardMetadata } from '../schemas/common.js';
 
 const logger = Logger.getLogger('MCPResource');
 
@@ -23,30 +24,116 @@ export function createJsonResource(uri: string, data: any) {
 }
 
 /**
- * Create a resource response with text content
+ * Create a resource response with JSON content and schema
  * @param uri Resource URI
- * @param data Text data to return
- * @returns Standard MCP resource response object
+ * @param data JSON data to return
+ * @param schema JSON Schema for the resource
+ * @returns Standard MCP resource response object with schema
  */
-export function createTextResource(uri: string, data: string) {
+export function createJsonResourceWithSchema(uri: string, data: any, schema: any) {
   return {
     contents: [
       {
         uri: uri,
-        mimeType: "text/plain",
-        text: data
+        mimeType: "application/json",
+        text: JSON.stringify(data),
+        schema: schema
       }
     ]
   };
 }
 
 /**
- * Define type for resource handler function
+ * Create a standardized resource response with metadata and schema
+ * 
+ * @param uri Resource URI
+ * @param data The data object/array to return
+ * @param dataKey The key name for the data in the response (e.g., "issues", "projects", "spaces")
+ * @param schema The JSON Schema for the resource
+ * @param totalCount Total number of records
+ * @param limit Maximum number of records returned
+ * @param offset Starting position
+ * @param uiUrl Optional URL to Atlassian UI for this resource
+ * @returns Standardized MCP resource response with metadata and schema
  */
+export function createStandardResource(
+  uri: string,
+  data: any[],
+  dataKey: string,
+  schema: any,
+  totalCount: number,
+  limit: number,
+  offset: number,
+  uiUrl?: string
+) {
+  // Create standard metadata
+  const metadata = createStandardMetadata(totalCount, limit, offset, uri, uiUrl);
+  
+  // Create response data object
+  const responseData: Record<string, any> = {
+    metadata: metadata
+  };
+  
+  // Add the data with the specified key
+  responseData[dataKey] = data;
+  
+  // Return formatted resource with schema
+  return createJsonResourceWithSchema(uri, responseData, schema);
+}
+
+/**
+ * Extract paging parameters from resource URI or request
+ * 
+ * @param params Parameters from URI or request
+ * @param defaultLimit Default limit if not specified
+ * @param defaultOffset Default offset if not specified
+ * @returns Object with limit and offset
+ */
+export function extractPagingParams(
+  params: any,
+  defaultLimit: number = 20,
+  defaultOffset: number = 0
+): { limit: number, offset: number } {
+  let limit = defaultLimit;
+  let offset = defaultOffset;
+  
+  if (params) {
+    // Extract limit
+    if (params.limit) {
+      const limitParam = Array.isArray(params.limit) ? params.limit[0] : params.limit;
+      const parsedLimit = parseInt(limitParam, 10);
+      if (!isNaN(parsedLimit) && parsedLimit > 0) {
+        limit = parsedLimit;
+      }
+    }
+    
+    // Extract offset
+    if (params.offset) {
+      const offsetParam = Array.isArray(params.offset) ? params.offset[0] : params.offset;
+      const parsedOffset = parseInt(offsetParam, 10);
+      if (!isNaN(parsedOffset) && parsedOffset >= 0) {
+        offset = parsedOffset;
+      }
+    }
+  }
+  
+  return { limit, offset };
+}
+
+// Type definition for resource handler function
 export type ResourceHandlerFunction = (
-  params: any, 
-  context: { config: AtlassianConfig; uri: string }
+  params: any,
+  context: { config: AtlassianConfig, uri: string }
 ) => Promise<any>;
+
+// Type definition for MCP resource callback parameters
+interface ResourceExtra {
+  context?: {
+    atlassianConfig?: AtlassianConfig;
+    [key: string]: any;
+  };
+  [key: string]: any;
+}
 
 // Atlassian config from environment variables
 const getAtlassianConfigFromEnv = (): AtlassianConfig => {
@@ -88,40 +175,28 @@ export function registerResource(
   // Register resource with MCP Server according to API definition
   server.resource(resourceName, resourceUri, 
     // Callback function for ReadResourceCallback
-    async (uri, extra) => {
+    async (uri: string | URL, params: Record<string, any>, extra: ResourceExtra) => {
       try {
-        logger.info(`Handling resource request for: ${uri.href}`);
-        
-        // Get Atlassian config from extra.context if available, otherwise from environment variables
+        // Get config from context or env
         let config: AtlassianConfig;
-        try {
-          // Safe access to context
-          if (extra && typeof extra === 'object' && 'context' in extra && extra.context) {
-            config = (extra.context as any).atlassianConfig as AtlassianConfig;
-            
-            // If atlassianConfig not found in context, create from env vars
-            if (!config) {
-              logger.warn(`atlassianConfig not found in context for resource: ${uri.href}, using env vars instead`);
-              config = getAtlassianConfigFromEnv();
-            }
-          } else {
-            // If no context, create from env vars
-            logger.warn(`context not found in extra for resource: ${uri.href}, using env vars instead`);
-            config = getAtlassianConfigFromEnv();
-          }
-        } catch (err) {
-          // Fallback: create from env vars
-          logger.warn(`Error accessing context for resource: ${uri.href}, using env vars instead`);
-          config = getAtlassianConfigFromEnv();
+        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && extra.context.atlassianConfig) {
+          config = extra.context.atlassianConfig;
+        } else {
+          // fallback to env
+          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
+          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
+          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
+          config = {
+            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
+            email: ATLASSIAN_USER_EMAIL,
+            apiToken: ATLASSIAN_API_TOKEN
+          };
         }
         
-        // Call handler function with params and context
-        const result = await handler({}, { config, uri: uri.href });
-        logger.debug(`Resource result for ${uri.href}:`, result);
-        
-        return result;
+        // Call handler with params, config and uri
+        return await handler(params, { config, uri: typeof uri === 'string' ? uri : uri.href });
       } catch (error) {
-        logger.error(`Error in resource handler for ${uri.href}:`, error);
+        logger.error(`Error handling resource request for ${resourceName}:`, error);
         throw error;
       }
     }

@@ -2,7 +2,8 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { Logger } from '../../utils/logger.js';
 import { AtlassianConfig } from '../../utils/atlassian-api.js';
 import fetch from 'cross-fetch';
-import { createJsonResource } from '../../utils/mcp-resource.js';
+import { createJsonResource, createStandardResource, extractPagingParams, registerResource } from '../../utils/mcp-resource.js';
+import { issueSchema, issuesListSchema, transitionsListSchema, commentsListSchema } from '../../schemas/jira.js';
 
 const logger = Logger.getLogger('JiraResource:Issues');
 
@@ -42,7 +43,7 @@ async function getIssue(config: AtlassianConfig, issueKey: string): Promise<any>
 /**
  * Helper function to get a list of issues from Jira (supports pagination)
  */
-async function getIssues(config: AtlassianConfig, startAt = 0, maxResults = 20): Promise<any> {
+async function getIssues(config: AtlassianConfig, startAt = 0, maxResults = 20, jql = ''): Promise<any> {
   try {
     const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
     const headers = {
@@ -55,7 +56,13 @@ async function getIssues(config: AtlassianConfig, startAt = 0, maxResults = 20):
     if (!baseUrl.startsWith('https://')) {
       baseUrl = `https://${baseUrl}`;
     }
-    const url = `${baseUrl}/rest/api/2/search?startAt=${startAt}&maxResults=${maxResults}`;
+    
+    // Build URL with optional JQL
+    let url = `${baseUrl}/rest/api/2/search?startAt=${startAt}&maxResults=${maxResults}`;
+    if (jql && jql.trim()) {
+      url += `&jql=${encodeURIComponent(jql.trim())}`;
+    }
+    
     logger.debug(`Getting Jira issues: ${url}`);
     const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
     if (!response.ok) {
@@ -141,7 +148,7 @@ async function getIssueTransitions(config: AtlassianConfig, issueKey: string): P
 /**
  * Helper function to get a list of comments for an issue from Jira
  */
-async function getIssueComments(config: AtlassianConfig, issueKey: string): Promise<any[]> {
+async function getIssueComments(config: AtlassianConfig, issueKey: string, startAt = 0, maxResults = 20): Promise<any> {
   try {
     const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
     const headers = {
@@ -154,7 +161,7 @@ async function getIssueComments(config: AtlassianConfig, issueKey: string): Prom
     if (!baseUrl.startsWith('https://')) {
       baseUrl = `https://${baseUrl}`;
     }
-    const url = `${baseUrl}/rest/api/2/issue/${issueKey}/comment`;
+    const url = `${baseUrl}/rest/api/2/issue/${issueKey}/comment?startAt=${startAt}&maxResults=${maxResults}`;
     logger.debug(`Getting Jira issue comments: ${url}`);
     const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
     if (!response.ok) {
@@ -164,11 +171,64 @@ async function getIssueComments(config: AtlassianConfig, issueKey: string): Prom
       throw new Error(`Jira API error: ${responseText}`);
     }
     const data = await response.json();
-    return data.comments || [];
+    return data;
   } catch (error) {
     logger.error(`Error getting Jira issue comments:`, error);
     throw error;
   }
+}
+
+/**
+ * Format Jira issue data to standardized format
+ */
+function formatIssueData(issue: any, baseUrl: string): any {
+  return {
+    id: issue.id,
+    key: issue.key,
+    summary: issue.fields?.summary || '',
+    description: issue.fields?.description || null,
+    status: {
+      name: issue.fields?.status?.name || 'Unknown',
+      id: issue.fields?.status?.id || '0'
+    },
+    assignee: issue.fields?.assignee ? {
+      displayName: issue.fields.assignee.displayName,
+      accountId: issue.fields.assignee.accountId
+    } : null,
+    reporter: issue.fields?.reporter ? {
+      displayName: issue.fields.reporter.displayName,
+      accountId: issue.fields.reporter.accountId
+    } : null,
+    priority: issue.fields?.priority ? {
+      name: issue.fields.priority.name,
+      id: issue.fields.priority.id
+    } : null,
+    created: issue.fields?.created || null,
+    updated: issue.fields?.updated || null,
+    issueType: {
+      name: issue.fields?.issuetype?.name || 'Unknown',
+      id: issue.fields?.issuetype?.id || '0'
+    },
+    projectKey: issue.fields?.project?.key || '',
+    projectName: issue.fields?.project?.name || '',
+    url: `${baseUrl}/browse/${issue.key}`
+  };
+}
+
+/**
+ * Format Jira comment data to standardized format
+ */
+function formatCommentData(comment: any): any {
+  return {
+    id: comment.id,
+    body: comment.body || '',
+    author: comment.author ? {
+      displayName: comment.author.displayName,
+      accountId: comment.author.accountId
+    } : null,
+    created: comment.created || null,
+    updated: comment.updated || null
+  };
 }
 
 /**
@@ -178,49 +238,86 @@ async function getIssueComments(config: AtlassianConfig, issueKey: string): Prom
 export function registerIssueResources(server: McpServer) {
   logger.info('Registering Jira issue resources...');
 
+  // Resource: Issues list (with pagination and JQL support)
+  registerResource(
+    server,
+    'jira-issues-list',
+    new ResourceTemplate('jira://issues', { list: undefined }),
+    'List of Jira issues with pagination and JQL support',
+    async (params, { config, uri }) => {
+      try {
+        // Extract pagination parameters
+        const { limit, offset } = extractPagingParams(params);
+        
+        // Extract JQL if provided
+        const jql = params && params.jql 
+          ? (Array.isArray(params.jql) ? params.jql[0] : params.jql)
+          : '';
+          
+        logger.info(`Getting list of Jira issues with limit=${limit}, offset=${offset}, jql=${jql || 'none'}`);
+        
+        // Get issues with pagination from Jira API
+        const issuesData = await getIssues(config, offset, limit, jql);
+        
+        // Format each issue to standardized format
+        const formattedIssues = (issuesData.issues || []).map((issue: any) => 
+          formatIssueData(issue, config.baseUrl)
+        );
+        
+        // Calculate total count
+        const totalCount = issuesData.total || 0;
+        
+        // UI URL for Jira issues (filter view if JQL provided)
+        const uiUrl = jql 
+          ? `${config.baseUrl}/issues/?jql=${encodeURIComponent(jql)}`
+          : `${config.baseUrl}/issues/`;
+          
+        // Return standardized resource with metadata and schema
+        return createStandardResource(
+          uri,
+          formattedIssues,
+          'issues',
+          issuesListSchema,
+          totalCount,
+          limit,
+          offset,
+          uiUrl
+        );
+      } catch (error) {
+        logger.error('Error getting Jira issues:', error);
+        throw error;
+      }
+    }
+  );
+
   // Resource: Issue details
-  server.resource(
+  registerResource(
+    server,
     'jira-issue-details',
     new ResourceTemplate('jira://issues/{issueKey}', { list: undefined }),
-    async (uri, { issueKey }, extra) => {
+    'Details of a specific Jira issue',
+    async (params, { config, uri }) => {
       let normalizedIssueKey = '';
       try {
-        // Get config from context or env (similar to other resources)
-        let config: AtlassianConfig;
-        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
-          config = (extra.context as any).atlassianConfig as AtlassianConfig;
-        } else {
-          // fallback to env
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
-        }
-        if (!issueKey) {
+        if (!params || !params.issueKey) {
           throw new Error('Missing issueKey in URI');
         }
-        // Ensure issueKey is a string
-        normalizedIssueKey = Array.isArray(issueKey) ? issueKey[0] : issueKey;
+        normalizedIssueKey = Array.isArray(params.issueKey) ? params.issueKey[0] : params.issueKey;
         logger.info(`Getting details for Jira issue: ${normalizedIssueKey}`);
         const issue = await getIssue(config, normalizedIssueKey);
-        // Format returned data
-        const formattedIssue = {
-          key: issue.key,
-          summary: issue.fields.summary,
-          status: issue.fields.status?.name || 'Unknown',
-          assignee: issue.fields.assignee?.displayName || 'Unassigned',
-          reporter: issue.fields.reporter?.displayName || 'Unknown',
-          description: issue.fields.description || '',
-          url: `${config.baseUrl}/browse/${issue.key}`
-        };
-        return createJsonResource(uri.href, {
-          issue: formattedIssue,
-          message: `Details of issue ${normalizedIssueKey}`
-        });
+        // Format issue data
+        const formattedIssue = formatIssueData(issue, config.baseUrl);
+        // Chuẩn hóa metadata/schema
+        return createStandardResource(
+          uri,
+          [formattedIssue],
+          'issue',
+          issueSchema,
+          1,
+          1,
+          0,
+          `${config.baseUrl}/browse/${normalizedIssueKey}`
+        );
       } catch (error) {
         logger.error(`Error getting Jira issue ${normalizedIssueKey}:`, error);
         throw error;
@@ -228,198 +325,75 @@ export function registerIssueResources(server: McpServer) {
     }
   );
 
-  // Resource: List all issues (supports pagination)
-  server.resource(
-    'jira-issues-list',
-    new ResourceTemplate('jira://issues', { list: undefined }),
-    async (uri, params, extra) => {
-      try {
-        // Get config from context or env
-        let config: AtlassianConfig;
-        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
-          config = (extra.context as any).atlassianConfig as AtlassianConfig;
-        } else {
-          // fallback to env
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
-        }
-        // Get pagination params if any
-        const startAt = params && params.startAt ? parseInt(Array.isArray(params.startAt) ? params.startAt[0] : params.startAt, 10) : 0;
-        const maxResults = params && params.maxResults ? parseInt(Array.isArray(params.maxResults) ? params.maxResults[0] : params.maxResults, 10) : 20;
-        logger.info(`Getting Jira issues list: startAt=${startAt}, maxResults=${maxResults}`);
-        const data = await getIssues(config, startAt, maxResults);
-        // Format issues list
-        const formattedIssues = (data.issues || []).map((issue: any) => ({
-          key: issue.key,
-          summary: issue.fields.summary,
-          status: issue.fields.status?.name || 'Unknown',
-          assignee: issue.fields.assignee?.displayName || 'Unassigned',
-          url: `${config.baseUrl}/browse/${issue.key}`
-        }));
-        return createJsonResource(uri.href, {
-          issues: formattedIssues,
-          total: data.total,
-          startAt: data.startAt,
-          maxResults: data.maxResults,
-          message: `Found ${data.total} issues, displaying from ${data.startAt + 1} to ${data.startAt + formattedIssues.length}`
-        });
-      } catch (error) {
-        logger.error(`Error getting Jira issues list:`, error);
-        throw error;
-      }
-    }
-  );
-
-  // Resource: Search issues by JQL (supports pagination)
-  server.resource(
-    'jira-issues-search-jql',
-    new ResourceTemplate('jira://issues?jql={jql}', { list: undefined }),
-    async (uri, params, extra) => {
-      try {
-        // Get config from context or env
-        let config: AtlassianConfig;
-        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
-          config = (extra.context as any).atlassianConfig as AtlassianConfig;
-        } else {
-          // fallback to env
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
-        }
-        // Get JQL and pagination params
-        let jql = params && params.jql ? (Array.isArray(params.jql) ? params.jql[0] : params.jql) : '';
-        if (!jql) {
-          throw new Error('Missing jql parameter in URI');
-        }
-        // Đảm bảo JQL là raw text, nếu đã encode thì decode trước
-        try { jql = decodeURIComponent(jql); } catch {}
-        const startAt = params && params.startAt ? parseInt(Array.isArray(params.startAt) ? params.startAt[0] : params.startAt, 10) : 0;
-        const maxResults = params && params.maxResults ? parseInt(Array.isArray(params.maxResults) ? params.maxResults[0] : params.maxResults, 10) : 20;
-        logger.info(`Searching Jira issues by JQL: jql="${jql}", startAt=${startAt}, maxResults=${maxResults}`);
-        const data = await searchIssuesByJql(config, jql, startAt, maxResults);
-        // Format issues list
-        const formattedIssues = (data.issues || []).map((issue: any) => ({
-          key: issue.key,
-          summary: issue.fields.summary,
-          status: issue.fields.status?.name || 'Unknown',
-          assignee: issue.fields.assignee?.displayName || 'Unassigned',
-          url: `${config.baseUrl}/browse/${issue.key}`
-        }));
-        return createJsonResource(uri.href, {
-          issues: formattedIssues,
-          total: data.total,
-          startAt: data.startAt,
-          maxResults: data.maxResults,
-          message: `Found ${data.total} issues by JQL, displaying from ${data.startAt + 1} to ${data.startAt + formattedIssues.length}`
-        });
-      } catch (error) {
-        logger.error(`Error searching Jira issues by JQL:`, error);
-        throw error;
-      }
-    }
-  );
-
-  // Resource: List transitions of an issue
-  server.resource(
+  // Resource: Issue transitions
+  registerResource(
+    server,
     'jira-issue-transitions',
     new ResourceTemplate('jira://issues/{issueKey}/transitions', { list: undefined }),
-    async (uri, { issueKey }, extra) => {
+    'Available transitions for a Jira issue',
+    async (params, { config, uri }) => {
       let normalizedIssueKey = '';
       try {
-        // Get config from context or env
-        let config: AtlassianConfig;
-        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
-          config = (extra.context as any).atlassianConfig as AtlassianConfig;
-        } else {
-          // fallback to env
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
-        }
-        if (!issueKey) {
+        if (!params || !params.issueKey) {
           throw new Error('Missing issueKey in URI');
         }
-        normalizedIssueKey = Array.isArray(issueKey) ? issueKey[0] : issueKey;
+        normalizedIssueKey = Array.isArray(params.issueKey) ? params.issueKey[0] : params.issueKey;
         logger.info(`Getting transitions for Jira issue: ${normalizedIssueKey}`);
         const transitions = await getIssueTransitions(config, normalizedIssueKey);
-        // Format transitions list
-        const formattedTransitions = transitions.map((t: any) => ({
-          id: t.id,
-          name: t.name,
-          to: t.to?.name || '',
-          description: t.to?.description || ''
-        }));
-        return createJsonResource(uri.href, {
-          transitions: formattedTransitions,
-          count: formattedTransitions.length,
-          message: `There are ${formattedTransitions.length} possible transitions for issue ${normalizedIssueKey}`
-        });
+        // Chuẩn hóa metadata/schema
+        return createStandardResource(
+          uri,
+          transitions,
+          'transitions',
+          transitionsListSchema,
+          transitions.length,
+          transitions.length,
+          0,
+          `${config.baseUrl}/browse/${normalizedIssueKey}`
+        );
       } catch (error) {
-        logger.error(`Error getting Jira issue transitions for ${normalizedIssueKey}:`, error);
+        logger.error(`Error getting Jira issue transitions ${normalizedIssueKey}:`, error);
         throw error;
       }
     }
   );
 
-  // Resource: List comments of an issue
-  server.resource(
+  // Resource: Issue comments
+  registerResource(
+    server,
     'jira-issue-comments',
     new ResourceTemplate('jira://issues/{issueKey}/comments', { list: undefined }),
-    async (uri, { issueKey }, extra) => {
+    'Comments on a Jira issue with pagination',
+    async (params, { config, uri }) => {
       let normalizedIssueKey = '';
       try {
-        // Get config from context or env
-        let config: AtlassianConfig;
-        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
-          config = (extra.context as any).atlassianConfig as AtlassianConfig;
-        } else {
-          // fallback to env
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
-        }
-        if (!issueKey) {
+        if (!params || !params.issueKey) {
           throw new Error('Missing issueKey in URI');
         }
-        normalizedIssueKey = Array.isArray(issueKey) ? issueKey[0] : issueKey;
-        logger.info(`Getting comments for Jira issue: ${normalizedIssueKey}`);
-        const comments = await getIssueComments(config, normalizedIssueKey);
-        // Format comments list
-        const formattedComments = comments.map((c: any) => ({
-          id: c.id,
-          author: c.author?.displayName || '',
-          body: c.body,
-          created: c.created,
-          updated: c.updated
-        }));
-        return createJsonResource(uri.href, {
-          comments: formattedComments,
-          count: formattedComments.length,
-          message: `There are ${formattedComments.length} comments for issue ${normalizedIssueKey}`
-        });
+        // Extract pagination parameters
+        const { limit, offset } = extractPagingParams(params);
+        normalizedIssueKey = Array.isArray(params.issueKey) ? params.issueKey[0] : params.issueKey;
+        logger.info(`Getting comments for Jira issue ${normalizedIssueKey} with limit=${limit}, offset=${offset}`);
+        const commentsData = await getIssueComments(config, normalizedIssueKey, offset, limit);
+        // Format comments to standardized format
+        const formattedComments = (commentsData.comments || []).map(formatCommentData);
+        // Calculate total count
+        const totalCount = commentsData.total || 0;
+        // UI URL for issue comments
+        const uiUrl = `${config.baseUrl}/browse/${normalizedIssueKey}?focusedCommentId=`;
+        // Chuẩn hóa metadata/schema
+        return createStandardResource(
+          uri,
+          formattedComments,
+          'comments',
+          commentsListSchema,
+          totalCount,
+          limit,
+          offset,
+          uiUrl
+        );
       } catch (error) {
-        logger.error(`Error getting Jira issue comments for ${normalizedIssueKey}:`, error);
+        logger.error(`Error getting Jira issue comments ${normalizedIssueKey}:`, error);
         throw error;
       }
     }

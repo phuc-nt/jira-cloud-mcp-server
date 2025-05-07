@@ -2,7 +2,8 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { Logger } from '../../utils/logger.js';
 import { AtlassianConfig } from '../../utils/atlassian-api.js';
 import fetch from 'cross-fetch';
-import { createJsonResource } from '../../utils/mcp-resource.js';
+import { createJsonResource, createStandardResource } from '../../utils/mcp-resource.js';
+import { pagesListSchema, pageSchema, commentsListSchema } from '../../schemas/confluence.js';
 
 const logger = Logger.getLogger('ConfluenceResource:Pages');
 
@@ -198,10 +199,17 @@ export function registerPageResources(server: McpServer) {
             ? page.metadata.labels.results.map((l: any) => l.name)
             : []
         };
-        return createJsonResource(uri.href, {
-          page: formattedPage,
-          message: `Page details for ${normalizedPageId}`
-        });
+        // Chuẩn hóa metadata/schema
+        return createStandardResource(
+          uri.href,
+          [formattedPage],
+          'page',
+          pageSchema,
+          1,
+          1,
+          0,
+          `${config.baseUrl}/wiki/pages/${page.id}`
+        );
       } catch (error) {
         logger.error(`Error getting Confluence page details for ${normalizedPageId}:`, error);
         throw error;
@@ -245,13 +253,17 @@ export function registerPageResources(server: McpServer) {
           status: page.status,
           url: `${config.baseUrl}/wiki/pages/${page.id}`
         }));
-        return createJsonResource(uri.href, {
-          pages: formattedPages,
-          total: data.size,
-          start,
+        // Return standardized resource with metadata and schema
+        return createStandardResource(
+          uri.href,
+          formattedPages,
+          'pages',
+          pagesListSchema,
+          data.size,
           limit,
-          message: `Found ${data.size} page(s) by CQL, showing from ${start + 1} to ${start + formattedPages.length}`
-        });
+          start,
+          `${config.baseUrl}/wiki/spaces/${data.space.key}/pages`
+        );
       } catch (error) {
         logger.error(`Error searching Confluence pages by CQL:`, error);
         throw error;
@@ -294,11 +306,21 @@ export function registerPageResources(server: McpServer) {
           status: child.status,
           url: `${config.baseUrl}/wiki/pages/${child.id}`
         }));
-        return createJsonResource(uri.href, {
-          children: formattedChildren,
-          count: formattedChildren.length,
-          message: `${formattedChildren.length} child page(s) for page ${normalizedPageId}`
-        });
+        // Chuẩn hóa metadata/schema (array of pageSchema)
+        const childrenSchema = {
+          type: "array",
+          items: pageSchema
+        };
+        return createStandardResource(
+          uri.href,
+          formattedChildren,
+          'children',
+          childrenSchema,
+          formattedChildren.length,
+          formattedChildren.length,
+          0,
+          `${config.baseUrl}/wiki/pages/${normalizedPageId}`
+        );
       } catch (error) {
         logger.error(`Error getting Confluence page children for ${normalizedPageId}:`, error);
         throw error;
@@ -342,11 +364,17 @@ export function registerPageResources(server: McpServer) {
           created: comment.created,
           updated: comment.version?.when || ''
         }));
-        return createJsonResource(uri.href, {
-          comments: formattedComments,
-          count: formattedComments.length,
-          message: `${formattedComments.length} comment(s) for page ${normalizedPageId}`
-        });
+        // Chuẩn hóa metadata/schema
+        return createStandardResource(
+          uri.href,
+          formattedComments,
+          'comments',
+          commentsListSchema,
+          formattedComments.length,
+          formattedComments.length,
+          0,
+          `${config.baseUrl}/wiki/pages/${normalizedPageId}`
+        );
       } catch (error) {
         logger.error(`Error getting Confluence page comments for ${normalizedPageId}:`, error);
         throw error;

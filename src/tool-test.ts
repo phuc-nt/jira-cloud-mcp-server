@@ -40,13 +40,56 @@ const atlassianConfig: AtlassianConfig = {
 
 logger.info('Initializing MCP Atlassian Server...');
 
+// Keep track of all registered resources with name and pattern
+const registeredResources: Array<{ name: string; pattern: string }> = [];
+
 // Initialize MCP server with capabilities
 const server = new McpServer({
-  name: process.env.MCP_SERVER_NAME || 'mcp-atlassian-integration',
+  name: process.env.MCP_SERVER_NAME || 'phuc-nt/mcp-atlassian-server',
   version: process.env.MCP_SERVER_VERSION || '1.0.0',
   capabilities: {
     resources: {},  // Declare support for resources capability
     tools: {}
+  }
+});
+
+// Create a proxy to track registered resources
+const serverProxy = new Proxy(server, {
+  get(target, prop) {
+    if (prop === 'resource') {
+      // Override the resource method to track registrations
+      return (name: string, pattern: any, handler: any) => {
+        // Debug log to see exactly what we're receiving
+        logger.debug(`Registering resource with pattern type: ${typeof pattern}, value: ${JSON.stringify(pattern)}`);
+        
+        try {
+          // Extract pattern based on type
+          let patternStr = 'unknown-pattern';
+          
+          if (typeof pattern === 'string') {
+            patternStr = pattern;
+          } else if (pattern && typeof pattern === 'object') {
+            if ('pattern' in pattern) {
+              patternStr = pattern.pattern;
+              logger.debug(`Found pattern in object: ${patternStr}`);
+            } else {
+              // Log all properties to help identify the structure
+              logger.debug(`Object properties: ${Object.keys(pattern).join(', ')}`);
+            }
+          }
+          
+          // Store both name and pattern
+          registeredResources.push({ name, pattern: patternStr });
+          
+          // Call the original method
+          return target.resource(name, pattern, handler);
+        } catch (error) {
+          logger.error(`Error registering resource: ${error}`);
+          return target.resource(name, pattern, handler);
+        }
+      };
+    }
+    return Reflect.get(target, prop);
   }
 });
 
@@ -96,7 +139,7 @@ wrapToolHandler(registerUpdatePageTool);
 
 // Register all resources
 logger.info('Registering MCP Resources...');
-registerAllResources(server);
+registerAllResources(serverProxy);
 
 // Start the server based on configured transport type
 async function startServer() {
@@ -106,7 +149,7 @@ async function startServer() {
     await server.connect(stdioTransport);
     logger.info('MCP Atlassian Server started with STDIO transport');
     // Print startup info
-    logger.info(`MCP Server Name: ${process.env.MCP_SERVER_NAME || 'mcp-atlassian-integration'}`);
+    logger.info(`MCP Server Name: ${process.env.MCP_SERVER_NAME || 'phuc-nt/mcp-atlassian-server'}`);
     logger.info(`MCP Server Version: ${process.env.MCP_SERVER_VERSION || '1.0.0'}`);
     logger.info(`Connected to Atlassian site: ${ATLASSIAN_SITE_NAME}`);
     logger.info('Registered tools:');
@@ -119,10 +162,22 @@ async function startServer() {
     logger.info('- createPage (Confluence)');
     logger.info('- addComment (Confluence)');
     logger.info('- updatePage (Confluence)');
-    // Resources
+    // Resources - dynamically list all registered resources
     logger.info('Registered resources:');
-    logger.info('- jira://projects');
-    logger.info('- jira://projects/{projectKey}');
+    
+    if (registeredResources.length === 0) {
+      logger.info('No resources registered');
+    } else {
+      // Group by name to improve readability
+      const uniquePatterns = new Set<string>();
+      registeredResources.forEach(res => {
+        uniquePatterns.add(res.pattern);
+      });
+      
+      Array.from(uniquePatterns).sort().forEach(pattern => {
+        logger.info(`- ${pattern}`);
+      });
+    }
   } catch (error) {
     logger.error('Failed to start MCP Server:', error);
     process.exit(1);

@@ -22,7 +22,7 @@
   "author": "Phuc Nguyen",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.10.2",
+    "@modelcontextprotocol/sdk": "^1.11.0",
     "axios": "^1.6.2",
     "axios-retry": "^4.5.0",
     "cross-fetch": "^4.1.0",

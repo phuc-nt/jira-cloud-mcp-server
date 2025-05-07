@@ -1,9 +1,10 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { registerResource, createJsonResource } from '../../utils/mcp-resource.js';
+import { registerResource, createJsonResource, createStandardResource } from '../../utils/mcp-resource.js';
 import { AtlassianConfig } from '../../utils/atlassian-api.js';
 import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import fetch from 'cross-fetch';
+import { projectsListSchema, projectSchema } from '../../schemas/jira.js';
 
 const logger = Logger.getLogger('JiraResource:Projects');
 
@@ -160,11 +161,9 @@ export function registerProjectResources(server: McpServer) {
     'List of all projects in Jira',
     async (params, { config, uri }) => {
       logger.info('Getting list of Jira projects');
-      
       try {
         // Get the list of projects from Jira API
         const projects = await getProjects(config);
-        
         // Convert response to a more friendly format
         const formattedProjects = projects.map((project: any) => ({
           id: project.id,
@@ -174,13 +173,17 @@ export function registerProjectResources(server: McpServer) {
           url: `${config.baseUrl}/browse/${project.key}`,
           lead: project.lead?.displayName || 'Unknown'
         }));
-        
-        // Return in MCP resource format
-        return createJsonResource(uri, {
-          projects: formattedProjects,
-          count: formattedProjects.length,
-          message: `Found ${formattedProjects.length} projects`
-        });
+        // Return standardized resource with metadata and schema
+        return createStandardResource(
+          uri,
+          formattedProjects,
+          'projects',
+          projectsListSchema,
+          formattedProjects.length,
+          formattedProjects.length,
+          0,
+          `${config.baseUrl}/jira/projects`
+        );
       } catch (error) {
         logger.error('Error getting Jira projects:', error);
         throw error;
@@ -227,11 +230,17 @@ export function registerProjectResources(server: McpServer) {
           projectCategory: project.projectCategory?.name || 'Uncategorized',
           projectType: project.projectTypeKey
         };
-        // Return in MCP resource format
-        return createJsonResource(uri, {
-          project: formattedProject,
-          message: `Details of project ${projectKey}`
-        });
+        // Chuẩn hóa metadata/schema
+        return createStandardResource(
+          uri,
+          [formattedProject],
+          'project',
+          projectSchema,
+          1,
+          1,
+          0,
+          `${config.baseUrl}/browse/${project.key}`
+        );
       } catch (error) {
         logger.error(`Error getting Jira project ${projectKey}:`, error);
         throw error;
@@ -288,12 +297,29 @@ export function registerProjectResources(server: McpServer) {
             url: urlStr
           };
         });
-        return createJsonResource(uri, {
+        // Chuẩn hóa metadata/schema (dùng array of role object, schema tự tạo inline)
+        const rolesListSchema = {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              roleName: { type: "string" },
+              roleId: { type: "string" },
+              url: { type: "string" }
+            },
+            required: ["roleName", "roleId", "url"]
+          }
+        };
+        return createStandardResource(
+          uri,
           roles,
-          count: roles.length,
-          projectKey,
-          message: `There are ${roles.length} roles in project ${projectKey}`
-        });
+          'roles',
+          rolesListSchema,
+          roles.length,
+          roles.length,
+          0,
+          `${config.baseUrl}/browse/${projectKey}/project-roles`
+        );
       } catch (error) {
         logger.error(`Error getting roles for Jira project ${projectKey}:`, error);
         throw error;

@@ -2,7 +2,8 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { Logger } from '../../utils/logger.js';
 import { AtlassianConfig } from '../../utils/atlassian-api.js';
 import fetch from 'cross-fetch';
-import { createJsonResource } from '../../utils/mcp-resource.js';
+import { createJsonResource, createStandardResource } from '../../utils/mcp-resource.js';
+import { spacesListSchema, spaceSchema } from '../../schemas/confluence.js';
 
 const logger = Logger.getLogger('ConfluenceResource:Spaces');
 
@@ -156,13 +157,17 @@ export function registerSpaceResources(server: McpServer) {
           status: space.status,
           url: `${config.baseUrl}/wiki/spaces/${space.key}`
         }));
-        return createJsonResource(uri.href, {
-          spaces: formattedSpaces,
-          total: data.size,
-          start,
+        // Return standardized resource with metadata and schema
+        return createStandardResource(
+          uri.href,
+          formattedSpaces,
+          'spaces',
+          spacesListSchema,
+          data.size,
           limit,
-          message: `Found ${data.size} space(s), showing from ${start + 1} to ${start + formattedSpaces.length}`
-        });
+          start,
+          `${config.baseUrl}/wiki/spaces`
+        );
       } catch (error) {
         logger.error(`Error getting Confluence spaces list:`, error);
         throw error;
@@ -207,10 +212,17 @@ export function registerSpaceResources(server: McpServer) {
           description: space.description?.plain?.value || '',
           url: `${config.baseUrl}/wiki/spaces/${space.key}`
         };
-        return createJsonResource(uri.href, {
-          space: formattedSpace,
-          message: `Space details for ${normalizedSpaceKey}`
-        });
+        // Chuẩn hóa metadata/schema
+        return createStandardResource(
+          uri.href,
+          [formattedSpace],
+          'space',
+          spaceSchema,
+          1,
+          1,
+          0,
+          `${config.baseUrl}/wiki/spaces/${space.key}`
+        );
       } catch (error) {
         logger.error(`Error getting Confluence space details for ${normalizedSpaceKey}:`, error);
         throw error;

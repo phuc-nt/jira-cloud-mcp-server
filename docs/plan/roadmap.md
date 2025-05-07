@@ -71,8 +71,10 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [x] **Done** - Cải thiện tool createPage: validate parentId, content storage format, thông báo lỗi rõ ràng
 - [x] **Done** - Tool updatePage: fix lỗi xóa label (DELETE trả về body rỗng, không parse JSON)
 - [ ] Cho phép truyền query params (filter, limit, sort) cho các resource dạng danh sách
-- [ ] Chuẩn hóa metadata trả về (ví dụ: tổng số, phân trang, link đến Atlassian UI)
-- [ ] Bổ sung schema (metadata) cho tất cả resource MCP để client (Cline) hiển thị đúng kiểu dữ liệu trả về. Tham khảo hướng dẫn chi tiết: [dev-guide/schema-metadata.md](../dev-guide/schema-metadata.md)
+- [x] **Done** - Bổ sung schema (metadata) cho tất cả resource MCP để client (Cline) hiển thị đúng kiểu dữ liệu trả về. Tham khảo hướng dẫn chi tiết: [dev-guide/schema-metadata.md](../dev-guide/schema-metadata.md)
+- [x] **Done** - Chuẩn hóa test client, tự động hóa kiểm thử resource/tool
+- [x] **Done** - Chia nhỏ file test thành nhiều file theo nhóm resource, dễ bảo trì và mở rộng
+- [x] **Done** - Tiếng Anh hóa toàn bộ code test client (comment, log, biến mô tả)
 - [ ] Bổ sung validation chi tiết cho các tham số tool
 - [ ] **Jira: Filters** – Truy vấn danh sách filter, chi tiết filter, filter cá nhân
 - [ ] **Jira: Boards** – Truy vấn board, board config, board issues
@@ -80,6 +82,14 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [ ] **Jira: Sprints** – Truy vấn sprint, backlog, active sprint, sprint report
 - [ ] **Jira: Backlog Management** – Truy vấn backlog, thao tác với backlog (nếu có)
 - [ ] **Confluence: Labels, Attachments, Content Versions** – Quản lý tài liệu nâng cao
+
+> **Ghi chú tiến độ:**
+> - Đã hoàn thành việc chuẩn hóa metadata/schema cho tất cả resource chính (Jira/Confluence), giúp client hiển thị đúng kiểu dữ liệu.
+> - Đã tự động hóa kiểm thử bằng cách chia nhỏ file test theo nhóm resource (Jira issue, Jira project, Jira user, Confluence spaces, Confluence pages).
+> - Đã tiếng Anh hóa toàn bộ code test client, đảm bảo tất cả comment, log, biến mô tả đều bằng tiếng Anh.
+> - Đã tạo tài liệu chi tiết về client development trong `docs/introduction/client-development-guide.md`, hướng dẫn cách build, test, phân tích cấu trúc file test.
+> - Còn lỗi nhỏ ở CQL query Confluence cần fix trong tương lai.
+> - Hệ thống đã sẵn sàng để mở rộng thêm test/resource/tool mới dễ dàng với cấu trúc chuẩn hóa.
 
 ### 3.1. Mở rộng tool cho Jira/Confluence
 - [ ] **Tool: Create/Update/Delete Filter** – Tạo, cập nhật, xóa filter cá nhân
