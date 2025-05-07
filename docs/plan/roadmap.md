@@ -162,8 +162,19 @@ Roadmap này tập trung vào các ưu tiên sau:
 
 Các phase tiếp theo sẽ liên tục được cập nhật dựa trên tiến độ thực tế và phản hồi từ cộng đồng.
 
+## Các vấn đề tồn đọng cần giải quyết
+
+1. **Lỗi CQL Confluence Query**: Resource `confluence://pages?cql=space="TX"` trả về lỗi "Could not parse cql", có thể do cú pháp CQL chưa đúng hoặc API yêu cầu format khác. Cần nghiên cứu thêm về định dạng CQL chính xác cho Confluence API.
+
+2. **Xử lý DELETE response**: Khi gọi API Atlassian (Confluence) với DELETE, response body thường rỗng. Nếu cố parse JSON sẽ lỗi "Unexpected end of JSON input". **Best practice:** chỉ parse JSON khi chắc chắn có body, hoặc kiểm tra text trước.
+
+3. **Expand metadata cho Page Labels**: Khi trả về resource page, nên expand metadata.labels và trả về danh sách label cho client để hiển thị đầy đủ thông tin.
+
+4. **Bỏ Resource jira://users**: Resource `jira://users` yêu cầu tham số truy vấn (username hoặc accountId), nên không thể truy cập trực tiếp mà không cung cấp tham số. Đây là giới hạn của API Jira, không phải lỗi của MCP server. **Đã xử lý:** Resource này đã bị loại bỏ, thay vào đó người dùng nên sử dụng các resource cụ thể hơn như `jira://users/{accountId}` hoặc `jira://users/assignable/{projectKey}`.
+
 ## History
 
 ### 2025-06-xx
-- Khi gọi API Atlassian (Confluence) với DELETE, response body thường rỗng. Nếu cố parse JSON sẽ lỗi "Unexpected end of JSON input". **Best practice:** chỉ parse JSON khi chắc chắn có body, hoặc kiểm tra text trước.
-- Khi trả về resource page, nên expand metadata.labels và trả về danh sách label cho client. 
+- Chuẩn hóa metadata/schema cho tất cả resource MCP Atlassian Server.
+- Chia nhỏ file test thành nhiều file theo nhóm resource, dễ bảo trì và mở rộng.
+- Tiếng Anh hóa toàn bộ code test client, đảm bảo tất cả comment, log, biến mô tả đều bằng tiếng Anh. 

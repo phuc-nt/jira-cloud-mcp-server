@@ -87,57 +87,11 @@ async function getUser(config: AtlassianConfig, accountId: string): Promise<any>
 export function registerUserResources(server: McpServer) {
   logger.info('Registering Jira user resources...');
 
-  // Resource: List all users (chuẩn hóa metadata/schema)
-  server.resource(
-    'jira-users-list',
-    new ResourceTemplate('jira://users', { list: undefined }),
-    async (uri, params, extra) => {
-      try {
-        let config: AtlassianConfig;
-        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
-          config = (extra.context as any).atlassianConfig as AtlassianConfig;
-        } else {
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
-        }
-        // Lấy phân trang nếu có
-        const startAt = params && params.startAt ? parseInt(Array.isArray(params.startAt) ? params.startAt[0] : params.startAt, 10) : 0;
-        const maxResults = params && params.maxResults ? parseInt(Array.isArray(params.maxResults) ? params.maxResults[0] : params.maxResults, 10) : 20;
-        logger.info(`Getting Jira users list: startAt=${startAt}, maxResults=${maxResults}`);
-        const users = await getUsers(config, startAt, maxResults);
-        // Chuẩn hóa users
-        const formattedUsers = (users || []).map((user: any) => ({
-          accountId: user.accountId,
-          displayName: user.displayName,
-          emailAddress: user.emailAddress,
-          active: user.active,
-          avatarUrl: user.avatarUrls?.['48x48'] || '',
-          timeZone: user.timeZone,
-          locale: user.locale
-        }));
-        // Trả về resource chuẩn hóa
-        return createStandardResource(
-          uri.href,
-          formattedUsers,
-          'users',
-          usersListSchema,
-          formattedUsers.length,
-          maxResults,
-          startAt,
-          `${config.baseUrl}/jira/people`
-        );
-      } catch (error) {
-        logger.error('Error getting Jira users:', error);
-        throw error;
-      }
-    }
-  );
+  // NOTE: Resource jira://users has been removed because it requires query parameters 
+  // (username or accountId) to function properly. The Jira API doesn't support
+  // getting all users without at least one filter parameter.
+  // Users should use more specific resources like jira://users/{accountId} or 
+  // jira://users/assignable/{projectKey} instead.
 
   // Resource: User details
   server.resource(

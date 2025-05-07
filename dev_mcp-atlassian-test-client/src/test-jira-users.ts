@@ -98,6 +98,10 @@ async function main() {
   const projectKey = "XDEMO2";
   const roleId = "10002"; // Example roleId, get the correct one from project roles
 
+  // NOTE: Resource jira://users has been removed because it requires query parameters
+  // (username or accountId) and cannot be accessed directly without parameters.
+  // We only test more specific resources below.
+  
   const resourceUris = [
     `jira://users/${accountId}`,
     `jira://users/assignable/${projectKey}`,
