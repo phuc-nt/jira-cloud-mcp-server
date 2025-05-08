@@ -29,6 +29,15 @@ Resources là các endpoint chỉ đọc, trả về dữ liệu từ Atlassian 
 | User Details | `jira://users/{accountId}` | Thông tin user | `/rest/api/3/user?accountId=...` | Single User object |
 | Assignable Users | `jira://users/assignable/{projectKey}` | User có thể gán cho issue | `/rest/api/3/user/assignable/search?project=...` | Array của User objects |
 | Users by Role | `jira://users/role/{projectKey}/{roleId}` | User theo role trong project | `/rest/api/3/project/{projectKey}/role/{roleId}` | Array của User objects |
+| Filters | `jira://filters` | Danh sách filter | `/rest/api/3/filter/search` | Array của Filter objects |
+| Filter Details | `jira://filters/{filterId}` | Chi tiết filter | `/rest/api/3/filter/{filterId}` | Single Filter object |
+| My Filters | `jira://filters/my` | Filter của tôi | `/rest/api/3/filter/my` | Array của Filter objects |
+| Boards | `jira://boards` | Danh sách board | `/rest/agile/1.0/board` | Array của Board objects |
+| Board Details | `jira://boards/{boardId}` | Chi tiết board | `/rest/agile/1.0/board/{boardId}` | Single Board object |
+| Board Issues | `jira://boards/{boardId}/issues` | Issues trong board | `/rest/agile/1.0/board/{boardId}/issue` | Array của Issue objects |
+| Board Sprints | `jira://boards/{boardId}/sprints` | Sprints trong board | `/rest/agile/1.0/board/{boardId}/sprint` | Array của Sprint objects |
+| Sprint Details | `jira://sprints/{sprintId}` | Chi tiết sprint | `/rest/agile/1.0/sprint/{sprintId}` | Single Sprint object |
+| Sprint Issues | `jira://sprints/{sprintId}/issues` | Issues trong sprint | `/rest/agile/1.0/sprint/{sprintId}/issue` | Array của Issue objects |
 
 #### Cấu trúc dữ liệu chính
 
@@ -75,6 +84,9 @@ Resources là các endpoint chỉ đọc, trả về dữ liệu từ Atlassian 
 | Page Details | `confluence://pages/{pageId}` | Chi tiết trang | `/rest/api/content/{pageId}` | Single Page object với content/body |
 | Page Children | `confluence://pages/{pageId}/children` | Danh sách trang con | `/rest/api/content/{pageId}/child/page` | Array của Page objects |
 | Page Ancestors | `confluence://pages/{pageId}/ancestors` | Danh sách tổ tiên | `/rest/api/content/{pageId}?expand=ancestors` | Array của Page objects |
+| Page Labels | `confluence://pages/{pageId}/labels` | Nhãn của trang | `/rest/api/content/{pageId}/label` | Array của Label objects |
+| Page Attachments | `confluence://pages/{pageId}/attachments` | Tập tin đính kèm | `/rest/api/content/{pageId}/child/attachment` | Array của Attachment objects |
+| Page Versions | `confluence://pages/{pageId}/versions` | Lịch sử phiên bản | `/rest/api/content/{pageId}/version` | Array của Version objects |
 
 ## Tools
 
@@ -88,6 +100,10 @@ Tools là các endpoint thực hiện hành động, có thể tạo, cập nh�
 | updateIssue | Cập nhật issue | issueKey, summary, ... | `/rest/api/3/issue/{issueIdOrKey}` | Status của update |
 | transitionIssue | Chuyển trạng thái issue | issueKey, transitionId | `/rest/api/3/issue/{issueIdOrKey}/transitions` | Status của transition |
 | assignIssue | Gán issue cho user | issueKey, accountId | `/rest/api/3/issue/{issueIdOrKey}/assignee` | Status của assignment |
+| createFilter | Tạo filter | name, jql, description, favourite | `/rest/api/3/filter` | Filter ID mới |
+| updateFilter | Cập nhật filter | filterId, name, jql, description, favourite | `/rest/api/3/filter/{filterId}` | Status của update |
+| deleteFilter | Xóa filter | filterId | `/rest/api/3/filter/{filterId}` | Status của xoá |
+| createSprint | Tạo sprint | boardId, name, startDate, endDate, goal | `/rest/agile/1.0/sprint` | Sprint ID mới |
 
 #### Cấu trúc dữ liệu input quan trọng
 
@@ -111,6 +127,8 @@ Tools là các endpoint thực hiện hành động, có thể tạo, cập nh�
 | createPage | Tạo trang mới | spaceKey, title, content | `/rest/api/content` | Page ID mới |
 | updatePage | Cập nhật trang | pageId, title, content, version | `/rest/api/content/{pageId}` (PUT) | Status của update |
 | addComment | Thêm comment vào page | pageId, content | `/rest/api/content` (type=comment) | Comment mới |
+| addLabelsToPage | Thêm nhãn vào trang | pageId, labels | `/rest/api/content/{pageId}/label` | Status của thêm |
+| removeLabelsFromPage | Xóa nhãn khỏi trang | pageId, labels | `/rest/api/content/{pageId}/label?name=...` | Status của xoá |
 
 ## Migration Notes (API v2 → v3)
 

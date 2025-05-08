@@ -72,14 +72,19 @@ npx -y @smithery/cli install @phuc-nt/mcp-atlassian-server --client claude
 
 ## Feature Overview
 
-> For detailed documentation of all Resources and Tools, see [Resource & Tool Architecture](./docs/knowledge/resource-and-tool-architecture.md)
+> For complete technical details including actual Atlassian API endpoints and implementation notes, see [Resource & Tools Documentation](./docs/introduction/resources-and-tools.md).
 
 | Type      | Group       | Feature                                         | Description                                      | Status |
 |-----------|-------------|-------------------------------------------------|--------------------------------------------------|--------|
 | Resource  | Jira        | View issues, projects, users, comments, roles   | Query Jira data (JQL, details, lists, roles, assignable users, users by role) | ✔      |
+| Resource  | Jira        | View filters, boards, sprints                   | Query Jira agile data (filters, boards, sprints, issues in board/sprint) | ✔      |
 | Resource  | Confluence  | View spaces, pages, child pages, ancestors      | Query Confluence data (spaces, pages, children, ancestors) | ✔      |
+| Resource  | Confluence  | View labels, attachments, versions              | Query Confluence metadata (labels, attachments, version history) | ✔      |
 | Tool      | Jira        | Create, update, transition, assign issues       | Direct actions on Jira (createIssue, updateIssue, transitionIssue, assignIssue) | ✔      |
+| Tool      | Jira        | Create, update, delete filters                  | Manage Jira filters (createFilter, updateFilter, deleteFilter) | ✔      |
+| Tool      | Jira        | Create sprints                                  | Manage Jira sprints (createSprint) | ✔      |
 | Tool      | Confluence  | Create, update pages, add comments              | Direct actions on Confluence (createPage, updatePage, addComment) | ✔      |
+| Tool      | Confluence  | Manage labels                                   | Add/remove labels on pages (addLabelsToPage, removeLabelsFromPage) | ✔      |
 | Tool      | Other       | Prompts, Sampling, Personalization              | AI optimization, personalization, advanced flows | 🚧     |
 
 ### Resource Endpoints (Jira & Confluence)

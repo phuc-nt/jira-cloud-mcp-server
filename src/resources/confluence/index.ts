@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerSpaceResources } from './spaces.js';
 import { registerPageResources } from './pages.js';
+import { registerContentMetadataResources } from './content-metadata.js';
 import { Logger } from '../../utils/logger.js';
 
 const logger = Logger.getLogger('ConfluenceResources');
@@ -15,6 +16,7 @@ export function registerConfluenceResources(server: McpServer) {
   // Register specific Confluence resources
   registerSpaceResources(server);
   registerPageResources(server);
+  registerContentMetadataResources(server);
   
   logger.info('Confluence resources registered successfully');
 }

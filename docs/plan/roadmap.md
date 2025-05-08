@@ -77,28 +77,33 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [x] **Done** - Chia nhỏ file test thành nhiều file theo nhóm resource, dễ bảo trì và mở rộng
 - [x] **Done** - Tiếng Anh hóa toàn bộ code test client (comment, log, biến mô tả)
 - [ ] Bổ sung validation chi tiết cho các tham số tool
-- [ ] **Jira: Filters** – Truy vấn danh sách filter, chi tiết filter, filter cá nhân
-- [ ] **Jira: Boards** – Truy vấn board, board config, board issues
+- [x] **Done** - **Jira: Filters** – Truy vấn danh sách filter, chi tiết filter, filter cá nhân
+- [x] **Done** - **Jira: Boards** – Truy vấn board, board config, board issues
+- [x] **Done** - **Jira: Sprints** – Truy vấn sprint, sprint issues, board sprints
 - [ ] **Jira: Dashboards** – Truy vấn dashboard, widget, dashboard cá nhân
-- [ ] **Jira: Sprints** – Truy vấn sprint, backlog, active sprint, sprint report
-- [ ] **Jira: Backlog Management** – Truy vấn backlog, thao tác với backlog (nếu có)
-- [ ] **Confluence: Labels, Attachments, Content Versions** – Quản lý tài liệu nâng cao
+- [x] **Done** - **Confluence: Labels, Attachments, Content Versions** – Quản lý tài liệu nâng cao
 
 > **Ghi chú tiến độ:**
 > - Đã hoàn thành việc chuẩn hóa metadata/schema cho tất cả resource chính (Jira/Confluence), giúp client hiển thị đúng kiểu dữ liệu.
 > - Đã tự động hóa kiểm thử bằng cách chia nhỏ file test theo nhóm resource (Jira issue, Jira project, Jira user, Confluence spaces, Confluence pages).
 > - Đã tiếng Anh hóa toàn bộ code test client, đảm bảo tất cả comment, log, biến mô tả đều bằng tiếng Anh.
-> - Đã tạo tài liệu chi tiết về client development trong `docs/introduction/client-development-guide.md`, hướng dẫn cách build, test, phân tích cấu trúc file test.
-> - Còn lỗi nhỏ ở CQL query Confluence cần fix trong tương lai.
+> - Đã triển khai thành công các resource mới: Jira Filters, Boards, Sprints và Confluence metadata (Labels, Attachments, Versions).
+> - Đã test toàn diện với client, tất cả resource mới đều hoạt động tốt, trả về dữ liệu đúng format với metadata đầy đủ.
 > - Hệ thống đã sẵn sàng để mở rộng thêm test/resource/tool mới dễ dàng với cấu trúc chuẩn hóa.
 
 ### 3.1. Mở rộng tool cho Jira/Confluence
-- [ ] **Tool: Create/Update/Delete Filter** – Tạo, cập nhật, xóa filter cá nhân
+- [x] **Done** - **Tool: Create/Update/Delete Filter** – Tạo, cập nhật, xóa filter cá nhân
 - [ ] **Tool: Board Actions** – Thêm/xóa issue vào board, cấu hình board
-- [ ] **Tool: Sprint Actions** – Tạo, bắt đầu, đóng sprint, di chuyển issue giữa các sprint
+- [x] **Done** - **Tool: Sprint Actions** – Tạo sprint
+- [ ] **Tool: More Sprint Actions** – Bắt đầu, đóng sprint, di chuyển issue giữa các sprint
 - [ ] **Tool: Backlog Actions** – Thêm/xóa issue vào backlog, sắp xếp backlog
 - [ ] **Tool: Dashboard Actions** – Tạo, cập nhật dashboard, thêm widget
-- [ ] **Tool: Confluence Label/Attachment/Version** – Thêm/xóa label, upload/download attachment, xem lịch sử version
+- [x] **Done** - **Tool: Confluence Label** – Thêm/xóa label
+
+> **Ghi chú tiến độ:**
+> - Đã triển khai thành công các tool mới: Jira Filter CRUD, Sprint Creation, và Confluence Label Management.
+> - Tất cả tool mới đã được test và hoạt động tốt, trả về dữ liệu kết quả đúng format với status rõ ràng.
+> - Các tool mới tuân thủ kiến trúc chung, dễ bảo trì và mở rộng trong tương lai.
 
 ### 4. Cải thiện developer experience cho local dev
 - [ ] Viết script tự động build và tạo symlink cho Cline nhận diện nhanh (không cần docker nếu chưa cần)

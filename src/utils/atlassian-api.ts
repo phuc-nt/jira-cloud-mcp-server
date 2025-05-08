@@ -1112,3 +1112,293 @@ export function adfToMarkdown(content: any): string {
   });
   return markdown;
 }
+
+/**
+ * Get list of Jira filters (with pagination)
+ */
+export async function getFilters(config: AtlassianConfig, startAt = 0, maxResults = 50): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/filter/search?startAt=${startAt}&maxResults=${maxResults}`;
+  logger.debug(`GET Jira filters: ${url}`);
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Get Jira filter by ID
+ */
+export async function getFilterById(config: AtlassianConfig, filterId: string): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/filter/${filterId}`;
+  logger.debug(`GET Jira filter by ID: ${url}`);
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Get filters owned by or shared with the current user
+ */
+export async function getMyFilters(config: AtlassianConfig): Promise<any[]> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/filter/my`;
+  logger.debug(`GET Jira my filters: ${url}`);
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Get list of Jira boards (Agile)
+ */
+export async function getBoards(config: AtlassianConfig, startAt = 0, maxResults = 50): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/agile/1.0/board?startAt=${startAt}&maxResults=${maxResults}`;
+  logger.debug(`GET Jira boards: ${url}`);
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Get Jira board by ID (Agile)
+ */
+export async function getBoardById(config: AtlassianConfig, boardId: string): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/agile/1.0/board/${boardId}`;
+  logger.debug(`GET Jira board by ID: ${url}`);
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Get issues in a Jira board (Agile)
+ */
+export async function getBoardIssues(config: AtlassianConfig, boardId: string, startAt = 0, maxResults = 50): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/agile/1.0/board/${boardId}/issue?startAt=${startAt}&maxResults=${maxResults}`;
+  logger.debug(`GET Jira board issues: ${url}`);
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Get list of sprints in a Jira board (Agile)
+ */
+export async function getSprintsByBoard(config: AtlassianConfig, boardId: string, startAt = 0, maxResults = 50): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/agile/1.0/board/${boardId}/sprint?startAt=${startAt}&maxResults=${maxResults}`;
+  logger.debug(`GET Jira sprints by board: ${url}`);
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Get Jira sprint by ID (Agile)
+ */
+export async function getSprintById(config: AtlassianConfig, sprintId: string): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/agile/1.0/sprint/${sprintId}`;
+  logger.debug(`GET Jira sprint by ID: ${url}`);
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Get issues in a Jira sprint (Agile)
+ */
+export async function getSprintIssues(config: AtlassianConfig, sprintId: string, startAt = 0, maxResults = 50): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/agile/1.0/sprint/${sprintId}/issue?startAt=${startAt}&maxResults=${maxResults}`;
+  logger.debug(`GET Jira sprint issues: ${url}`);
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Get labels of a Confluence page
+ */
+export async function getPageLabels(config: AtlassianConfig, pageId: string, start = 0, limit = 50): Promise<any> {
+  return await callConfluenceApi<any>(
+    config,
+    `/content/${pageId}/label`,
+    'GET',
+    null,
+    { start, limit }
+  );
+}
+
+/**
+ * Get attachments of a Confluence page
+ */
+export async function getPageAttachments(config: AtlassianConfig, pageId: string, start = 0, limit = 50): Promise<any> {
+  return await callConfluenceApi<any>(
+    config,
+    `/content/${pageId}/child/attachment`,
+    'GET',
+    null,
+    { start, limit, expand: 'version' }
+  );
+}
+
+/**
+ * Get versions of a Confluence page
+ */
+export async function getPageVersions(config: AtlassianConfig, pageId: string, start = 0, limit = 50): Promise<any> {
+  return await callConfluenceApi<any>(
+    config,
+    `/content/${pageId}/version`,
+    'GET',
+    null,
+    { start, limit, expand: 'content.version' }
+  );
+}
+
+/**
+ * Add labels to a Confluence page
+ */
+export async function addLabelsToPage(config: AtlassianConfig, pageId: string, labels: string[]): Promise<{ labelsCount: number }> {
+  const labelObjects = labels.map(label => ({ name: label }));
+  const response = await callConfluenceApi<any>(
+    config,
+    `/content/${pageId}/label`,
+    'POST',
+    labelObjects
+  );
+  return { labelsCount: response.length || labelObjects.length };
+}
+
+/**
+ * Remove labels from a Confluence page
+ */
+export async function removeLabelsFromPage(config: AtlassianConfig, pageId: string, labels: string[]): Promise<{ labelsCount: number }> {
+  for (const label of labels) {
+    await callConfluenceApi<any>(
+      config,
+      `/content/${pageId}/label?name=${encodeURIComponent(label)}`,
+      'DELETE'
+    );
+  }
+  return { labelsCount: labels.length };
+}
+
+/**
+ * Create a new Jira filter
+ */
+export async function createFilter(
+  config: AtlassianConfig,
+  name: string,
+  jql: string,
+  description?: string,
+  favourite?: boolean
+): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/filter`;
+  const data: any = {
+    name,
+    jql,
+    description: description || '',
+    favourite: favourite !== undefined ? favourite : false
+  };
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Update an existing Jira filter
+ */
+export async function updateFilter(
+  config: AtlassianConfig,
+  filterId: string,
+  updateData: { name?: string; jql?: string; description?: string; favourite?: boolean }
+): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/filter/${filterId}`;
+  // Lấy filter hiện tại để merge (API yêu cầu PUT phải đủ trường)
+  const current = await (async () => {
+    const res = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+    if (!res.ok) throw new Error(`Jira API error: ${res.status} ${await res.text()}`);
+    return await res.json();
+  })();
+  const data = { ...current, ...updateData };
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Delete a Jira filter
+ */
+export async function deleteFilter(
+  config: AtlassianConfig,
+  filterId: string
+): Promise<void> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/filter/${filterId}`;
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers,
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+}
+
+/**
+ * Create a new Jira sprint (Agile)
+ */
+export async function createSprint(
+  config: AtlassianConfig,
+  boardId: string,
+  name: string,
+  startDate?: string,
+  endDate?: string,
+  goal?: string
+): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/agile/1.0/sprint`;
+  const data: any = {
+    name,
+    originBoardId: boardId
+  };
+  if (startDate) data.startDate = startDate;
+  if (endDate) data.endDate = endDate;
+  if (goal) data.goal = goal;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}

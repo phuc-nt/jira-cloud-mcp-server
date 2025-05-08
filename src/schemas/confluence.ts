@@ -149,4 +149,77 @@ export const searchResultsListSchema = {
     cql: { type: "string", description: "CQL query used for the search" }
   },
   required: ["metadata", "results"]
+};
+
+// Label schemas
+export const labelSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", description: "Label ID" },
+    name: { type: "string", description: "Label name" },
+    prefix: { type: "string", description: "Label prefix" }
+  }
+};
+
+export const labelListSchema = {
+  type: "object",
+  properties: {
+    labels: {
+      type: "array",
+      items: labelSchema
+    },
+    metadata: standardMetadataSchema
+  }
+};
+
+// Attachment schemas
+export const attachmentSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", description: "Attachment ID" },
+    title: { type: "string", description: "Attachment title" },
+    filename: { type: "string", description: "File name" },
+    mediaType: { type: "string", description: "Media type" },
+    fileSize: { type: "number", description: "File size in bytes" },
+    downloadUrl: { type: "string", description: "Download URL" }
+  }
+};
+
+export const attachmentListSchema = {
+  type: "object",
+  properties: {
+    attachments: {
+      type: "array",
+      items: attachmentSchema
+    },
+    metadata: standardMetadataSchema
+  }
+};
+
+// Version schemas
+export const versionSchema = {
+  type: "object",
+  properties: {
+    number: { type: "number", description: "Version number" },
+    by: { 
+      type: "object", 
+      properties: {
+        displayName: { type: "string" },
+        accountId: { type: "string" }
+      }
+    },
+    when: { type: "string", description: "Creation date" },
+    message: { type: "string", description: "Version message" }
+  }
+};
+
+export const versionListSchema = {
+  type: "object",
+  properties: {
+    versions: {
+      type: "array",
+      items: versionSchema
+    },
+    metadata: standardMetadataSchema
+  }
 }; 

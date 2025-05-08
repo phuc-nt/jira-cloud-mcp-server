@@ -227,4 +227,90 @@ export const commentsListSchema = {
     issueKey: { type: "string", description: "Issue key" }
   },
   required: ["metadata", "comments", "issueKey"]
+};
+
+// Filter schemas
+export const filterSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", description: "Filter ID" },
+    name: { type: "string", description: "Filter name" },
+    jql: { type: "string", description: "JQL query" },
+    description: { type: "string", description: "Filter description" },
+    owner: { 
+      type: "object", 
+      properties: {
+        displayName: { type: "string" },
+        accountId: { type: "string" }
+      }
+    },
+    favourite: { type: "boolean", description: "Whether the filter is favorited" },
+    sharePermissions: { type: "array", description: "Share permissions" }
+  }
+};
+
+export const filterListSchema = {
+  type: "object",
+  properties: {
+    filters: {
+      type: "array",
+      items: filterSchema
+    },
+    metadata: standardMetadataSchema
+  }
+};
+
+// Board schemas
+export const boardSchema = {
+  type: "object",
+  properties: {
+    id: { type: "number", description: "Board ID" },
+    name: { type: "string", description: "Board name" },
+    type: { type: "string", description: "Board type (scrum, kanban)" },
+    location: { 
+      type: "object", 
+      properties: {
+        projectId: { type: "string" },
+        displayName: { type: "string" },
+        projectKey: { type: "string" },
+        projectName: { type: "string" }
+      }
+    }
+  }
+};
+
+export const boardListSchema = {
+  type: "object",
+  properties: {
+    boards: {
+      type: "array",
+      items: boardSchema
+    },
+    metadata: standardMetadataSchema
+  }
+};
+
+// Sprint schemas
+export const sprintSchema = {
+  type: "object",
+  properties: {
+    id: { type: "number", description: "Sprint ID" },
+    name: { type: "string", description: "Sprint name" },
+    state: { type: "string", description: "Sprint state (future, active, closed)" },
+    startDate: { type: "string", description: "Start date" },
+    endDate: { type: "string", description: "End date" },
+    goal: { type: "string", description: "Sprint goal" },
+    originBoardId: { type: "number", description: "Board ID" }
+  }
+};
+
+export const sprintListSchema = {
+  type: "object",
+  properties: {
+    sprints: {
+      type: "array",
+      items: sprintSchema
+    },
+    metadata: standardMetadataSchema
+  }
 }; 
