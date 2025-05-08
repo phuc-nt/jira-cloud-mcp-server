@@ -76,15 +76,10 @@ npx -y @smithery/cli install @phuc-nt/mcp-atlassian-server --client claude
 
 | Type      | Group       | Feature                                         | Description                                      | Status |
 |-----------|-------------|-------------------------------------------------|--------------------------------------------------|--------|
-| Resource  | Jira        | View issues, projects, users, comments, roles   | Query Jira data (JQL, details, lists, roles, assignable users, users by role) | ✔      |
-| Resource  | Jira        | View filters, boards, sprints                   | Query Jira agile data (filters, boards, sprints, issues in board/sprint) | ✔      |
-| Resource  | Confluence  | View spaces, pages, child pages, ancestors      | Query Confluence data (spaces, pages, children, ancestors) | ✔      |
-| Resource  | Confluence  | View labels, attachments, versions              | Query Confluence metadata (labels, attachments, version history) | ✔      |
-| Tool      | Jira        | Create, update, transition, assign issues       | Direct actions on Jira (createIssue, updateIssue, transitionIssue, assignIssue) | ✔      |
-| Tool      | Jira        | Create, update, delete filters                  | Manage Jira filters (createFilter, updateFilter, deleteFilter) | ✔      |
-| Tool      | Jira        | Create sprints                                  | Manage Jira sprints (createSprint) | ✔      |
-| Tool      | Confluence  | Create, update pages, add comments              | Direct actions on Confluence (createPage, updatePage, addComment) | ✔      |
-| Tool      | Confluence  | Manage labels                                   | Add/remove labels on pages (addLabelsToPage, removeLabelsFromPage) | ✔      |
+| Resource  | Jira        | View issues, projects, users, comments, roles, filters, boards, sprints | Query Jira data (JQL, details, lists, roles, assignable users, users by role, filters, boards, sprints) | ✔      |
+| Resource  | Confluence  | View spaces, pages, child pages, ancestors, labels, attachments, versions | Query Confluence data (spaces, pages, children, ancestors, labels, attachments, versions) | ✔      |
+| Tool      | Jira        | Create, update, transition, assign issues; manage filters, sprints        | Direct actions on Jira (createIssue, updateIssue, transitionIssue, assignIssue, createFilter, updateFilter, deleteFilter, createSprint) | ✔      |
+| Tool      | Confluence  | Create, update pages, add comments, manage labels                        | Direct actions on Confluence (createPage, updatePage, addComment, addLabelsToPage, removeLabelsFromPage) | ✔      |
 | Tool      | Other       | Prompts, Sampling, Personalization              | AI optimization, personalization, advanced flows | 🚧     |
 
 ### Resource Endpoints (Jira & Confluence)
@@ -101,12 +96,24 @@ npx -y @smithery/cli install @phuc-nt/mcp-atlassian-server --client claude
 | User | `jira://users/{accountId}` | User details |
 | Assignable Users | `jira://users/assignable/{projectKey}` | Users assignable to a project |
 | Users by Role | `jira://users/role/{projectKey}/{roleId}` | Users in a project role |
+| Filters | `jira://filters` | List all Jira filters |
+| Filter Details | `jira://filters/{filterId}` | Filter details |
+| My Filters | `jira://filters/my` | My filters |
+| Boards | `jira://boards` | List all Jira boards |
+| Board Details | `jira://boards/{boardId}` | Board details |
+| Board Issues | `jira://boards/{boardId}/issues` | Issues in a board |
+| Board Sprints | `jira://boards/{boardId}/sprints` | Sprints in a board |
+| Sprint Details | `jira://sprints/{sprintId}` | Sprint details |
+| Sprint Issues | `jira://sprints/{sprintId}/issues` | Issues in a sprint |
 | Confluence Spaces | `confluence://spaces` | List all Confluence spaces |
 | Confluence Space | `confluence://spaces/{spaceKey}` | Space details |
 | Confluence Pages | `confluence://pages` | List all pages |
 | Confluence Page | `confluence://pages/{pageId}` | Page details |
 | Page Children | `confluence://pages/{pageId}/children` | List child pages |
 | Page Ancestors | `confluence://pages/{pageId}/ancestors` | List ancestor pages |
+| Page Labels | `confluence://pages/{pageId}/labels` | Labels of a page |
+| Page Attachments | `confluence://pages/{pageId}/attachments` | Attachments of a page |
+| Page Versions | `confluence://pages/{pageId}/versions` | Version history of a page |
 
 > For complete technical details including actual Atlassian API endpoints and implementation notes, see [Resource & Tools Documentation](./docs/introduction/resources-and-tools.md).
 
@@ -118,9 +125,15 @@ npx -y @smithery/cli install @phuc-nt/mcp-atlassian-server --client claude
 | updateIssue | Update a Jira issue | issueKey, summary, description... |
 | transitionIssue | Transition issue status | issueKey, transitionId |
 | assignIssue | Assign issue to user | issueKey, accountId |
+| createFilter | Create a Jira filter | name, jql, description, favourite |
+| updateFilter | Update a Jira filter | filterId, name, jql, description, favourite |
+| deleteFilter | Delete a Jira filter | filterId |
+| createSprint | Create a Jira sprint | boardId, name, startDate, endDate, goal |
 | createPage | Create a Confluence page | title, content, spaceKey |
-| updatePage | Update a Confluence page | pageId, title, content |
+| updatePage | Update a Confluence page | pageId, title, content, version, addLabels, removeLabels |
 | addComment | Add comment to a page | pageId, content |
+| addLabelsToPage | Add labels to a page | pageId, labels |
+| removeLabelsFromPage | Remove labels from a page | pageId, labels |
 
 ## Request Flow
 

@@ -125,7 +125,7 @@ Tools là các endpoint thực hiện hành động, có thể tạo, cập nh�
 | Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
 |------|-------|---------------|-----------------------|----------------|
 | createPage | Tạo trang mới | spaceKey, title, content | `/rest/api/content` | Page ID mới |
-| updatePage | Cập nhật trang | pageId, title, content, version | `/rest/api/content/{pageId}` (PUT) | Status của update |
+| updatePage | Cập nhật trang | pageId, title, content, version, addLabels, removeLabels | `/rest/api/content/{pageId}` (PUT) | Status của update |
 | addComment | Thêm comment vào page | pageId, content | `/rest/api/content` (type=comment) | Comment mới |
 | addLabelsToPage | Thêm nhãn vào trang | pageId, labels | `/rest/api/content/{pageId}/label` | Status của thêm |
 | removeLabelsFromPage | Xóa nhãn khỏi trang | pageId, labels | `/rest/api/content/{pageId}/label?name=...` | Status của xoá |
