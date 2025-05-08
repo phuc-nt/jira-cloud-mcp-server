@@ -1,362 +1,193 @@
 # MCP Atlassian Server: Resources & Tools Reference
 
-This document provides detailed information about all available Resources and Tools in MCP Atlassian Server.
+Tài liệu này liệt kê đầy đủ các Resource (truy vấn dữ liệu) và Tool (thao tác) mà MCP Atlassian Server hỗ trợ, kèm endpoint Atlassian API thực tế và thông tin kỹ thuật chi tiết dành cho developers.
 
-- **Resources**: Read-only data endpoints that provide information from Atlassian
-- **Tools**: Action endpoints that can create, update, or modify data in Atlassian
+## Hướng dẫn dành cho Developers
+
+Tài liệu này cung cấp thông tin chi tiết về implementation, API endpoints, cấu trúc dữ liệu, và các lưu ý kỹ thuật quan trọng để:
+
+- Hiểu cách Resource và Tool được triển khai
+- Thêm mới hoặc mở rộng Resource/Tool
+- Xử lý các trường hợp đặc biệt (ADF, version conflicts, error handling)
+- Debugging và maintenance
 
 ## Resources
 
-Resources are read-only endpoints that return data from Atlassian. They follow a URI pattern like `jira://resource-name` or `confluence://resource-name`.
+Resources là các endpoint chỉ đọc, trả về dữ liệu từ Atlassian theo mẫu URI: `jira://resource-name` hoặc `confluence://resource-name`.
 
 ### Jira Resources
 
-#### 1. Issues
+| Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về | 
+|----------|-----|-------|-----------------------|----------------|
+| Issues | `jira://issues` | Danh sách issues, hỗ trợ JQL, phân trang | `/rest/api/3/search` | Array của Issue objects, có phân trang |
+| Issue Details | `jira://issues/{issueKey}` | Chi tiết issue | `/rest/api/3/issue/{issueKey}` | Single Issue object với description (ADF→text) |
+| Issue Transitions | `jira://issues/{issueKey}/transitions` | Danh sách transitions | `/rest/api/3/issue/{issueKey}/transitions` | Array của Transition objects |
+| Issue Comments | `jira://issues/{issueKey}/comments` | Danh sách comment | `/rest/api/3/issue/{issueKey}/comment` | Array của Comment objects với body (ADF→text) |
+| Projects | `jira://projects` | Danh sách project | `/rest/api/3/project` | Array của Project objects |
+| Project Details | `jira://projects/{projectKey}` | Chi tiết project | `/rest/api/3/project/{projectKey}` | Single Project object |
+| Project Roles | `jira://projects/{projectKey}/roles` | Danh sách role của project | `/rest/api/3/project/{projectKey}/role` | Array các role (name, id) |
+| User Details | `jira://users/{accountId}` | Thông tin user | `/rest/api/3/user?accountId=...` | Single User object |
+| Assignable Users | `jira://users/assignable/{projectKey}` | User có thể gán cho issue | `/rest/api/3/user/assignable/search?project=...` | Array của User objects |
+| Users by Role | `jira://users/role/{projectKey}/{roleId}` | User theo role trong project | `/rest/api/3/project/{projectKey}/role/{roleId}` | Array của User objects |
 
-- **URI**: `jira://issues`
-- **Description**: Get a list of issues, filtered by JQL (Jira Query Language)
-- **Parameters**:
-  - `jql`: (Optional) JQL query to filter issues
-  - `maxResults`: (Optional) Limit number of results
-- **Example Usage**:
-  ```
-  jira://issues?jql=assignee=currentUser()
-  jira://issues?jql=project=DEMO
-  ```
-- **Notes**: 
-  - Simple JQL works best: `project=DEMO` instead of `project = DEMO AND key = DEMO-43`
-  - Complex queries may need URL encoding
+#### Cấu trúc dữ liệu chính
 
-#### 2. Issue Details
+**Issue Object Schema**:  
+```
+{
+  "id": "string",
+  "key": "string", 
+  "summary": "string",
+  "description": "string", // Đã convert từ ADF sang text
+  "rawDescription": object|string, // ADF nguyên bản
+  "status": { "name": "string", "id": "string" },
+  "assignee": { "displayName": "string", "accountId": "string" }, 
+  "reporter": { "displayName": "string", "accountId": "string" },
+  "priority": { "name": "string", "id": "string" },
+  "created": "date-time",
+  "updated": "date-time",
+  "issueType": { "name": "string", "id": "string" },
+  "projectKey": "string",
+  "projectName": "string",
+  "url": "string"
+}
+```
 
-- **URI**: `jira://issues/{issueKey}`
-- **Description**: Get detailed information about a specific issue
-- **Parameters**:
-  - `issueKey`: Required issue key (e.g., DEMO-123)
-- **Example Usage**:
-  ```
-  jira://issues/DEMO-123
-  ```
-- **Notes**: Includes issue fields, status, assignee, reporter, and more
-
-#### 3. Issue Transitions
-
-- **URI**: `jira://issues/{issueKey}/transitions`
-- **Description**: Get available transitions for a specific issue
-- **Parameters**:
-  - `issueKey`: Required issue key
-- **Example Usage**:
-  ```
-  jira://issues/DEMO-123/transitions
-  ```
-- **Notes**: Lists all possible workflow transitions for the issue
-
-#### 4. Issue Comments
-
-- **URI**: `jira://issues/{issueKey}/comments`
-- **Description**: Get comments for a specific issue
-- **Parameters**:
-  - `issueKey`: Required issue key
-- **Example Usage**:
-  ```
-  jira://issues/DEMO-123/comments
-  ```
-
-#### 5. Projects
-
-- **URI**: `jira://projects`
-- **Description**: Get a list of all accessible projects
-- **Parameters**: None
-- **Example Usage**:
-  ```
-  jira://projects
-  ```
-
-#### 6. Project Details
-
-- **URI**: `jira://projects/{projectKey}`
-- **Description**: Get detailed information about a specific project
-- **Parameters**:
-  - `projectKey`: Required project key (e.g., DEMO)
-- **Example Usage**:
-  ```
-  jira://projects/DEMO
-  ```
-
-#### 7. Project Roles
-
-- **URI**: `jira://projects/{projectKey}/roles`
-- **Description**: Get role information for a specific project
-- **Parameters**:
-  - `projectKey`: Required project key
-- **Example Usage**:
-  ```
-  jira://projects/DEMO/roles
-  ```
-
-#### 8. Users
-
-- **URI**: `jira://users`
-- **Description**: Get a list of users
-- **Parameters**: None
-- **Example Usage**:
-  ```
-  jira://users
-  ```
-
-#### 9. User Details
-
-- **URI**: `jira://users/{accountId}`
-- **Description**: Get detailed information about a specific user
-- **Parameters**:
-  - `accountId`: Required Atlassian account ID
-- **Example Usage**:
-  ```
-  jira://users/5b10a2844c20165700ede21g
-  ```
-
-#### 10. Assignable Users
-
-- **URI**: `jira://users/assignable`
-- **Description**: Get users who can be assigned to issues
-- **Parameters**:
-  - `project`: Optional project key to filter users
-- **Example Usage**:
-  ```
-  jira://users/assignable?project=DEMO
-  ```
+**Comment Object Schema**:
+```
+{
+  "id": "string",
+  "body": "string", // Đã convert từ ADF sang text
+  "rawBody": object|string, // ADF nguyên bản
+  "author": { "displayName": "string", "accountId": "string" },
+  "created": "date-time",
+  "updated": "date-time"
+}
+```
 
 ### Confluence Resources
 
-#### 1. Spaces
-
-- **URI**: `confluence://spaces`
-- **Description**: Get a list of all accessible Confluence spaces
-- **Parameters**: None
-- **Example Usage**:
-  ```
-  confluence://spaces
-  ```
-
-#### 2. Space Details
-
-- **URI**: `confluence://spaces/{spaceKey}`
-- **Description**: Get detailed information about a specific space
-- **Parameters**:
-  - `spaceKey`: Required space key (e.g., TEAM)
-- **Example Usage**:
-  ```
-  confluence://spaces/TEAM
-  ```
-
-#### 3. Pages in Space
-
-- **URI**: `confluence://spaces/{spaceKey}/pages`
-- **Description**: Get all pages in a specific space
-- **Parameters**:
-  - `spaceKey`: Required space key
-- **Example Usage**:
-  ```
-  confluence://spaces/TEAM/pages
-  ```
-
-#### 4. Page Details
-
-- **URI**: `confluence://pages/{pageId}`
-- **Description**: Get detailed information about a specific page
-- **Parameters**:
-  - `pageId`: Required page ID
-- **Example Usage**:
-  ```
-  confluence://pages/123456
-  ```
-
-#### 5. Child Pages
-
-- **URI**: `confluence://pages/{pageId}/children`
-- **Description**: Get child pages of a specific page
-- **Parameters**:
-  - `pageId`: Required page ID
-- **Example Usage**:
-  ```
-  confluence://pages/123456/children
-  ```
-
-#### 6. Page Comments
-
-- **URI**: `confluence://pages/{pageId}/comments`
-- **Description**: Get comments on a specific page
-- **Parameters**:
-  - `pageId`: Required page ID
-- **Example Usage**:
-  ```
-  confluence://pages/123456/comments
-  ```
-
-#### 7. Content Search
-
-- **URI**: `confluence://search`
-- **Description**: Search Confluence content using CQL (Confluence Query Language)
-- **Parameters**:
-  - `cql`: Required CQL query
-- **Example Usage**:
-  ```
-  confluence://search?cql=type=page AND space=TEAM
-  ```
+| Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
+|----------|-----|-------|-----------------------|----------------|
+| Spaces | `confluence://spaces` | Danh sách không gian | `/rest/api/space` | Array của Space objects |
+| Space Details | `confluence://spaces/{spaceKey}` | Chi tiết không gian | `/rest/api/space/{spaceKey}` | Single Space object |
+| Pages | `confluence://pages` | Danh sách trang | `/rest/api/content/search` | Array của Page objects |
+| Page Details | `confluence://pages/{pageId}` | Chi tiết trang | `/rest/api/content/{pageId}` | Single Page object với content/body |
+| Page Children | `confluence://pages/{pageId}/children` | Danh sách trang con | `/rest/api/content/{pageId}/child/page` | Array của Page objects |
+| Page Ancestors | `confluence://pages/{pageId}/ancestors` | Danh sách tổ tiên | `/rest/api/content/{pageId}?expand=ancestors` | Array của Page objects |
 
 ## Tools
 
-Tools are action endpoints that can create, update, or modify data in Atlassian. They are called with specific parameters to perform actions.
+Tools là các endpoint thực hiện hành động, có thể tạo, cập nhật, hoặc sửa đổi dữ liệu trong Atlassian.
 
 ### Jira Tools
 
-#### 1. Create Issue
+| Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
+|------|-------|---------------|-----------------------|----------------|
+| createIssue | Tạo issue mới | projectKey, summary, ... | `/rest/api/3/issue` | Issue key và ID mới |
+| updateIssue | Cập nhật issue | issueKey, summary, ... | `/rest/api/3/issue/{issueIdOrKey}` | Status của update |
+| transitionIssue | Chuyển trạng thái issue | issueKey, transitionId | `/rest/api/3/issue/{issueIdOrKey}/transitions` | Status của transition |
+| assignIssue | Gán issue cho user | issueKey, accountId | `/rest/api/3/issue/{issueIdOrKey}/assignee` | Status của assignment |
 
-- **Name**: `createIssue`
-- **Description**: Create a new Jira issue
-- **Required Parameters**:
-  - `projectKey`: The project key (e.g., DEMO)
-  - `summary`: Issue summary/title
-- **Optional Parameters**:
-  - `description`: Detailed description
-  - `issueType`: Issue type (defaults to "Task")
-  - `assignee`: Account ID of assignee
-  - `labels`: Array of labels
-  - `priority`: Priority value
-- **Example Usage**:
-  ```json
-  {
-    "projectKey": "DEMO",
-    "summary": "Fix login page error",
-    "description": "Users cannot log in from mobile devices",
-    "issueType": "Bug"
-  }
-  ```
-- **Notes**: 
-  - For best results, provide only the minimum required fields
-  - Markdown is supported in the description field
+#### Cấu trúc dữ liệu input quan trọng
 
-#### 2. Update Issue
-
-- **Name**: `updateIssue`
-- **Description**: Update an existing Jira issue
-- **Required Parameters**:
-  - `issueKey`: The issue key (e.g., DEMO-123)
-- **Optional Parameters**:
-  - `summary`: Updated summary
-  - `description`: Updated description
-  - `assignee`: Account ID to reassign
-  - `labels`: Array of labels
-- **Example Usage**:
-  ```json
-  {
-    "issueKey": "DEMO-123",
-    "summary": "Updated: Fix login page error",
-    "assignee": "5b10a2844c20165700ede21g"
-  }
-  ```
-
-#### 3. Transition Issue
-
-- **Name**: `transitionIssue`
-- **Description**: Move an issue to a different status
-- **Required Parameters**:
-  - `issueKey`: The issue key (e.g., DEMO-123)
-  - `transitionId`: ID of the transition to perform
-- **Example Usage**:
-  ```json
-  {
-    "issueKey": "DEMO-123",
-    "transitionId": "21"
-  }
-  ```
-- **Notes**: 
-  - Use the issue transitions resource first to find available transition IDs
-  - Common transitions: "In Progress", "Done", "To Do"
-
-#### 4. Assign Issue
-
-- **Name**: `assignIssue`
-- **Description**: Assign an issue to a user
-- **Required Parameters**:
-  - `issueKey`: The issue key (e.g., DEMO-123)
-  - `accountId`: Account ID of the assignee
-- **Example Usage**:
-  ```json
-  {
-    "issueKey": "DEMO-123",
-    "accountId": "5b10a2844c20165700ede21g"
-  }
-  ```
-- **Notes**: Use empty accountId to unassign
+**createIssue**:
+```
+{
+  "projectKey": "string", // (bắt buộc) Project key
+  "summary": "string", // (bắt buộc) Tiêu đề issue
+  "description": "string", // Mô tả (sẽ tự convert sang ADF)
+  "issueType": "string", // Loại issue (default: "Task") 
+  "priority": "string", // Độ ưu tiên
+  "assignee": "string", // accountId của người được gán
+  "labels": "string[]" // Nhãn
+}
+```
 
 ### Confluence Tools
 
-#### 1. Create Page
+| Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
+|------|-------|---------------|-----------------------|----------------|
+| createPage | Tạo trang mới | spaceKey, title, content | `/rest/api/content` | Page ID mới |
+| updatePage | Cập nhật trang | pageId, title, content, version | `/rest/api/content/{pageId}` (PUT) | Status của update |
+| addComment | Thêm comment vào page | pageId, content | `/rest/api/content` (type=comment) | Comment mới |
 
-- **Name**: `createPage`
-- **Description**: Create a new Confluence page
-- **Required Parameters**:
-  - `spaceKey`: The space key (e.g., TEAM)
-  - `title`: Page title
-  - `content`: Page content in HTML format
-- **Optional Parameters**:
-  - `parentId`: ID of parent page
-- **Example Usage**:
-  ```json
-  {
-    "spaceKey": "TEAM",
-    "title": "Meeting Notes",
-    "content": "<p>Discussion points:</p><ul><li>Project timeline</li><li>Resource allocation</li></ul>"
+## Migration Notes (API v2 → v3)
+
+**Việc migrate từ API v2 sang v3 (Tháng 6/2025):**
+
+1. **Thay đổi Endpoint**: Toàn bộ endpoint `/rest/api/2/...` đã chuyển thành `/rest/api/3/...`
+
+2. **Xử lý ADF**: 
+   - API v3 trả về các trường như `description`, `comment` ở định dạng ADF (Atlassian Document Format), thay vì text thuần  
+   - Đã thêm hàm `extractTextFromADF()` để tự động chuyển ADF thành text trong các trường:
+     - Issue description (issue.fields.description)
+     - Comment body (comment.body)
+
+3. **Schema Update**:
+   - Đã cập nhật schema để hỗ trợ cả dạng ADF và text thuần
+   - Thêm trường `rawDescription` và `rawBody` để lưu giữ data ADF nguyên bản
+   - Đảm bảo backward compatibility
+
+4. **Files Update**:
+   - `src/resources/jira/*.ts`: Cập nhật endpoint URLs và xử lý ADF
+   - `src/schemas/jira.ts`: Cập nhật schema để hỗ trợ ADF
+
+## Implementation Details
+
+### Cấu trúc Code
+
+```
+src/
+  resources/           # Các resource (read-only)
+    jira/              # Resource Jira
+      issues.ts        # Issues, comments, transitions
+      projects.ts      # Projects, roles
+      users.ts         # User details, assignable users
+    confluence/        # Resource Confluence
+      spaces.ts        # Spaces
+      pages.ts         # Pages, child pages, content
+  tools/               # Các tool (actions/mutations)
+    jira/              # Tool Jira
+      create-issue.ts
+      update-issue.ts
+      transition-issue.ts
+      assign-issue.ts
+    confluence/        # Tool Confluence
+      create-page.ts
+      update-page.ts
+      add-comment.ts
+  schemas/             # Schema validation
+    jira.ts            # Schema cho Jira resources/tools
+    confluence.ts      # Schema cho Confluence resources/tools
+  utils/               # Common utilities
+    atlassian-api.js   # Xử lý API calls, authentication
+    mcp-resource.js    # Helper functions cho MCP resources
+```
+
+### Xử lý ADF
+
+ADF (Atlassian Document Format) là định dạng rich text phức tạp. Hàm chuyển đổi sang text:
+
+```typescript
+function extractTextFromADF(adf: any): string {
+  if (!adf || typeof adf === 'string') return adf || '';
+  let text = '';
+  if (adf.content) {
+    adf.content.forEach((node: any) => {
+      if (node.type === 'paragraph' && node.content) {
+        node.content.forEach((inline: any) => {
+          if (inline.type === 'text') {
+            text += inline.text;
+          }
+        });
+        text += '\n';
+      }
+    });
   }
-  ```
-- **Notes**: 
-  - Use simple HTML content for best results
-  - Avoid specifying parentId for initial testing
-
-#### 2. Update Page
-
-- **Name**: `updatePage` (hoặc `editPage`)
-- **Description**: Cập nhật nội dung, tiêu đề, version, và labels cho một trang Confluence đã có
-- **Required Parameters**:
-  - `pageId`: ID của trang cần cập nhật
-  - `title`: Tiêu đề mới của trang (bắt buộc, do API Atlassian yêu cầu)
-  - `content`: Nội dung mới của trang (HTML hoặc storage format)
-  - `version`: Số version hiện tại của trang (bắt buộc, để tránh conflict)
-- **Optional Parameters**:
-  - `labels`: Danh sách label mới (thay thế toàn bộ labels hiện tại)
-- **Example Usage**:
-  ```json
-  {
-    "pageId": "123456",
-    "title": "Updated Meeting Notes",
-    "content": "<p>Updated discussion points...</p>",
-    "version": 3,
-    "labels": ["meeting", "2024"]
-  }
-  ```
-- **Notes**:
-  - Luôn lấy version hiện tại của trang trước khi cập nhật (dùng resource `confluence://pages/{pageId}`)
-  - Nếu không truyền đúng version, API sẽ báo lỗi conflict
-  - Trường labels là tuỳ chọn, nếu không truyền sẽ giữ nguyên labels cũ
-  - Nội dung nên dùng HTML hoặc storage format chuẩn của Confluence (có thể lấy từ resource page mẫu)
-  - Khi cập nhật labels, toàn bộ labels cũ sẽ bị thay thế
-  - Nếu chỉ muốn cập nhật một trường (ví dụ chỉ đổi title), vẫn phải truyền đủ các trường bắt buộc (title, content, version)
-
-#### 3. Add Comment
-
-- **Name**: `addComment`
-- **Description**: Add a comment to a Confluence page
-- **Required Parameters**:
-  - `pageId`: The page ID
-  - `content`: Comment content in HTML format
-- **Example Usage**:
-  ```json
-  {
-    "pageId": "123456",
-    "content": "<p>This documentation is very helpful!</p>"
-  }
-  ```
+  return text.trim();
+}
+```
 
 ## Best Practices
 
@@ -365,6 +196,63 @@ Tools are action endpoints that can create, update, or modify data in Atlassian.
 3. **Handle Errors**: Always check for error responses
 4. **Chain Resources and Tools**: Use resources to get information before performing actions with tools
 5. **Use Clear Examples**: When instructing AI assistants, provide clear examples of what you want
+
+## Developer Tips
+
+### 1. Extending Resources
+
+Để thêm resource mới:
+
+1. Tạo file trong thư mục tương ứng (src/resources/jira/ hoặc src/resources/confluence/)
+2. Định nghĩa function để gọi API Atlassian
+3. Tạo resource trong server với `server.resource()` hoặc `registerResource()`
+4. Thêm schema vào file schema tương ứng
+5. Import/export thích hợp
+
+```typescript
+// Template add resource mới
+export function registerCustomResource(server: McpServer) {
+  // Resource: Custom resource
+  registerResource(
+    server,
+    'jira-custom-resource',
+    new ResourceTemplate('jira://custom/{param}', { list: undefined }),
+    'Custom resource description',
+    async (params, { config, uri }) => {
+      // Code gọi API và xử lý dữ liệu
+    }
+  );
+}
+```
+
+### 2. Xử lý ADF trong Tools
+
+Khi gửi request tạo/cập nhật thông tin, API v3 yêu cầu ADF:
+
+```typescript
+// Helpers chuyển text thành ADF:
+function textToAdf(text: string) {
+  return {
+    version: 1,
+    type: 'doc',
+    content: [{
+      type: 'paragraph',
+      content: [{ type: 'text', text: text }]
+    }]
+  };
+}
+
+// Sử dụng trong tool:
+if (params.description) {
+  fields.description = textToAdf(params.description);
+}
+```
+
+### 3. Common Issues & Solutions
+
+- **Version Conflicts trong Confluence**: Luôn lấy version hiện tại trước khi update
+- **JQL Special Characters**: Cần encode các ký tự đặc biệt trong JQL parameters
+- **Empty DELETE Response**: Khi xóa label hoặc resource, Atlassian có thể trả về body rỗng
 
 ## Common Workflows
 
@@ -388,3 +276,5 @@ Future enhancements will include:
 - Jira: Filters, Boards, Dashboards, Sprints, Backlog Management
 - Confluence: Labels, Attachments, Content Versions History
 - Advanced features: Prompts, Sampling, Smart caching, personalization 
+
+**Lưu ý:** Từ tháng 6/2025, toàn bộ resource Jira đã migrate sang API v3 (endpoint `/rest/api/3/...`). Các trường rich text như description/comment trả về dạng ADF, đã tự động chuyển sang text thuần cho client không hỗ trợ ADF. 

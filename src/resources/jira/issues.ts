@@ -23,7 +23,7 @@ async function getIssue(config: AtlassianConfig, issueKey: string): Promise<any>
     if (!baseUrl.startsWith('https://')) {
       baseUrl = `https://${baseUrl}`;
     }
-    const url = `${baseUrl}/rest/api/2/issue/${issueKey}`;
+    const url = `${baseUrl}/rest/api/3/issue/${issueKey}`;
     logger.debug(`Getting Jira issue: ${url}`);
     const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
     if (!response.ok) {
@@ -58,7 +58,7 @@ async function getIssues(config: AtlassianConfig, startAt = 0, maxResults = 20, 
     }
     
     // Build URL with optional JQL
-    let url = `${baseUrl}/rest/api/2/search?startAt=${startAt}&maxResults=${maxResults}`;
+    let url = `${baseUrl}/rest/api/3/search?startAt=${startAt}&maxResults=${maxResults}`;
     if (jql && jql.trim()) {
       url += `&jql=${encodeURIComponent(jql.trim())}`;
     }
@@ -95,7 +95,7 @@ async function searchIssuesByJql(config: AtlassianConfig, jql: string, startAt =
     if (!baseUrl.startsWith('https://')) {
       baseUrl = `https://${baseUrl}`;
     }
-    const url = `${baseUrl}/rest/api/2/search?jql=${encodeURIComponent(jql)}&startAt=${startAt}&maxResults=${maxResults}`;
+    const url = `${baseUrl}/rest/api/3/search?jql=${encodeURIComponent(jql)}&startAt=${startAt}&maxResults=${maxResults}`;
     logger.debug(`Searching Jira issues by JQL: ${url}`);
     const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
     if (!response.ok) {
@@ -128,7 +128,7 @@ async function getIssueTransitions(config: AtlassianConfig, issueKey: string): P
     if (!baseUrl.startsWith('https://')) {
       baseUrl = `https://${baseUrl}`;
     }
-    const url = `${baseUrl}/rest/api/2/issue/${issueKey}/transitions`;
+    const url = `${baseUrl}/rest/api/3/issue/${issueKey}/transitions`;
     logger.debug(`Getting Jira issue transitions: ${url}`);
     const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
     if (!response.ok) {
@@ -161,7 +161,7 @@ async function getIssueComments(config: AtlassianConfig, issueKey: string, start
     if (!baseUrl.startsWith('https://')) {
       baseUrl = `https://${baseUrl}`;
     }
-    const url = `${baseUrl}/rest/api/2/issue/${issueKey}/comment?startAt=${startAt}&maxResults=${maxResults}`;
+    const url = `${baseUrl}/rest/api/3/issue/${issueKey}/comment?startAt=${startAt}&maxResults=${maxResults}`;
     logger.debug(`Getting Jira issue comments: ${url}`);
     const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
     if (!response.ok) {
@@ -179,6 +179,27 @@ async function getIssueComments(config: AtlassianConfig, issueKey: string, start
 }
 
 /**
+ * Hàm chuyển ADF sang text thuần
+ */
+function extractTextFromADF(adf: any): string {
+  if (!adf || typeof adf === 'string') return adf || '';
+  let text = '';
+  if (adf.content) {
+    adf.content.forEach((node: any) => {
+      if (node.type === 'paragraph' && node.content) {
+        node.content.forEach((inline: any) => {
+          if (inline.type === 'text') {
+            text += inline.text;
+          }
+        });
+        text += '\n';
+      }
+    });
+  }
+  return text.trim();
+}
+
+/**
  * Format Jira issue data to standardized format
  */
 function formatIssueData(issue: any, baseUrl: string): any {
@@ -186,7 +207,8 @@ function formatIssueData(issue: any, baseUrl: string): any {
     id: issue.id,
     key: issue.key,
     summary: issue.fields?.summary || '',
-    description: issue.fields?.description || null,
+    description: extractTextFromADF(issue.fields?.description),
+    rawDescription: issue.fields?.description || null,
     status: {
       name: issue.fields?.status?.name || 'Unknown',
       id: issue.fields?.status?.id || '0'
@@ -221,7 +243,8 @@ function formatIssueData(issue: any, baseUrl: string): any {
 function formatCommentData(comment: any): any {
   return {
     id: comment.id,
-    body: comment.body || '',
+    body: extractTextFromADF(comment.body),
+    rawBody: comment.body || '',
     author: comment.author ? {
       displayName: comment.author.displayName,
       accountId: comment.author.accountId

@@ -72,18 +72,50 @@ npx -y @smithery/cli install @phuc-nt/mcp-atlassian-server --client claude
 
 ## Feature Overview
 
-> For detailed documentation of all Resources and Tools, see [Resources & Tools Reference](./docs/introduction/resources-and-tools.md)
+> For detailed documentation of all Resources and Tools, see [Resource & Tool Architecture](./docs/knowledge/resource-and-tool-architecture.md)
 
 | Type      | Group       | Feature                                         | Description                                      | Status |
 |-----------|-------------|-------------------------------------------------|--------------------------------------------------|--------|
-| Resource  | Jira        | View issues, projects, users, comments, roles   | Query Jira data (JQL, details, lists)            | ✔      |
-| Resource  | Jira        | Filters, Boards, Dashboards, Sprints            | Advanced management for developers               | 🚧     |
-| Resource  | Confluence  | View spaces, pages, child pages, comments       | Query Confluence data                            | ✔      |
-| Resource  | Confluence  | Labels, Attachments, Content Versions           | Advanced document management                     | 🚧     |
-| Resource  | Other       | Smart caching, advanced JQL/CQL, templates      | Performance, experience, UI integration          | 🚧     |
-| Tool      | Jira        | Create, update, transition issues               | Direct actions on Jira                           | ✔      |
-| Tool      | Confluence  | Create pages, update pages (title, content, version, labels), manage labels, add comments | Direct actions on Confluence (create, update, add/remove labels, comment) | ✔      |
+| Resource  | Jira        | View issues, projects, users, comments, roles   | Query Jira data (JQL, details, lists, roles, assignable users, users by role) | ✔      |
+| Resource  | Confluence  | View spaces, pages, child pages, ancestors      | Query Confluence data (spaces, pages, children, ancestors) | ✔      |
+| Tool      | Jira        | Create, update, transition, assign issues       | Direct actions on Jira (createIssue, updateIssue, transitionIssue, assignIssue) | ✔      |
+| Tool      | Confluence  | Create, update pages, add comments              | Direct actions on Confluence (createPage, updatePage, addComment) | ✔      |
 | Tool      | Other       | Prompts, Sampling, Personalization              | AI optimization, personalization, advanced flows | 🚧     |
+
+### Resource Endpoints (Jira & Confluence)
+
+| Resource | URI Pattern | Description |
+|----------|-------------|-------------|
+| Projects | `jira://projects` | List all Jira projects |
+| Project | `jira://projects/{projectKey}` | Project details |
+| Project Roles | `jira://projects/{projectKey}/roles` | List project roles |
+| Issues | `jira://issues` | List/search issues (JQL, pagination) |
+| Issue | `jira://issues/{issueKey}` | Issue details |
+| Issue Transitions | `jira://issues/{issueKey}/transitions` | List available transitions |
+| Comments | `jira://issues/{issueKey}/comments` | List comments of an issue |
+| User | `jira://users/{accountId}` | User details |
+| Assignable Users | `jira://users/assignable/{projectKey}` | Users assignable to a project |
+| Users by Role | `jira://users/role/{projectKey}/{roleId}` | Users in a project role |
+| Confluence Spaces | `confluence://spaces` | List all Confluence spaces |
+| Confluence Space | `confluence://spaces/{spaceKey}` | Space details |
+| Confluence Pages | `confluence://pages` | List all pages |
+| Confluence Page | `confluence://pages/{pageId}` | Page details |
+| Page Children | `confluence://pages/{pageId}/children` | List child pages |
+| Page Ancestors | `confluence://pages/{pageId}/ancestors` | List ancestor pages |
+
+> For complete technical details including actual Atlassian API endpoints and implementation notes, see [Resource & Tools Documentation](./docs/introduction/resources-and-tools.md).
+
+### Tool Endpoints
+
+| Tool | Description | Main Parameters |
+|------|-------------|-----------------|
+| createIssue | Create a new Jira issue | projectKey, summary, description... |
+| updateIssue | Update a Jira issue | issueKey, summary, description... |
+| transitionIssue | Transition issue status | issueKey, transitionId |
+| assignIssue | Assign issue to user | issueKey, accountId |
+| createPage | Create a Confluence page | title, content, spaceKey |
+| updatePage | Update a Confluence page | pageId, title, content |
+| addComment | Add comment to a page | pageId, content |
 
 ## Request Flow
 
@@ -165,3 +197,5 @@ Try asking Cline these queries after installation:
 **See detailed instructions in [llms-install.md](./llms-install.md)**
 
 > While the server uses the open MCP standard, it is primarily designed and tested for Cline users.
+
+**Lưu ý:** Từ tháng 6/2025, toàn bộ resource Jira đã migrate sang API v3 (endpoint `/rest/api/3/...`). Các trường rich text như description/comment trả về dạng ADF, đã tự động chuyển sang text thuần cho client không hỗ trợ ADF.

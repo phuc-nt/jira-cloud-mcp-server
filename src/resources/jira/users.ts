@@ -62,8 +62,8 @@ async function getUser(config: AtlassianConfig, accountId: string): Promise<any>
     if (!baseUrl.startsWith('https://')) {
       baseUrl = `https://${baseUrl}`;
     }
-    // API get user: /rest/api/2/user?accountId=...
-    const url = `${baseUrl}/rest/api/2/user?accountId=${encodeURIComponent(accountId)}`;
+    // API get user: /rest/api/3/user?accountId=...
+    const url = `${baseUrl}/rest/api/3/user?accountId=${encodeURIComponent(accountId)}`;
     logger.debug(`Getting Jira user: ${url}`);
     const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
     if (!response.ok) {

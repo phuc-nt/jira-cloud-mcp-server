@@ -35,7 +35,7 @@ async function getProjects(config: AtlassianConfig): Promise<any[]> {
     }
     
     // API URL to get the list of projects
-    const url = `${baseUrl}/rest/api/2/project`;
+    const url = `${baseUrl}/rest/api/3/project`;
     
     logger.debug(`Getting projects with direct fetch: ${url}`);
     
@@ -94,7 +94,7 @@ async function getProject(config: AtlassianConfig, projectKey: string): Promise<
     }
     
     // API URL to get project details
-    const url = `${baseUrl}/rest/api/2/project/${projectKey}`;
+    const url = `${baseUrl}/rest/api/3/project/${projectKey}`;
     
     logger.debug(`Getting project details with direct fetch: ${url}`);
     

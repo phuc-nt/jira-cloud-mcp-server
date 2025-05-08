@@ -48,10 +48,22 @@ sequenceDiagram
 
 | Resource | URI Pattern | Dữ liệu trả về |
 |----------|-------------|----------------|
+| Projects | `jira://projects` | Danh sách project (id, key, name, ...)|
 | Project | `jira://projects/{projectKey}` | Thông tin project (id, key, name, description...) |
+| Project Roles | `jira://projects/{projectKey}/roles` | Danh sách role của project |
 | Issue | `jira://issues/{issueKey}` | Chi tiết issue (summary, status, assignee...) |
-| Users | `jira://users/assignable/{projectKey}` | Danh sách user có thể gán cho issue |
+| Issues | `jira://issues` | Danh sách issues, hỗ trợ JQL, phân trang |
+| Issue Transitions | `jira://issues/{issueKey}/transitions` | Danh sách transitions của issue |
 | Comments | `jira://issues/{issueKey}/comments` | Comments của issue |
+| User | `jira://users/{accountId}` | Thông tin chi tiết user |
+| Assignable Users | `jira://users/assignable/{projectKey}` | Danh sách user có thể gán cho issue |
+| Users by Role | `jira://users/role/{projectKey}/{roleId}` | Danh sách user theo role trong project |
+| Confluence Spaces | `confluence://spaces` | Danh sách không gian Confluence |
+| Confluence Space | `confluence://spaces/{spaceKey}` | Thông tin chi tiết không gian |
+| Confluence Pages | `confluence://pages` | Danh sách trang Confluence |
+| Confluence Page | `confluence://pages/{pageId}` | Thông tin chi tiết trang |
+| Page Children | `confluence://pages/{pageId}/children` | Danh sách trang con |
+| Page Ancestors | `confluence://pages/{pageId}/ancestors` | Danh sách tổ tiên của trang |
 
 ### Use cases đã kiểm thử
 
@@ -108,6 +120,7 @@ sequenceDiagram
 | transitionIssue | Chuyển trạng thái issue | issueKey, transitionId |
 | assignIssue | Gán issue cho user | issueKey, accountId |
 | createPage | Tạo trang Confluence | title, content, spaceKey |
+| updatePage | Cập nhật trang Confluence | pageId, title, content |
 | addComment | Thêm comment vào page | pageId, content |
 
 ### Use cases đã kiểm thử

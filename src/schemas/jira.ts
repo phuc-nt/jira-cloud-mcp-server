@@ -12,7 +12,14 @@ export const issueSchema = {
     id: { type: "string", description: "Issue ID" },
     key: { type: "string", description: "Issue key (e.g., PROJ-123)" },
     summary: { type: "string", description: "Issue title/summary" },
-    description: { type: "string", description: "Issue description", nullable: true },
+    description: { anyOf: [
+      { type: "string", description: "Issue description as plain text" },
+      { type: "object", description: "Issue description in ADF format" }
+    ], nullable: true },
+    rawDescription: { anyOf: [
+      { type: "string", description: "Issue description as plain text" },
+      { type: "object", description: "Issue description in ADF format" }
+    ], nullable: true },
     status: { 
       type: "object", 
       properties: {
@@ -185,7 +192,14 @@ export const commentSchema = {
   type: "object",
   properties: {
     id: { type: "string", description: "Comment ID" },
-    body: { type: "string", description: "Comment body" },
+    body: { anyOf: [
+      { type: "string", description: "Comment body as plain text" },
+      { type: "object", description: "Comment body in ADF format" }
+    ] },
+    rawBody: { anyOf: [
+      { type: "string", description: "Comment body as plain text" },
+      { type: "object", description: "Comment body in ADF format" }
+    ] },
     author: {
       type: "object",
       properties: {

@@ -15,6 +15,7 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [x] Đảm bảo tất cả error response và API messages đều bằng tiếng Anh
 - [x] Tạo file llms-install.md theo chuẩn hướng dẫn marketplace
 - [x] Kiểm tra lại code base đảm bảo không còn nội dung tiếng Việt
+- [x] Đã migrate toàn bộ resource Jira sang API v3, hỗ trợ ADF cho description/comment, cập nhật tài liệu liên quan (6/2025)
 
 > **Ghi chú tiến độ:**
 > - Đã hoàn thành chuyển đổi toàn bộ codebase (resource, tool, utils, entrypoint) sang tiếng Anh.
