@@ -19,13 +19,13 @@ Resources là các endpoint chỉ đọc, trả về dữ liệu từ Atlassian 
 
 | Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về | 
 |----------|-----|-------|-----------------------|----------------|
+| Projects | `jira://projects` | Danh sách project | `/rest/api/3/project` | Array của Project objects |
+| Project Details | `jira://projects/{projectKey}` | Chi tiết project | `/rest/api/3/project/{projectKey}` | Single Project object |
+| Project Roles | `jira://projects/{projectKey}/roles` | Danh sách role của project | `/rest/api/3/project/{projectKey}/role` | Array các role (name, id) |
 | Issues | `jira://issues` | Danh sách issues, hỗ trợ JQL, phân trang | `/rest/api/3/search` | Array của Issue objects, có phân trang |
 | Issue Details | `jira://issues/{issueKey}` | Chi tiết issue | `/rest/api/3/issue/{issueKey}` | Single Issue object với description (ADF→text) |
 | Issue Transitions | `jira://issues/{issueKey}/transitions` | Danh sách transitions | `/rest/api/3/issue/{issueKey}/transitions` | Array của Transition objects |
 | Issue Comments | `jira://issues/{issueKey}/comments` | Danh sách comment | `/rest/api/3/issue/{issueKey}/comment` | Array của Comment objects với body (ADF→text) |
-| Projects | `jira://projects` | Danh sách project | `/rest/api/3/project` | Array của Project objects |
-| Project Details | `jira://projects/{projectKey}` | Chi tiết project | `/rest/api/3/project/{projectKey}` | Single Project object |
-| Project Roles | `jira://projects/{projectKey}/roles` | Danh sách role của project | `/rest/api/3/project/{projectKey}/role` | Array các role (name, id) |
 | User Details | `jira://users/{accountId}` | Thông tin user | `/rest/api/3/user?accountId=...` | Single User object |
 | Assignable Users | `jira://users/assignable/{projectKey}` | User có thể gán cho issue | `/rest/api/3/user/assignable/search?project=...` | Array của User objects |
 | Users by Role | `jira://users/role/{projectKey}/{roleId}` | User theo role trong project | `/rest/api/3/project/{projectKey}/role/{roleId}` | Array của User objects |
@@ -38,6 +38,10 @@ Resources là các endpoint chỉ đọc, trả về dữ liệu từ Atlassian 
 | Board Sprints | `jira://boards/{boardId}/sprints` | Sprints trong board | `/rest/agile/1.0/board/{boardId}/sprint` | Array của Sprint objects |
 | Sprint Details | `jira://sprints/{sprintId}` | Chi tiết sprint | `/rest/agile/1.0/sprint/{sprintId}` | Single Sprint object |
 | Sprint Issues | `jira://sprints/{sprintId}/issues` | Issues trong sprint | `/rest/agile/1.0/sprint/{sprintId}/issue` | Array của Issue objects |
+| Dashboards | `jira://dashboards` | Danh sách dashboard | `/rest/api/3/dashboard` | Array của Dashboard objects |
+| My Dashboards | `jira://dashboards/my` | Dashboard của tôi | `/rest/api/3/dashboard?filter=my` | Array của Dashboard objects |
+| Dashboard Details | `jira://dashboards/{dashboardId}` | Chi tiết dashboard | `/rest/api/3/dashboard/{dashboardId}` | Single Dashboard object |
+| Dashboard Gadgets | `jira://dashboards/{dashboardId}/gadgets` | Danh sách gadget của dashboard | `/rest/api/3/dashboard/{dashboardId}/gadget` | Array của Gadget objects |
 
 #### Cấu trúc dữ liệu chính
 
@@ -104,6 +108,18 @@ Tools là các endpoint thực hiện hành động, có thể tạo, cập nh�
 | updateFilter | Cập nhật filter | filterId, name, jql, description, favourite | `/rest/api/3/filter/{filterId}` | Status của update |
 | deleteFilter | Xóa filter | filterId | `/rest/api/3/filter/{filterId}` | Status của xoá |
 | createSprint | Tạo sprint | boardId, name, startDate, endDate, goal | `/rest/agile/1.0/sprint` | Sprint ID mới |
+| addIssueToBoard | Thêm issue vào board | boardId, issueKey | `/rest/agile/1.0/board/{boardId}/issue` | Status của thêm |
+| configureBoardColumns | Cấu hình cột board | boardId, columns | `/rest/agile/1.0/board/{boardId}/column` | Status của cấu hình |
+| startSprint | Bắt đầu sprint | sprintId, startDate, endDate, goal | `/rest/agile/1.0/sprint/{sprintId}/start` | Status của bắt đầu |
+| closeSprint | Đóng sprint | sprintId, completeDate, moveToSprintId, createNewSprint | `/rest/agile/1.0/sprint/{sprintId}/close` | Status của đóng |
+| moveIssuesBetweenSprints | Di chuyển issue giữa các sprint | fromSprintId, toSprintId, issueKeys | `/rest/agile/1.0/sprint/{fromSprintId}/issue/{issueKey}/move` | Status của di chuyển |
+| addIssuesToBacklog | Thêm issue vào backlog | boardId, issueKeys | `/rest/agile/1.0/board/{boardId}/issue` | Status của thêm |
+| removeIssuesFromBacklog | Xóa issue khỏi backlog | boardId, sprintId, issueKeys | `/rest/agile/1.0/sprint/{sprintId}/issue/{issueKey}/remove` | Status của xóa |
+| rankBacklogIssues | Sắp xếp thứ tự backlog | boardId, issueKeys, rankBeforeIssue, rankAfterIssue | `/rest/agile/1.0/board/{boardId}/issue/{issueKey}/rank` | Status của sắp xếp |
+| createDashboard | Tạo dashboard | name, description, sharePermissions | `/rest/api/3/dashboard` | Dashboard ID mới |
+| updateDashboard | Cập nhật dashboard | dashboardId, name, description, sharePermissions | `/rest/api/3/dashboard/{dashboardId}` | Status của update |
+| addGadgetToDashboard | Thêm gadget vào dashboard | dashboardId, uri, color, position, title, properties | `/rest/api/3/dashboard/{dashboardId}/gadget` | Gadget ID mới |
+| removeGadgetFromDashboard | Xóa gadget khỏi dashboard | dashboardId, gadgetId | `/rest/api/3/dashboard/{dashboardId}/gadget/{gadgetId}` | Status của xóa |
 
 #### Cấu trúc dữ liệu input quan trọng
 

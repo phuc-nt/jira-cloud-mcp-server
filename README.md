@@ -76,7 +76,7 @@ npx -y @smithery/cli install @phuc-nt/mcp-atlassian-server --client claude
 
 | Type      | Group       | Feature                                         | Description                                      | Status |
 |-----------|-------------|-------------------------------------------------|--------------------------------------------------|--------|
-| Resource  | Jira        | View issues, projects, users, comments, roles, filters, boards, sprints | Query Jira data (JQL, details, lists, roles, assignable users, users by role, filters, boards, sprints) | ✔      |
+| Resource  | Jira        | View issues, projects, users, comments, roles, filters, boards, sprints, dashboards, gadgets | Query Jira data (JQL, details, lists, roles, assignable users, users by role, filters, boards, sprints, dashboards, gadgets) | ✔      |
 | Resource  | Confluence  | View spaces, pages, child pages, ancestors, labels, attachments, versions | Query Confluence data (spaces, pages, children, ancestors, labels, attachments, versions) | ✔      |
 | Tool      | Jira        | Create, update, transition, assign issues; manage filters, sprints        | Direct actions on Jira (createIssue, updateIssue, transitionIssue, assignIssue, createFilter, updateFilter, deleteFilter, createSprint) | ✔      |
 | Tool      | Confluence  | Create, update pages, add comments, manage labels                        | Direct actions on Confluence (createPage, updatePage, addComment, addLabelsToPage, removeLabelsFromPage) | ✔      |
@@ -114,6 +114,10 @@ npx -y @smithery/cli install @phuc-nt/mcp-atlassian-server --client claude
 | Page Labels | `confluence://pages/{pageId}/labels` | Labels of a page |
 | Page Attachments | `confluence://pages/{pageId}/attachments` | Attachments of a page |
 | Page Versions | `confluence://pages/{pageId}/versions` | Version history of a page |
+| Dashboards | `jira://dashboards` | List all Jira dashboards |
+| My Dashboards | `jira://dashboards/my` | List dashboards owned by current user |
+| Dashboard Details | `jira://dashboards/{dashboardId}` | Dashboard details |
+| Dashboard Gadgets | `jira://dashboards/{dashboardId}/gadgets` | List gadgets of a dashboard |
 
 > For complete technical details including actual Atlassian API endpoints and implementation notes, see [Resource & Tools Documentation](./docs/introduction/resources-and-tools.md).
 
@@ -134,6 +138,18 @@ npx -y @smithery/cli install @phuc-nt/mcp-atlassian-server --client claude
 | addComment | Add comment to a page | pageId, content |
 | addLabelsToPage | Add labels to a page | pageId, labels |
 | removeLabelsFromPage | Remove labels from a page | pageId, labels |
+| addIssueToBoard | Add issue(s) to a Jira board | boardId, issueKey |
+| configureBoardColumns | Configure columns of a Jira board | boardId, columns |
+| startSprint | Start a Jira sprint | sprintId, startDate, endDate, goal |
+| closeSprint | Close a Jira sprint | sprintId, completeDate, moveToSprintId, createNewSprint |
+| moveIssuesBetweenSprints | Move issues between sprints | fromSprintId, toSprintId, issueKeys |
+| addIssuesToBacklog | Add issues to backlog | boardId, issueKeys |
+| removeIssuesFromBacklog | Remove issues from backlog (move to sprint) | boardId, sprintId, issueKeys |
+| rankBacklogIssues | Rank issues in backlog | boardId, issueKeys, rankBeforeIssue, rankAfterIssue |
+| createDashboard | Create a Jira dashboard | name, description, sharePermissions |
+| updateDashboard | Update a Jira dashboard | dashboardId, name, description, sharePermissions |
+| addGadgetToDashboard | Add gadget to dashboard | dashboardId, uri, color, position, title, properties |
+| removeGadgetFromDashboard | Remove gadget from dashboard | dashboardId, gadgetId |
 
 ## Request Flow
 

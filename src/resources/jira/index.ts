@@ -5,6 +5,7 @@ import { registerUserResources } from './users.js';
 import { registerFilterResources } from './filters.js';
 import { registerBoardResources } from './boards.js';
 import { registerSprintResources } from './sprints.js';
+import { registerDashboardResources } from './dashboards.js';
 import { Logger } from '../../utils/logger.js';
 
 const logger = Logger.getLogger('JiraResources');
@@ -23,6 +24,7 @@ export function registerJiraResources(server: McpServer) {
   registerFilterResources(server);
   registerBoardResources(server);
   registerSprintResources(server);
+  registerDashboardResources(server);
   
   logger.info('Jira resources registered successfully');
 }

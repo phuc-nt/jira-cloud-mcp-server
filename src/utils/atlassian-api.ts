@@ -1402,3 +1402,309 @@ export async function createSprint(
   if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
   return await response.json();
 }
+
+/**
+ * Get list of Jira dashboards (all)
+ */
+export async function getDashboards(config: AtlassianConfig, startAt = 0, maxResults = 50): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/dashboard?startAt=${startAt}&maxResults=${maxResults}`;
+  logger.debug(`GET Jira dashboards: ${url}`);
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Get list of Jira dashboards owned by current user (my dashboards)
+ */
+export async function getMyDashboards(config: AtlassianConfig, startAt = 0, maxResults = 50): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  // Atlassian API: filter=my
+  const url = `${baseUrl}/rest/api/3/dashboard/search?filter=my&startAt=${startAt}&maxResults=${maxResults}`;
+  logger.debug(`GET Jira my dashboards: ${url}`);
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Get Jira dashboard by ID
+ */
+export async function getDashboardById(config: AtlassianConfig, dashboardId: string): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/dashboard/${dashboardId}`;
+  logger.debug(`GET Jira dashboard by ID: ${url}`);
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Get gadgets (widgets) of a Jira dashboard
+ */
+export async function getDashboardGadgets(config: AtlassianConfig, dashboardId: string): Promise<any> {
+  // Gadgets nằm trong trường gadgets của dashboard details
+  const dashboard = await getDashboardById(config, dashboardId);
+  return dashboard.gadgets || [];
+}
+
+/**
+ * Add issue(s) to a Jira board (scrum backlog)
+ * Endpoint: POST /rest/agile/1.0/backlog/issue
+ * Payload: { issues: [issueKey] }
+ */
+export async function addIssueToBoard(config: AtlassianConfig, boardId: string, issueKey: string | string[]): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/agile/1.0/backlog/issue`;
+  const issues = Array.isArray(issueKey) ? issueKey : [issueKey];
+  const data = { issues };
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Configure board columns
+ * Endpoint: PUT /rest/agile/1.0/board/{boardId}/configuration
+ * Payload: { ...boardConfig, columnConfig: { columns: [...] } }
+ */
+export async function configureBoardColumns(config: AtlassianConfig, boardId: string, columns: any[]): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/agile/1.0/board/${boardId}/configuration`;
+  // Lấy config hiện tại để merge
+  const currentRes = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!currentRes.ok) throw new Error(`Jira API error: ${currentRes.status} ${await currentRes.text()}`);
+  const currentConfig = await currentRes.json();
+  const data = { ...currentConfig, columnConfig: { columns } };
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Start a Jira sprint
+ * Endpoint: POST /rest/agile/1.0/sprint/{sprintId}
+ * Payload: { state: 'active', startDate, endDate, goal }
+ */
+export async function startSprint(config: AtlassianConfig, sprintId: string, startDate: string, endDate: string, goal?: string): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/agile/1.0/sprint/${sprintId}`;
+  const data: any = {
+    state: 'active',
+    startDate,
+    endDate
+  };
+  if (goal) data.goal = goal;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Close a Jira sprint
+ * Endpoint: POST /rest/agile/1.0/sprint/{sprintId}
+ * Payload: { state: 'closed', completeDate, moveToSprintId?, createNewSprint? }
+ */
+export async function closeSprint(config: AtlassianConfig, sprintId: string, options: { completeDate?: string, moveToSprintId?: string, createNewSprint?: boolean } = {}): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/agile/1.0/sprint/${sprintId}`;
+  const data: any = {
+    state: 'closed',
+    ...options
+  };
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Move issues between sprints
+ * Endpoint: POST /rest/agile/1.0/sprint/{sprintId}/issue
+ * Payload: { issues: [issueKey], remove?: true }
+ */
+export async function moveIssuesBetweenSprints(config: AtlassianConfig, fromSprintId: string, toSprintId: string, issueKeys: string[]): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  // Remove from old sprint
+  const removeUrl = `${baseUrl}/rest/agile/1.0/sprint/${fromSprintId}/issue`;
+  await fetch(removeUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ issues: issueKeys, remove: true }),
+    credentials: 'omit',
+  });
+  // Add to new sprint
+  const addUrl = `${baseUrl}/rest/agile/1.0/sprint/${toSprintId}/issue`;
+  const response = await fetch(addUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ issues: issueKeys }),
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Add issues to backlog
+ * Endpoint: POST /rest/agile/1.0/backlog/issue
+ * Payload: { issues: [issueKey] }
+ */
+export async function addIssuesToBacklog(config: AtlassianConfig, boardId: string, issueKeys: string[]): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/agile/1.0/backlog/issue`;
+  const data = { issues: issueKeys };
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Remove issues from backlog (move to sprint)
+ * Endpoint: POST /rest/agile/1.0/sprint/{sprintId}/issue
+ * Payload: { issues: [issueKey] }
+ */
+export async function removeIssuesFromBacklog(config: AtlassianConfig, boardId: string, sprintId: string, issueKeys: string[]): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/agile/1.0/sprint/${sprintId}/issue`;
+  const data = { issues: issueKeys };
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Rank backlog issues
+ * Endpoint: PUT /rest/agile/1.0/issue/rank
+ * Payload: { issues: [issueKey], rankBeforeIssue?, rankAfterIssue? }
+ */
+export async function rankBacklogIssues(config: AtlassianConfig, boardId: string, issueKeys: string[], options: { rankBeforeIssue?: string, rankAfterIssue?: string } = {}): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/agile/1.0/issue/rank`;
+  const data: any = { issues: issueKeys };
+  if (options.rankBeforeIssue) data.rankBeforeIssue = options.rankBeforeIssue;
+  if (options.rankAfterIssue) data.rankAfterIssue = options.rankAfterIssue;
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Create a new Jira dashboard
+ * Endpoint: POST /rest/api/3/dashboard
+ * Payload: { name, description, sharePermissions }
+ */
+export async function createDashboard(config: AtlassianConfig, data: { name: string, description?: string, sharePermissions?: any[] }): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/dashboard`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Update a Jira dashboard
+ * Endpoint: PUT /rest/api/3/dashboard/{dashboardId}
+ * Payload: { name?, description?, sharePermissions? }
+ */
+export async function updateDashboard(config: AtlassianConfig, dashboardId: string, data: { name?: string, description?: string, sharePermissions?: any[] }): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/dashboard/${dashboardId}`;
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Add gadget to dashboard
+ * Endpoint: POST /rest/api/3/dashboard/{dashboardId}/gadget
+ * Payload: { uri, color, position, title, properties? }
+ */
+export async function addGadgetToDashboard(config: AtlassianConfig, dashboardId: string, data: { uri: string, color?: string, position?: any, title?: string, properties?: any }): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/dashboard/${dashboardId}/gadget`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Remove gadget from dashboard
+ * Endpoint: DELETE /rest/api/3/dashboard/{dashboardId}/gadget/{gadgetId}
+ */
+export async function removeGadgetFromDashboard(config: AtlassianConfig, dashboardId: string, gadgetId: string): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/dashboard/${dashboardId}/gadget/${gadgetId}`;
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers,
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return { success: true };
+}

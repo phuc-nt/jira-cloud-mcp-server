@@ -313,4 +313,63 @@ export const sprintListSchema = {
     },
     metadata: standardMetadataSchema
   }
+};
+
+// Dashboard schemas
+export const dashboardSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", description: "Dashboard ID" },
+    name: { type: "string", description: "Dashboard name" },
+    description: { type: "string", description: "Dashboard description", nullable: true },
+    owner: {
+      type: "object",
+      properties: {
+        displayName: { type: "string" },
+        accountId: { type: "string" }
+      },
+      nullable: true
+    },
+    sharePermissions: { type: "array", description: "Share permissions", items: { type: "object" }, nullable: true },
+    gadgets: { type: "array", items: { type: "object" }, nullable: true },
+    isFavourite: { type: "boolean", description: "Is favourite", nullable: true },
+    view: { type: "string", description: "View type", nullable: true },
+    url: { type: "string", description: "Dashboard URL", nullable: true }
+  },
+  required: ["id", "name"]
+};
+
+export const dashboardListSchema = {
+  type: "object",
+  properties: {
+    dashboards: { type: "array", items: dashboardSchema },
+    total: { type: "number", description: "Total dashboards" },
+    maxResults: { type: "number", description: "Max results per page" },
+    startAt: { type: "number", description: "Start offset" },
+    metadata: standardMetadataSchema
+  },
+  required: ["dashboards", "total"]
+};
+
+// Gadget schemas
+export const gadgetSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", description: "Gadget ID" },
+    title: { type: "string", description: "Gadget title" },
+    color: { type: "string", description: "Gadget color", nullable: true },
+    position: { type: "object", description: "Gadget position", nullable: true },
+    uri: { type: "string", description: "Gadget URI", nullable: true },
+    properties: { type: "object", description: "Gadget properties", nullable: true }
+  },
+  required: ["id", "title"]
+};
+
+export const gadgetListSchema = {
+  type: "object",
+  properties: {
+    gadgets: { type: "array", items: gadgetSchema },
+    metadata: standardMetadataSchema
+  },
+  required: ["gadgets"]
 }; 

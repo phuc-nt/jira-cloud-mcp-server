@@ -83,27 +83,20 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [ ] **Jira: Dashboards** – Truy vấn dashboard, widget, dashboard cá nhân
 - [x] **Done** - **Confluence: Labels, Attachments, Content Versions** – Quản lý tài liệu nâng cao
 
-> **Ghi chú tiến độ:**
-> - Đã hoàn thành việc chuẩn hóa metadata/schema cho tất cả resource chính (Jira/Confluence), giúp client hiển thị đúng kiểu dữ liệu.
-> - Đã tự động hóa kiểm thử bằng cách chia nhỏ file test theo nhóm resource (Jira issue, Jira project, Jira user, Confluence spaces, Confluence pages).
-> - Đã tiếng Anh hóa toàn bộ code test client, đảm bảo tất cả comment, log, biến mô tả đều bằng tiếng Anh.
-> - Đã triển khai thành công các resource mới: Jira Filters, Boards, Sprints và Confluence metadata (Labels, Attachments, Versions).
-> - Đã test toàn diện với client, tất cả resource mới đều hoạt động tốt, trả về dữ liệu đúng format với metadata đầy đủ.
-> - Hệ thống đã sẵn sàng để mở rộng thêm test/resource/tool mới dễ dàng với cấu trúc chuẩn hóa.
+### 3.2. Chuẩn hóa & mở rộng resource/tool MCP (2025-06)
 
-### 3.1. Mở rộng tool cho Jira/Confluence
-- [x] **Done** - **Tool: Create/Update/Delete Filter** – Tạo, cập nhật, xóa filter cá nhân
-- [ ] **Tool: Board Actions** – Thêm/xóa issue vào board, cấu hình board
-- [x] **Done** - **Tool: Sprint Actions** – Tạo sprint
-- [ ] **Tool: More Sprint Actions** – Bắt đầu, đóng sprint, di chuyển issue giữa các sprint
-- [ ] **Tool: Backlog Actions** – Thêm/xóa issue vào backlog, sắp xếp backlog
-- [ ] **Tool: Dashboard Actions** – Tạo, cập nhật dashboard, thêm widget
-- [x] **Done** - **Tool: Confluence Label** – Thêm/xóa label
+- [x] Refactor toàn bộ resource/tool chỉ dùng `atlassian-api.ts`, loại bỏ hoàn toàn JS cũ, đồng bộ type-safe.
+- [x] Migrate toàn bộ resource Jira sang API v3, xử lý ADF, cập nhật schema, bổ sung hàm chuyển ADF.
+- [x] Mở rộng resource/tool nâng cao: Dashboards, Gadgets, Board Actions, Sprint Actions, Backlog Actions, Dashboard/Gadget Actions.
+- [x] Đăng ký đồng bộ tất cả tool qua `registerAllTools`, Cline nhận đủ tool nâng cao.
+- [x] Chuẩn hóa tài liệu: cập nhật README.md, docs/introduction/resources-and-tools.md, roadmap.
+- [x] Xóa file JS/TS thừa, kiểm tra lại codebase, build thành công.
+- [x] Test lại toàn bộ với Cline, xác nhận resource/tool mới hoạt động tốt.
 
 > **Ghi chú tiến độ:**
-> - Đã triển khai thành công các tool mới: Jira Filter CRUD, Sprint Creation, và Confluence Label Management.
-> - Tất cả tool mới đã được test và hoạt động tốt, trả về dữ liệu kết quả đúng format với status rõ ràng.
-> - Các tool mới tuân thủ kiến trúc chung, dễ bảo trì và mở rộng trong tương lai.
+> - Đã hoàn thành chuẩn hóa codebase, tài liệu, schema, tool/resource.
+> - Đã đồng bộ tài liệu, bảng resource/tool, loại bỏ hướng dẫn cũ.
+> - Đã test thực tế với Cline, Cline nhận đủ tool/resource nâng cao.
 
 ### 4. Cải thiện developer experience cho local dev
 - [ ] Viết script tự động build và tạo symlink cho Cline nhận diện nhanh (không cần docker nếu chưa cần)

@@ -11,6 +11,18 @@ import { registerUpdatePageTool } from './confluence/update-page.js';
 import { registerAddCommentTool } from './confluence/add-comment.js';
 import { registerAddLabelsTool, registerRemoveLabelsTool } from './confluence/label-page.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { registerAddIssueToBoardTool } from './jira/add-issue-to-board.js';
+import { registerConfigureBoardColumnsTool } from './jira/configure-board-columns.js';
+import { registerStartSprintTool } from './jira/start-sprint.js';
+import { registerCloseSprintTool } from './jira/close-sprint.js';
+import { registerMoveIssuesBetweenSprintsTool } from './jira/move-issues-between-sprints.js';
+import { registerAddIssuesToBacklogTool } from './jira/add-issues-to-backlog.js';
+import { registerRemoveIssuesFromBacklogTool } from './jira/remove-issues-from-backlog.js';
+import { registerRankBacklogIssuesTool } from './jira/rank-backlog-issues.js';
+import { registerCreateDashboardTool } from './jira/create-dashboard.js';
+import { registerUpdateDashboardTool } from './jira/update-dashboard.js';
+import { registerAddGadgetToDashboardTool } from './jira/add-gadget-to-dashboard.js';
+import { registerRemoveGadgetFromDashboardTool } from './jira/remove-gadget-from-dashboard.js';
 
 /**
  * Register all tools with MCP Server
@@ -30,6 +42,24 @@ export function registerAllTools(server: McpServer) {
   
   // Jira sprint tools
   registerCreateSprintTool(server);
+  registerStartSprintTool(server);
+  registerCloseSprintTool(server);
+  registerMoveIssuesBetweenSprintsTool(server);
+  
+  // Jira board tools
+  registerAddIssueToBoardTool(server);
+  registerConfigureBoardColumnsTool(server);
+  
+  // Jira backlog tools
+  registerAddIssuesToBacklogTool(server);
+  registerRemoveIssuesFromBacklogTool(server);
+  registerRankBacklogIssuesTool(server);
+  
+  // Jira dashboard/gadget tools
+  registerCreateDashboardTool(server);
+  registerUpdateDashboardTool(server);
+  registerAddGadgetToDashboardTool(server);
+  registerRemoveGadgetFromDashboardTool(server);
   
   // Confluence tools
   registerCreatePageTool(server);

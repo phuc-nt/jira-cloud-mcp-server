@@ -1,17 +1,10 @@
 import dotenv from 'dotenv';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { registerCreateIssueTool } from './tools/jira/create-issue.js';
-import { registerUpdateIssueTool } from './tools/jira/update-issue.js';
-import { registerTransitionIssueTool } from './tools/jira/transition-issue.js';
-import { registerAssignIssueTool } from './tools/jira/assign-issue.js';
-import { registerCreatePageTool } from './tools/confluence/create-page.js';
-import { registerAddCommentTool } from './tools/confluence/add-comment.js';
-import { registerUpdatePageTool } from './tools/confluence/update-page.js';
+import { registerAllTools } from './tools/index.js';
 import { registerAllResources } from './resources/index.js';
 import { Logger } from './utils/logger.js';
 import { AtlassianConfig } from './utils/atlassian-api.js';
-import { registerJiraResources } from './resources/jira/index.js';
 
 // Load environment variables
 dotenv.config();
@@ -96,46 +89,32 @@ const serverProxy = new Proxy(server, {
 // Log config info for debugging
 logger.info(`Atlassian config available: ${JSON.stringify(atlassianConfig, null, 2)}`);
 
-// Define a wrapper function to handle context
-const wrapToolHandler = (registerToolFn: (server: McpServer) => void) => {
-  // Create a server proxy to intercept tool registration
-  const proxyServer: any = {
-    tool: (name: string, description: string, schema: any, handler: any) => {
-      // Re-register tool with new handler that handles context
-      server.tool(name, description, schema, async (params: any, context: any) => {
-        // Context is provided directly to the handler
-        context.atlassianConfig = atlassianConfig;
-        
-        logger.debug(`Tool ${name} called with context keys: [${Object.keys(context)}]`);
-        
-        try {
-          return await handler(params, context);
-        } catch (error) {
-          logger.error(`Error in wrapped handler for ${name}:`, error);
-          return {
-            content: [{ type: 'text', text: `Error in tool handler: ${error instanceof Error ? error.message : String(error)}` }],
-            isError: true
-          };
-        }
-      });
-    }
-  };
-  
-  // Call the registration function with the proxy server
-  registerToolFn(proxyServer);
+// Tạo server proxy cho việc đăng ký tool
+const toolServerProxy: any = {
+  tool: (name: string, description: string, schema: any, handler: any) => {
+    // Đăng ký tool với handler được wrap để xử lý context
+    server.tool(name, description, schema, async (params: any, context: any) => {
+      // Thêm config vào context
+      context.atlassianConfig = atlassianConfig;
+      
+      logger.debug(`Tool ${name} called with context keys: [${Object.keys(context)}]`);
+      
+      try {
+        return await handler(params, context);
+      } catch (error) {
+        logger.error(`Error in tool handler for ${name}:`, error);
+        return {
+          content: [{ type: 'text', text: `Error in tool handler: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true
+        };
+      }
+    });
+  }
 };
 
-// Register all tools with wrapper
-// Jira tools
-wrapToolHandler(registerCreateIssueTool);
-wrapToolHandler(registerUpdateIssueTool);
-wrapToolHandler(registerTransitionIssueTool);
-wrapToolHandler(registerAssignIssueTool);
-
-// Confluence tools
-wrapToolHandler(registerCreatePageTool);
-wrapToolHandler(registerAddCommentTool);
-wrapToolHandler(registerUpdatePageTool);
+// Đăng ký tất cả tools thay vì đăng ký từng tool riêng lẻ
+logger.info('Registering all MCP Tools...');
+registerAllTools(toolServerProxy);
 
 // Register all resources
 logger.info('Registering MCP Resources...');
@@ -152,16 +131,17 @@ async function startServer() {
     logger.info(`MCP Server Name: ${process.env.MCP_SERVER_NAME || 'phuc-nt/mcp-atlassian-server'}`);
     logger.info(`MCP Server Version: ${process.env.MCP_SERVER_VERSION || '1.0.0'}`);
     logger.info(`Connected to Atlassian site: ${ATLASSIAN_SITE_NAME}`);
+    
     logger.info('Registered tools:');
-    // Jira tools
-    logger.info('- createIssue (Jira)');
-    logger.info('- updateIssue (Jira)');
-    logger.info('- transitionIssue (Jira)');
-    logger.info('- assignIssue (Jira)');
-    // Confluence tools
-    logger.info('- createPage (Confluence)');
-    logger.info('- addComment (Confluence)');
-    logger.info('- updatePage (Confluence)');
+    // Liệt kê tất cả các tool đã đăng ký
+    logger.info('- Jira issue tools: createIssue, updateIssue, transitionIssue, assignIssue');
+    logger.info('- Jira filter tools: createFilter, updateFilter, deleteFilter');
+    logger.info('- Jira sprint tools: createSprint, startSprint, closeSprint, moveIssuesBetweenSprints');
+    logger.info('- Jira board tools: addIssueToBoard, configureBoardColumns');
+    logger.info('- Jira backlog tools: addIssuesToBacklog, removeIssuesFromBacklog, rankBacklogIssues');
+    logger.info('- Jira dashboard tools: createDashboard, updateDashboard, addGadgetToDashboard, removeGadgetFromDashboard');
+    logger.info('- Confluence tools: createPage, updatePage, addComment, addLabelsToPage, removeLabelsFromPage');
+    
     // Resources - dynamically list all registered resources
     logger.info('Registered resources:');
     
