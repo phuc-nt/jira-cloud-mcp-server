@@ -134,10 +134,12 @@ npx -y @smithery/cli install @phuc-nt/mcp-atlassian-server --client claude
 | deleteFilter | Delete a Jira filter | filterId |
 | createSprint | Create a Jira sprint | boardId, name, startDate, endDate, goal |
 | createPage | Create a Confluence page | title, content, spaceKey |
-| updatePage | Update a Confluence page | pageId, title, content, version, addLabels, removeLabels |
+| updatePage | Update a Confluence page | pageId, title, content, version |
+| updatePageTitle | Update a Confluence page title | pageId, title, version |
 | addComment | Add comment to a page | pageId, content |
-| addLabelsToPage | Add labels to a page | pageId, labels |
-| removeLabelsFromPage | Remove labels from a page | pageId, labels |
+| updateFooterComment | Update a footer comment | commentId, version, value, representation, message |
+| deleteFooterComment | Delete a footer comment | commentId |
+| deletePage | Delete a Confluence page | pageId, draft, purge |
 | addIssueToBoard | Add issue(s) to a Jira board | boardId, issueKey |
 | configureBoardColumns | Configure columns of a Jira board | boardId, columns |
 | startSprint | Start a Jira sprint | sprintId, startDate, endDate, goal |
@@ -190,10 +192,12 @@ Try asking Cline these queries after installation:
 
 3. **Documentation with Confluence**
    - "Create a Confluence page titled 'Meeting Notes'"
-   - "Update the Confluence page 'API Documentation' with new examples and labels"
-   - "Add the label 'documentation' to the page about architecture"
-   - "Remove the label 'draft' from the page 'Meeting Notes'"
+   - "Update the Confluence page 'API Documentation' with new examples"
+   - "Change the title of the 'Meeting Notes' page to 'Weekly Meeting Notes'"
    - "Add a comment to the Confluence page about API Documentation"
+   - "Update my comment on the API Documentation page"
+   - "Delete my comment from the Meeting Notes page" 
+   - "Delete the outdated page about last year's project"
 
 4. **Analysis and Reporting**
    - "Compare the number of completed issues between the current and previous sprint"

@@ -53,7 +53,16 @@ export const pageSchema = {
         createdAt: { type: "string", description: "Version creation date" }
       }
     },
-    body: { type: "string", description: "Page content (converted from body object)" },
+    body: { type: "string", description: `Page content (converted from body object, chỉ hỗ trợ Confluence storage format - XML-like HTML).
+
+- KHÔNG hỗ trợ plain text hoặc markdown (nếu truyền sẽ báo lỗi).
+- HỖ TRỢ các thẻ HTML dạng XML-like, macro Confluence (<ac:structured-macro>, <ac:rich-text-body>, ...), bảng, panel, info, warning, v.v. nếu đúng storage format.
+- Nội dung phải tuân thủ đúng chuẩn storage format của Confluence.
+
+Ví dụ hợp lệ:
+- <p>Đây là đoạn văn bản</p>
+- <ac:structured-macro ac:name=\"info\"><ac:rich-text-body>Thông tin</ac:rich-text-body></ac:structured-macro>
+` },
     bodyType: { type: "string", description: "Content representation type" },
     _links: { type: "object", description: "Links related to the page" }
   },

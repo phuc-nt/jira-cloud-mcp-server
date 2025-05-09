@@ -89,9 +89,10 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [x] Migrate toàn bộ resource Jira sang API v3, xử lý ADF, cập nhật schema, bổ sung hàm chuyển ADF.
 - [x] Migrate toàn bộ resource/tool Confluence sang API v2, loại bỏ hoàn toàn endpoint v1, cập nhật schema, tài liệu, test.
 - [x] Mở rộng resource/tool nâng cao: Dashboards, Gadgets, Board Actions, Sprint Actions, Backlog Actions, Dashboard/Gadget Actions.
+- [x] Bổ sung các tool Confluence: updatePageTitle, updateFooterComment, deleteFooterComment, deletePage.
 - [x] Đăng ký đồng bộ tất cả tool qua `registerAllTools`, Cline nhận đủ tool nâng cao.
 - [x] Chuẩn hóa tài liệu: cập nhật README.md, docs/introduction/resources-and-tools.md, roadmap.
-- [x] Xóa file JS/TS thừa, kiểm tra lại codebase, build thành công.
+- [x] Xóa file JS/TS thừa (bao gồm label-page.ts), kiểm tra lại codebase, build thành công.
 - [x] Test lại toàn bộ với Cline, xác nhận resource/tool mới hoạt động tốt.
 
 > **Ghi chú tiến độ:**

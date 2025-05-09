@@ -142,7 +142,11 @@ Tools là các endpoint thực hiện hành động, có thể tạo, cập nh�
 |------|-------|---------------|-----------------------|----------------|
 | createPage | Tạo trang mới | spaceId, title, content, parentId | `/wiki/api/v2/pages` | Page ID mới |
 | updatePage | Cập nhật trang | pageId, title, content, version | `/wiki/api/v2/pages/{pageId}` (PUT) | Status của update |
+| updatePageTitle | Cập nhật tiêu đề trang | pageId, title, version | `/wiki/api/v2/pages/{pageId}/title` (PUT) | Status của update |
 | addComment | Thêm comment footer vào page | pageId, content | `/wiki/api/v2/footer-comments` | Comment mới |
+| updateFooterComment | Cập nhật comment | commentId, version, value, representation, message | `/wiki/api/v2/footer-comments/{commentId}` (PUT) | Status của update |
+| deleteFooterComment | Xóa comment | commentId | `/wiki/api/v2/footer-comments/{commentId}` (DELETE) | Status của xóa |
+| deletePage | Xóa trang | pageId, draft, purge | `/wiki/api/v2/pages/{pageId}` (DELETE) | Status của xóa |
 
 ## Migration Notes (API v2 → v3)
 

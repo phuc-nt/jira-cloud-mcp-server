@@ -1952,3 +1952,59 @@ export async function deleteConfluencePageV2(config: AtlassianConfig, params: { 
     'DELETE'
   );
 }
+
+/**
+ * Update Confluence page title (API v2)
+ * @param config AtlassianConfig
+ * @param params object containing pageId, title, and version
+ */
+export async function updateConfluencePageTitleV2(config: AtlassianConfig, params: { pageId: string, title: string, version: number }): Promise<any> {
+  const payload = {
+    title: params.title,
+    version: { number: params.version },
+    status: "current"
+  };
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/pages/${encodeURIComponent(params.pageId)}/title`,
+    'PUT',
+    payload
+  );
+}
+
+/**
+ * Update a footer comment in Confluence (API v2)
+ * @param config AtlassianConfig
+ * @param params object chứa commentId, version, body, message (tùy chọn)
+ */
+export async function updateConfluenceFooterCommentV2(config: AtlassianConfig, params: { commentId: string|number, version: number, value: string, representation?: string, message?: string }): Promise<any> {
+  const payload: any = {
+    version: {
+      number: params.version
+    },
+    body: {
+      representation: params.representation || 'storage',
+      value: params.value
+    }
+  };
+  if (params.message) payload.version.message = params.message;
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/footer-comments/${encodeURIComponent(params.commentId)}`,
+    'PUT',
+    payload
+  );
+}
+
+/**
+ * Delete a footer comment in Confluence (API v2)
+ * @param config AtlassianConfig
+ * @param commentId ID của comment cần xóa
+ */
+export async function deleteConfluenceFooterCommentV2(config: AtlassianConfig, commentId: string|number): Promise<any> {
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/footer-comments/${encodeURIComponent(commentId)}`,
+    'DELETE'
+  );
+}

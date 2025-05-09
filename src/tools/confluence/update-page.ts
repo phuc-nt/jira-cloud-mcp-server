@@ -14,7 +14,16 @@ const logger = Logger.getLogger('ConfluenceTools:updatePage');
 export const updatePageSchema = z.object({
   pageId: z.string().describe('ID of the page to update'),
   title: z.string().optional().describe('New title of the page'),
-  content: z.string().optional().describe('New content of the page (in storage/HTML format)'),
+  content: z.string().optional().describe(`Nội dung mới của page (chỉ hỗ trợ Confluence storage format - XML-like HTML).
+
+- KHÔNG hỗ trợ plain text hoặc markdown (nếu truyền sẽ báo lỗi).
+- HỖ TRỢ các thẻ HTML dạng XML-like, macro Confluence (<ac:structured-macro>, <ac:rich-text-body>, ...), bảng, panel, info, warning, v.v. nếu đúng storage format.
+- Nội dung phải tuân thủ đúng chuẩn storage format của Confluence.
+
+Ví dụ hợp lệ:
+- <p>Đây là đoạn văn bản</p>
+- <ac:structured-macro ac:name="info"><ac:rich-text-body>Thông tin</ac:rich-text-body></ac:structured-macro>
+`),
   version: z.number().describe('Current version number of the page (required to avoid conflicts)')
 });
 

@@ -9,6 +9,10 @@ import { registerCreateSprintTool } from './jira/create-sprint.js';
 import { registerCreatePageTool } from './confluence/create-page.js';
 import { registerUpdatePageTool } from './confluence/update-page.js';
 import { registerAddCommentTool } from './confluence/add-comment.js';
+import { registerDeletePageTool } from './confluence/delete-page.js';
+import { registerUpdatePageTitleTool } from './confluence/update-page-title.js';
+import { registerUpdateFooterCommentTool } from './confluence/update-footer-comment.js';
+import { registerDeleteFooterCommentTool } from './confluence/delete-footer-comment.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerAddIssueToBoardTool } from './jira/add-issue-to-board.js';
 import { registerConfigureBoardColumnsTool } from './jira/configure-board-columns.js';
@@ -64,4 +68,8 @@ export function registerAllTools(server: McpServer) {
   registerCreatePageTool(server);
   registerUpdatePageTool(server);
   registerAddCommentTool(server);
+  registerDeletePageTool(server);
+  registerUpdatePageTitleTool(server);
+  registerUpdateFooterCommentTool(server);
+  registerDeleteFooterCommentTool(server);
 }

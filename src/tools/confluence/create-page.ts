@@ -14,7 +14,16 @@ const logger = Logger.getLogger('ConfluenceTools:createPage');
 export const createPageSchema = z.object({
   spaceId: z.string().describe('ID số của space muốn tạo page (bắt buộc, lấy từ API v2, không phải key như TX, DEV, ...)'),
   title: z.string().describe('Title of the page'),
-  content: z.string().describe('Content of the page (in Confluence storage/HTML format)'),
+  content: z.string().describe(`Content của page (bắt buộc, chỉ hỗ trợ Confluence storage format - XML-like HTML).
+
+- KHÔNG hỗ trợ plain text hoặc markdown (nếu truyền sẽ báo lỗi).
+- HỖ TRỢ các thẻ HTML dạng XML-like, macro Confluence (<ac:structured-macro>, <ac:rich-text-body>, ...), bảng, panel, info, warning, v.v. nếu đúng storage format.
+- Nội dung phải tuân thủ đúng chuẩn storage format của Confluence.
+
+Ví dụ hợp lệ:
+- <p>Đây là đoạn văn bản</p>
+- <ac:structured-macro ac:name="info"><ac:rich-text-body>Thông tin</ac:rich-text-body></ac:structured-macro>
+`),
   parentId: z.string().optional().describe('ID of the parent page (if creating a child page)')
 });
 
