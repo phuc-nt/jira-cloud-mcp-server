@@ -238,51 +238,6 @@ export function registerPageResources(server: McpServer) {
     }
   );
 
-  // Resource: Labels
-  server.resource(
-    'confluence-page-labels',
-    new ResourceTemplate('confluence://pages/{pageId}/labels', { list: undefined }),
-    async (uri, { pageId, limit, cursor }, extra) => {
-      let normalizedPageId = '';
-      try {
-        let config: AtlassianConfig;
-        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
-          config = (extra.context as any).atlassianConfig as AtlassianConfig;
-        } else {
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
-        }
-        if (!pageId) {
-          throw new Error('Missing pageId in URI');
-        }
-        normalizedPageId = Array.isArray(pageId) ? pageId[0] : pageId;
-        const safeCursor = Array.isArray(cursor) ? cursor[0] : cursor;
-        const safeLimit = Array.isArray(limit) ? parseInt(limit[0], 10) : (limit ? parseInt(limit, 10) : undefined);
-        logger.info(`Getting labels for Confluence page (v2): ${normalizedPageId}`);
-        const data = await getConfluencePageLabelsV2(config, normalizedPageId, safeCursor, safeLimit || 25);
-        return createStandardResource(
-          uri.href,
-          data.results || [],
-          'labels',
-          undefined,
-          data.results?.length || 0,
-          data.results?.length || 0,
-          0,
-          `${config.baseUrl}/wiki/pages/${normalizedPageId}`
-        );
-      } catch (error) {
-        logger.error(`Error getting Confluence page labels for ${normalizedPageId}:`, error);
-        throw error;
-      }
-    }
-  );
-
   // Resource: Attachments
   server.resource(
     'confluence-page-attachments',

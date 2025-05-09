@@ -9,7 +9,6 @@ import { registerCreateSprintTool } from './jira/create-sprint.js';
 import { registerCreatePageTool } from './confluence/create-page.js';
 import { registerUpdatePageTool } from './confluence/update-page.js';
 import { registerAddCommentTool } from './confluence/add-comment.js';
-import { registerAddLabelsTool, registerRemoveLabelsTool } from './confluence/label-page.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerAddIssueToBoardTool } from './jira/add-issue-to-board.js';
 import { registerConfigureBoardColumnsTool } from './jira/configure-board-columns.js';
@@ -65,6 +64,4 @@ export function registerAllTools(server: McpServer) {
   registerCreatePageTool(server);
   registerUpdatePageTool(server);
   registerAddCommentTool(server);
-  registerAddLabelsTool(server);
-  registerRemoveLabelsTool(server);
 }

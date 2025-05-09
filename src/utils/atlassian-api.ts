@@ -1276,30 +1276,6 @@ export async function getConfluencePageVersionsV2(config: AtlassianConfig, pageI
 }
 
 /**
- * Add labels to a Confluence page (API v2)
- */
-export async function addConfluenceLabelsV2(config: AtlassianConfig, pageId: string, labels: string[]): Promise<any> {
-  const labelObjects = labels.map(label => ({ name: label }));
-  return await callConfluenceApi<any>(
-    config,
-    `/api/v2/pages/${encodeURIComponent(pageId)}/labels`,
-    'POST',
-    labelObjects
-  );
-}
-
-/**
- * Remove a label from a Confluence page (API v2)
- */
-export async function removeConfluenceLabelV2(config: AtlassianConfig, pageId: string, label: string): Promise<any> {
-  return await callConfluenceApi<any>(
-    config,
-    `/api/v2/pages/${encodeURIComponent(pageId)}/labels/${encodeURIComponent(label)}`,
-    'DELETE'
-  );
-}
-
-/**
  * Create a new Jira filter
  */
 export async function createFilter(
@@ -1788,21 +1764,14 @@ export async function getConfluenceSpaceV2(config: AtlassianConfig, spaceKey: st
 /**
  * Create a new Confluence page (API v2)
  */
-export async function createConfluencePageV2(config: AtlassianConfig, params: { spaceKey: string, title: string, content: string, parentId?: string }): Promise<any> {
-  // Lấy spaceId từ spaceKey nếu cần
-  let spaceId = params.spaceKey;
-  if (/^[a-zA-Z0-9\-]+$/.test(params.spaceKey)) {
-    // Nếu là key, gọi API để lấy id
-    const spaceRes = await getConfluenceSpaceV2(config, params.spaceKey);
-    spaceId = spaceRes.id;
-  }
+export async function createConfluencePageV2(config: AtlassianConfig, params: { spaceId: string, title: string, content: string, parentId?: string }): Promise<any> {
   // Validate content
   if (!params.content.trim().startsWith('<')) {
     throw new Error('Content must be in Confluence storage format (XML-like HTML).');
   }
   // Chuẩn bị payload
   const requestData: any = {
-    spaceId: spaceId,
+    spaceId: params.spaceId,
     title: params.title,
     body: {
       representation: 'storage',
@@ -1823,31 +1792,25 @@ export async function createConfluencePageV2(config: AtlassianConfig, params: { 
  * Update a Confluence page (API v2)
  * Có thể update title hoặc body hoặc cả hai. Mỗi lần update phải tăng version.
  */
-export async function updateConfluencePageV2(config: AtlassianConfig, params: { pageId: string, title?: string, content?: string, version: number }): Promise<any> {
-  // Update title nếu có
-  let result: any = null;
-  if (params.title) {
-    result = await callConfluenceApi<any>(
-      config,
-      `/api/v2/pages/${encodeURIComponent(params.pageId)}/title`,
-      'PUT',
-      { title: params.title, version: params.version }
-    );
-    params.version++;
-  }
-  // Update body nếu có
-  if (params.content) {
-    if (!params.content.trim().startsWith('<')) {
-      throw new Error('Content must be in Confluence storage format (XML-like HTML).');
+export async function updateConfluencePageV2(config: AtlassianConfig, params: { pageId: string, title: string, content: string, version: number }): Promise<any> {
+  const payload = {
+    id: params.pageId,
+    status: "current",
+    title: params.title,
+    body: {
+      representation: "storage",
+      value: params.content
+    },
+    version: {
+      number: params.version
     }
-    result = await callConfluenceApi<any>(
-      config,
-      `/api/v2/pages/${encodeURIComponent(params.pageId)}/body`,
-      'PUT',
-      { body: { representation: 'storage', value: params.content }, version: params.version }
-    );
-  }
-  return result;
+  };
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/pages/${encodeURIComponent(params.pageId)}`,
+    'PUT',
+    payload
+  );
 }
 
 /**
@@ -1858,6 +1821,7 @@ export async function addConfluenceCommentV2(config: AtlassianConfig, params: { 
     throw new Error('Comment content must be in Confluence storage format (XML-like HTML).');
   }
   const requestData = {
+    pageId: params.pageId,
     body: {
       representation: 'storage',
       value: params.content
@@ -1865,7 +1829,7 @@ export async function addConfluenceCommentV2(config: AtlassianConfig, params: { 
   };
   return await callConfluenceApi<any>(
     config,
-    `/api/v2/pages/${encodeURIComponent(params.pageId)}/comments`,
+    `/api/v2/footer-comments`,
     'POST',
     requestData
   );
@@ -1969,5 +1933,22 @@ export async function getConfluencePagesWithFilters(config: AtlassianConfig, fil
     'GET',
     null,
     filters
+  );
+}
+
+/**
+ * Delete a Confluence page (API v2)
+ * @param config AtlassianConfig
+ * @param params object containing pageId, draft, and purge
+ */
+export async function deleteConfluencePageV2(config: AtlassianConfig, params: { pageId: string, draft?: boolean, purge?: boolean }): Promise<any> {
+  const query: string[] = [];
+  if (params.draft) query.push('draft=true');
+  if (params.purge) query.push('purge=true');
+  const endpoint = `/api/v2/pages/${encodeURIComponent(params.pageId)}` + (query.length ? `?${query.join('&')}` : '');
+  return await callConfluenceApi<any>(
+    config,
+    endpoint,
+    'DELETE'
   );
 }

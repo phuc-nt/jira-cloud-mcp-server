@@ -42,28 +42,22 @@ export const pageSchema = {
     id: { type: "string", description: "Page ID" },
     title: { type: "string", description: "Page title" },
     status: { type: "string", description: "Page status" },
-    spaceKey: { type: "string", description: "Space key the page belongs to" },
-    version: { type: "number", description: "Page version number" },
-    body: { type: "string", description: "Page content in storage format" },
-    url: { type: "string", description: "Page URL" },
-    labels: {
-      type: "array",
-      items: { type: "string" },
-      description: "Page labels/tags"
-    },
+    spaceId: { type: "string", description: "Space ID" },
     parentId: { type: "string", description: "Parent page ID", nullable: true },
-    author: {
+    authorId: { type: "string", description: "Author ID", nullable: true },
+    createdAt: { type: "string", description: "Creation date" },
+    version: {
       type: "object",
       properties: {
-        displayName: { type: "string", description: "Author's display name" },
-        accountId: { type: "string", description: "Author's account ID" }
-      },
-      nullable: true
+        number: { type: "number", description: "Version number" },
+        createdAt: { type: "string", description: "Version creation date" }
+      }
     },
-    created: { type: "string", format: "date-time", description: "Creation date" },
-    updated: { type: "string", format: "date-time", description: "Last update date" }
+    body: { type: "string", description: "Page content (converted from body object)" },
+    bodyType: { type: "string", description: "Content representation type" },
+    _links: { type: "object", description: "Links related to the page" }
   },
-  required: ["id", "title", "spaceKey", "version"]
+  required: ["id", "title", "status", "spaceId", "createdAt", "version", "body", "bodyType", "_links"]
 };
 
 /**
@@ -89,18 +83,20 @@ export const commentSchema = {
   type: "object",
   properties: {
     id: { type: "string", description: "Comment ID" },
-    body: { type: "string", description: "Comment content" },
-    author: {
+    pageId: { type: "string", description: "Page ID" },
+    body: { type: "string", description: "Comment content (HTML)" },
+    bodyType: { type: "string", description: "Content representation type" },
+    createdAt: { type: "string", format: "date-time", description: "Creation date" },
+    createdBy: {
       type: "object",
       properties: {
-        displayName: { type: "string", description: "Author's display name" },
-        accountId: { type: "string", description: "Author's account ID" }
+        accountId: { type: "string", description: "Author's account ID" },
+        displayName: { type: "string", description: "Author's display name" }
       }
     },
-    created: { type: "string", format: "date-time", description: "Creation date" },
-    updated: { type: "string", format: "date-time", description: "Last update date" }
+    _links: { type: "object", description: "Links related to the comment" }
   },
-  required: ["id", "body", "author"]
+  required: ["id", "pageId", "body", "createdAt", "createdBy"]
 };
 
 /**

@@ -84,11 +84,11 @@ Resources là các endpoint chỉ đọc, trả về dữ liệu từ Atlassian 
 |----------|-----|-------|-----------------------|----------------|
 | Spaces | `confluence://spaces` | Danh sách không gian | `/wiki/api/v2/spaces` | Array của Space objects (v2) |
 | Space Details | `confluence://spaces/{spaceKey}` | Chi tiết không gian | `/wiki/api/v2/spaces/{spaceKey}` | Single Space object (v2) |
-| Pages | `confluence://pages` | Danh sách trang | `/wiki/api/v2/pages` | Array của Page objects (v2) |
+| Pages | `confluence://pages` | Danh sách trang (hỗ trợ filter, phân trang) | `/wiki/api/v2/pages` | Array của Page objects (v2) |
 | Page Details | `confluence://pages/{pageId}` | Chi tiết trang | `/wiki/api/v2/pages/{pageId}` + `/wiki/api/v2/pages/{pageId}/body` | Single Page object với content/body (v2) |
 | Page Children | `confluence://pages/{pageId}/children` | Danh sách trang con | `/wiki/api/v2/pages/{pageId}/children` | Array của Page objects (v2) |
 | Page Ancestors | `confluence://pages/{pageId}/ancestors` | Danh sách tổ tiên | `/wiki/api/v2/pages/{pageId}/ancestors` | Array của Page objects (v2) |
-| Page Labels | `confluence://pages/{pageId}/labels` | Nhãn của trang | `/wiki/api/v2/pages/{pageId}/labels` | Array của Label objects (v2) |
+| Page Comments | `confluence://pages/{pageId}/comments` | Danh sách comment (footer + inline) | `/wiki/api/v2/pages/{pageId}/footer-comments`, `/wiki/api/v2/pages/{pageId}/inline-comments` | Array của Comment objects (v2) |
 | Page Attachments | `confluence://pages/{pageId}/attachments` | Tập tin đính kèm | `/wiki/api/v2/pages/{pageId}/attachments` | Array của Attachment objects (v2) |
 | Page Versions | `confluence://pages/{pageId}/versions` | Lịch sử phiên bản | `/wiki/api/v2/pages/{pageId}/versions` | Array của Version objects (v2) |
 
@@ -140,11 +140,9 @@ Tools là các endpoint thực hiện hành động, có thể tạo, cập nh�
 
 | Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
 |------|-------|---------------|-----------------------|----------------|
-| createPage | Tạo trang mới | spaceKey, title, content, parentId | `/wiki/api/v2/pages` | Page ID mới |
-| updatePage | Cập nhật trang | pageId, title, content, version, addLabels, removeLabels | `/wiki/api/v2/pages/{pageId}` (PUT), `/wiki/api/v2/pages/{pageId}/body` (PUT) | Status của update |
-| addComment | Thêm comment vào page | pageId, content | `/wiki/api/v2/pages/{pageId}/comments` | Comment mới |
-| addLabelsToPage | Thêm nhãn vào trang | pageId, labels | `/wiki/api/v2/pages/{pageId}/labels` | Status của thêm |
-| removeLabelsFromPage | Xóa nhãn khỏi trang | pageId, labels | `/wiki/api/v2/pages/{pageId}/labels/{label}` | Status của xoá |
+| createPage | Tạo trang mới | spaceId, title, content, parentId | `/wiki/api/v2/pages` | Page ID mới |
+| updatePage | Cập nhật trang | pageId, title, content, version | `/wiki/api/v2/pages/{pageId}` (PUT) | Status của update |
+| addComment | Thêm comment footer vào page | pageId, content | `/wiki/api/v2/footer-comments` | Comment mới |
 
 ## Migration Notes (API v2 → v3)
 
@@ -401,3 +399,10 @@ Future enhancements will include:
 **Lưu ý:** Từ tháng 6/2025, toàn bộ resource Jira đã migrate sang API v3 (endpoint `/rest/api/3/...`). Các trường rich text như description/comment trả về dạng ADF, đã tự động chuyển sang text thuần cho client không hỗ trợ ADF. 
 
 > **Lưu ý:** Tất cả resource và tool Confluence hiện tại chỉ sử dụng API v2 (`/wiki/api/v2/`). Các endpoint v1 đã bị loại bỏ hoàn toàn. Schema dữ liệu đã cập nhật theo API v2. 
+
+## Develop Tip: Luôn cập nhật schema khi implement resource/tool mới
+
+- Khi implement resource hoặc tool mới (đặc biệt với Confluence/Jira API v2), **luôn phải cập nhật schema** (ở `src/schemas/...`) cho đúng chuẩn response thực tế của API.
+- Nếu không cập nhật schema, phía client (như Cline) sẽ không validate hoặc hiển thị đúng dữ liệu, dẫn đến lỗi hoặc thiếu thông tin.
+- Kinh nghiệm thực tế: mỗi khi sửa logic hoặc response của resource/tool, phải kiểm tra và update schema tương ứng. Đặc biệt chú ý các trường required, kiểu dữ liệu, và các trường mới/cũ bị thay đổi do API Atlassian update.
+- Nên test lại resource/tool với Cline hoặc client thực tế để đảm bảo schema và dữ liệu trả về đã đồng bộ. 

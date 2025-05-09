@@ -12,7 +12,7 @@ const logger = Logger.getLogger('ConfluenceTools:createPage');
 
 // Input parameter schema
 export const createPageSchema = z.object({
-  spaceKey: z.string().describe('Space key to create the page in (e.g., DEV, HR)'),
+  spaceId: z.string().describe('ID số của space muốn tạo page (bắt buộc, lấy từ API v2, không phải key như TX, DEV, ...)'),
   title: z.string().describe('Title of the page'),
   content: z.string().describe('Content of the page (in Confluence storage/HTML format)'),
   parentId: z.string().optional().describe('ID of the parent page (if creating a child page)')
@@ -27,6 +27,7 @@ interface CreatePageResult {
   self: string;
   webui: string;
   success: boolean;
+  spaceId?: string;
 }
 
 // Main handler to create a new page (API v2)
@@ -35,9 +36,9 @@ export async function createPageHandler(
   config: AtlassianConfig
 ): Promise<CreatePageResult> {
   try {
-    logger.info(`Creating new page (v2) "${params.title}" in space ${params.spaceKey}`);
+    logger.info(`Creating new page (v2) "${params.title}" in spaceId ${params.spaceId}`);
     const data = await createConfluencePageV2(config, {
-      spaceKey: params.spaceKey,
+      spaceId: params.spaceId,
       title: params.title,
       content: params.content,
       parentId: params.parentId
@@ -48,13 +49,14 @@ export async function createPageHandler(
       title: data.title,
       self: data._links.self,
       webui: data._links.webui,
-      success: true
+      success: true,
+      spaceId: params.spaceId
     };
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
     }
-    logger.error(`Error creating page (v2) in space ${params.spaceKey}:`, error);
+    logger.error(`Error creating page (v2) in spaceId ${params.spaceId}:`, error);
     let message = `Failed to create page: ${error instanceof Error ? error.message : String(error)}`;
     throw new ApiError(
       ApiErrorType.SERVER_ERROR,
@@ -68,7 +70,7 @@ export async function createPageHandler(
 export const registerCreatePageTool = (server: McpServer) => {
   server.tool(
     'createPage',
-    'Create a new page in Confluence',
+    'Create a new page in Confluence (API v2, chỉ hỗ trợ spaceId)',
     createPageSchema.shape,
     async (params: CreatePageParams, context: Record<string, any>): Promise<McpResponse> => {
       try {
@@ -82,12 +84,11 @@ export const registerCreatePageTool = (server: McpServer) => {
         const result = await createPageHandler(params, config);
         
         return createTextResponse(
-          `Page "${result.title}" created successfully in space ${params.spaceKey}. URL: ${config.baseUrl}/wiki/spaces/${params.spaceKey}/pages/${result.id}/${encodeURIComponent(result.title.replace(/ /g, '+'))}`,
+          `Page created successfully!\n- ID: ${result.id}\n- Title: ${result.title}\n- SpaceId: ${result.spaceId}\n- Success: ${result.success}`,
           {
             id: result.id,
             title: result.title,
-            spaceKey: params.spaceKey,
-            url: `${config.baseUrl}/wiki/spaces/${params.spaceKey}/pages/${result.id}/${encodeURIComponent(result.title.replace(/ /g, '+'))}`,
+            spaceId: result.spaceId,
             success: result.success
           }
         );

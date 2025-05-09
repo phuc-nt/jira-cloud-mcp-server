@@ -15,9 +15,7 @@ export const updatePageSchema = z.object({
   pageId: z.string().describe('ID of the page to update'),
   title: z.string().optional().describe('New title of the page'),
   content: z.string().optional().describe('New content of the page (in storage/HTML format)'),
-  version: z.number().describe('Current version number of the page (required to avoid conflicts)'),
-  addLabels: z.array(z.string()).optional().describe('Labels to add to the page'),
-  removeLabels: z.array(z.string()).optional().describe('Labels to remove from the page')
+  version: z.number().describe('Current version number of the page (required to avoid conflicts)')
 });
 
 type UpdatePageParams = z.infer<typeof updatePageSchema>;
@@ -30,8 +28,6 @@ interface UpdatePageResult {
   webui: string;
   success: boolean;
   message: string;
-  labelsAdded?: string[];
-  labelsRemoved?: string[];
 }
 
 // Main handler to update a page (API v2)
@@ -41,7 +37,7 @@ export async function updatePageHandler(
 ): Promise<UpdatePageResult> {
   try {
     logger.info(`Updating page (v2) with ID: ${params.pageId}`);
-    // Lấy version hiện tại
+    // Lấy version, title, content hiện tại nếu thiếu
     const baseUrl = config.baseUrl.endsWith('/wiki') ? config.baseUrl : `${config.baseUrl}/wiki`;
     const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
     const headers = {
@@ -54,12 +50,23 @@ export async function updatePageHandler(
     const res = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
     if (!res.ok) throw new Error(`Failed to get page info: ${params.pageId}`);
     const pageData = await res.json();
-    let version = pageData.version.number;
-    // Gọi helper updateConfluencePageV2
+    let version = pageData.version.number + 1;
+    let title = params.title ?? pageData.title;
+    let content = params.content;
+    if (!title) throw new Error('Missing title for page update');
+    if (!content) {
+      // Lấy body hiện tại nếu không truyền content
+      const bodyRes = await fetch(`${url}/body`, { method: 'GET', headers, credentials: 'omit' });
+      if (!bodyRes.ok) throw new Error(`Failed to get page body: ${params.pageId}`);
+      const bodyData = await bodyRes.json();
+      content = bodyData.value;
+      if (!content) throw new Error('Missing content for page update');
+    }
+    // Gọi helper updateConfluencePageV2 với đủ trường
     const data = await updateConfluencePageV2(config, {
       pageId: params.pageId,
-      title: params.title,
-      content: params.content,
+      title,
+      content,
       version
     });
     return {
@@ -110,8 +117,6 @@ export const registerUpdatePageTool = (server: McpServer) => {
             version: result.version,
             success: result.success,
             url: `${config.baseUrl}/wiki${result.webui}`,
-            labelsAdded: result.labelsAdded,
-            labelsRemoved: result.labelsRemoved,
             message: result.message
           }
         );

@@ -15,6 +15,7 @@ Tài liệu này liệt kê các task quan trọng, cần thực hiện ngay đ�
 - [ ] Resource `confluence://pages` (filter nâng cao) vẫn chưa hoạt động đúng với filter (`space-id`, `label`, `status`, ...). Chỉ hoạt động khi không truyền filter. Cần debug và hoàn thiện mapping filter từ client sang API v2.
     - Ưu tiên kiểm tra biến thể tên filter, log params đầu vào, so sánh với curl thành công.
     - Để lại xử lý sau.
+- [ ] [Confluence] API v2 KHÔNG hỗ trợ add/remove label cho page. Đã xoá toàn bộ tool, resource, helper liên quan. Nếu Atlassian cập nhật lại API, cần review lại logic này.
 
 ### 2. Test & fix nhóm Tool nâng cao
 - [ ] Test tool addIssueToBoard
