@@ -1,119 +1,24 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../../utils/logger.js';
 import { AtlassianConfig } from '../../utils/atlassian-api.js';
-import fetch from 'cross-fetch';
+import { getConfluenceSpacesV2, getConfluenceSpaceV2, getConfluencePagesWithFilters } from '../../utils/atlassian-api.js';
 import { createJsonResource, createStandardResource } from '../../utils/mcp-resource.js';
 import { spacesListSchema, spaceSchema } from '../../schemas/confluence.js';
 
 const logger = Logger.getLogger('ConfluenceResource:Spaces');
 
 /**
- * Helper function to get the list of spaces from Confluence (supports pagination)
+ * Helper function to get the list of spaces from Confluence API v2 (cursor-based)
  */
-async function getSpaces(config: AtlassianConfig, start = 0, limit = 20): Promise<any> {
-  try {
-    const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
-    const headers = {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'User-Agent': 'MCP-Atlassian-Server/1.0.0'
-    };
-    let baseUrl = config.baseUrl;
-    if (!baseUrl.startsWith('https://')) {
-      baseUrl = `https://${baseUrl}`;
-    }
-    // Ensure /wiki for Confluence Cloud API
-    if (!baseUrl.endsWith('/wiki')) {
-      baseUrl = `${baseUrl}/wiki`;
-    }
-    const url = `${baseUrl}/rest/api/space?start=${start}&limit=${limit}`;
-    logger.debug(`Getting Confluence spaces: ${url}`);
-    const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
-    if (!response.ok) {
-      const statusCode = response.status;
-      const responseText = await response.text();
-      logger.error(`Confluence API error (${statusCode}):`, responseText);
-      throw new Error(`Confluence API error: ${responseText}`);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    logger.error(`Error getting Confluence spaces:`, error);
-    throw error;
-  }
+async function getSpacesV2(config: AtlassianConfig, cursor: string | undefined = undefined, limit = 25): Promise<any> {
+  return await getConfluenceSpacesV2(config, cursor, limit);
 }
 
 /**
- * Helper function to get space details from Confluence
+ * Helper function to get space details from Confluence API v2
  */
-async function getSpace(config: AtlassianConfig, spaceKey: string): Promise<any> {
-  try {
-    const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
-    const headers = {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'User-Agent': 'MCP-Atlassian-Server/1.0.0'
-    };
-    let baseUrl = config.baseUrl;
-    if (!baseUrl.startsWith('https://')) {
-      baseUrl = `https://${baseUrl}`;
-    }
-    if (!baseUrl.endsWith('/wiki')) {
-      baseUrl = `${baseUrl}/wiki`;
-    }
-    const url = `${baseUrl}/rest/api/space/${encodeURIComponent(spaceKey)}`;
-    logger.debug(`Getting Confluence space details: ${url}`);
-    const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
-    if (!response.ok) {
-      const statusCode = response.status;
-      const responseText = await response.text();
-      logger.error(`Confluence API error (${statusCode}):`, responseText);
-      throw new Error(`Confluence API error: ${responseText}`);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    logger.error(`Error getting Confluence space details:`, error);
-    throw error;
-  }
-}
-
-/**
- * Helper function to get the list of pages in a space from Confluence (supports pagination)
- */
-async function getSpacePages(config: AtlassianConfig, spaceKey: string, start = 0, limit = 20): Promise<any> {
-  try {
-    const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
-    const headers = {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'User-Agent': 'MCP-Atlassian-Server/1.0.0'
-    };
-    let baseUrl = config.baseUrl;
-    if (!baseUrl.startsWith('https://')) {
-      baseUrl = `https://${baseUrl}`;
-    }
-    if (!baseUrl.endsWith('/wiki')) {
-      baseUrl = `${baseUrl}/wiki`;
-    }
-    const url = `${baseUrl}/rest/api/space/${encodeURIComponent(spaceKey)}/content/page?start=${start}&limit=${limit}`;
-    logger.debug(`Getting Confluence pages in space: ${url}`);
-    const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
-    if (!response.ok) {
-      const statusCode = response.status;
-      const responseText = await response.text();
-      logger.error(`Confluence API error (${statusCode}):`, responseText);
-      throw new Error(`Confluence API error: ${responseText}`);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    logger.error(`Error getting Confluence pages in space:`, error);
-    throw error;
-  }
+async function getSpaceV2(config: AtlassianConfig, spaceKey: string): Promise<any> {
+  return await getConfluenceSpaceV2(config, spaceKey);
 }
 
 /**
@@ -123,18 +28,16 @@ async function getSpacePages(config: AtlassianConfig, spaceKey: string, start = 
 export function registerSpaceResources(server: McpServer) {
   logger.info('Registering Confluence space resources...');
 
-  // Resource: List of spaces (supports pagination)
+  // Resource: List of spaces (API v2, cursor-based)
   server.resource(
     'confluence-spaces-list',
     new ResourceTemplate('confluence://spaces', { list: undefined }),
     async (uri, params, extra) => {
       try {
-        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -144,50 +47,43 @@ export function registerSpaceResources(server: McpServer) {
             apiToken: ATLASSIAN_API_TOKEN
           };
         }
-        // Get pagination params if any
-        const start = params && params.start ? parseInt(Array.isArray(params.start) ? params.start[0] : params.start, 10) : 0;
-        const limit = params && params.limit ? parseInt(Array.isArray(params.limit) ? params.limit[0] : params.limit, 10) : 20;
-        logger.info(`Getting Confluence spaces list: start=${start}, limit=${limit}`);
-        const data = await getSpaces(config, start, limit);
-        // Format the list of spaces
-        const formattedSpaces = (data.results || []).map((space: any) => ({
-          key: space.key,
-          name: space.name,
-          type: space.type,
-          status: space.status,
-          url: `${config.baseUrl}/wiki/spaces/${space.key}`
-        }));
-        // Return standardized resource with metadata and schema
-        return createStandardResource(
-          uri.href,
-          formattedSpaces,
-          'spaces',
-          spacesListSchema,
-          data.size,
-          limit,
-          start,
-          `${config.baseUrl}/wiki/spaces`
-        );
+        // Lấy params cursor-based
+        const limit = params && params.limit ? parseInt(Array.isArray(params.limit) ? params.limit[0] : params.limit, 10) : 25;
+        const cursor = params && params.cursor ? (Array.isArray(params.cursor) ? params.cursor[0] : params.cursor) : undefined;
+        logger.info(`Getting Confluence spaces list (v2): cursor=${cursor}, limit=${limit}`);
+        const data = await getSpacesV2(config, cursor, limit);
+        // Format metadata v2
+        const metadata = {
+          total: data._links && data._links.next ? -1 : (data.results?.length || 0),
+          limit: limit,
+          hasMore: !!(data._links && data._links.next),
+          links: {
+            self: uri.href,
+            next: data._links && data._links.next ? `${uri.href}?cursor=${encodeURIComponent(new URL(data._links.next, 'http://dummy').searchParams.get('cursor') || '')}&limit=${limit}` : undefined
+          }
+        };
+        return createJsonResource(uri.href, {
+          spaces: data.results,
+          metadata
+        });
       } catch (error) {
-        logger.error(`Error getting Confluence spaces list:`, error);
+        logger.error(`Error getting Confluence spaces list (v2):`, error);
         throw error;
       }
     }
   );
 
-  // Resource: Space details
+  // Resource: Space details (API v2, mapping key -> id)
   server.resource(
     'confluence-space-details',
     new ResourceTemplate('confluence://spaces/{spaceKey}', { list: undefined }),
     async (uri, { spaceKey }, extra) => {
       let normalizedSpaceKey = '';
       try {
-        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -201,30 +97,31 @@ export function registerSpaceResources(server: McpServer) {
           throw new Error('Missing spaceKey in URI');
         }
         normalizedSpaceKey = Array.isArray(spaceKey) ? spaceKey[0] : spaceKey;
-        logger.info(`Getting details for Confluence space: ${normalizedSpaceKey}`);
-        const space = await getSpace(config, normalizedSpaceKey);
-        // Format returned data
-        const formattedSpace = {
-          key: space.key,
-          name: space.name,
-          type: space.type,
-          status: space.status,
-          description: space.description?.plain?.value || '',
-          url: `${config.baseUrl}/wiki/spaces/${space.key}`
-        };
-        // Chuẩn hóa metadata/schema
-        return createStandardResource(
-          uri.href,
-          [formattedSpace],
-          'space',
-          spaceSchema,
-          1,
-          1,
-          0,
-          `${config.baseUrl}/wiki/spaces/${space.key}`
-        );
+        logger.info(`Getting details for Confluence space (v2) by key: ${normalizedSpaceKey}`);
+        // Gọi API v2 lấy space theo key
+        const url = `${config.baseUrl}/wiki/api/v2/spaces?key=${encodeURIComponent(normalizedSpaceKey)}`;
+        const response = await fetch(url, { method: 'GET', headers: { 'Authorization': `Basic ${Buffer.from(`${config.email}:${config.apiToken}`).toString('base64')}` } });
+        if (!response.ok) {
+          throw new Error(`Confluence API error: ${response.status} ${await response.text()}`);
+        }
+        const data = await response.json();
+        if (!data.results || !data.results.length) {
+          throw new Error(`Space with key ${normalizedSpaceKey} not found`);
+        }
+        const spaceId = data.results[0].id;
+        // Gọi tiếp API lấy chi tiết space theo id
+        const url2 = `${config.baseUrl}/wiki/api/v2/spaces/${spaceId}`;
+        const response2 = await fetch(url2, { method: 'GET', headers: { 'Authorization': `Basic ${Buffer.from(`${config.email}:${config.apiToken}`).toString('base64')}` } });
+        if (!response2.ok) {
+          throw new Error(`Confluence API error: ${response2.status} ${await response2.text()}`);
+        }
+        const space = await response2.json();
+        return createJsonResource(uri.href, {
+          space,
+          metadata: { self: uri.href }
+        });
       } catch (error) {
-        logger.error(`Error getting Confluence space details for ${normalizedSpaceKey}:`, error);
+        logger.error(`Error getting Confluence space details (v2) for ${normalizedSpaceKey}:`, error);
         throw error;
       }
     }
@@ -235,14 +132,12 @@ export function registerSpaceResources(server: McpServer) {
     'confluence-space-pages',
     new ResourceTemplate('confluence://spaces/{spaceKey}/pages', { list: undefined }),
     async (uri, { spaceKey, start, limit }, extra) => {
-      let normalizedSpaceKey = '';
+      let normalizedSpaceKey = Array.isArray(spaceKey) ? spaceKey[0] : spaceKey;
       try {
-        // Get config from context or env
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          // fallback to env
           const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
           const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
           const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -252,15 +147,18 @@ export function registerSpaceResources(server: McpServer) {
             apiToken: ATLASSIAN_API_TOKEN
           };
         }
-        if (!spaceKey) {
+        if (!normalizedSpaceKey) {
           throw new Error('Missing spaceKey in URI');
         }
-        normalizedSpaceKey = Array.isArray(spaceKey) ? spaceKey[0] : spaceKey;
-        const startVal = start ? parseInt(Array.isArray(start) ? start[0] : start, 10) : 0;
-        const limitVal = limit ? parseInt(Array.isArray(limit) ? limit[0] : limit, 10) : 20;
-        logger.info(`Getting pages for Confluence space: ${normalizedSpaceKey}, start=${startVal}, limit=${limitVal}`);
-        const data = await getSpacePages(config, normalizedSpaceKey, startVal, limitVal);
-        // Format the list of pages
+        // Lấy spaceId từ spaceKey
+        const spaces = await getConfluenceSpacesV2(config, undefined, 250);
+        const found = (spaces.results || []).find((s: any) => s.key === normalizedSpaceKey);
+        if (!found) throw new Error(`Space with key ${normalizedSpaceKey} not found`);
+        const spaceId = found.id;
+        // Gọi helper lấy danh sách page theo space-id
+        const filterParams = { 'space-id': spaceId, limit: limit ? parseInt(Array.isArray(limit) ? limit[0] : limit, 10) : 25 };
+        const data = await getConfluencePagesWithFilters(config, filterParams);
+        // Format kết quả
         const formattedPages = (data.results || []).map((page: any) => ({
           id: page.id,
           title: page.title,
@@ -269,10 +167,9 @@ export function registerSpaceResources(server: McpServer) {
         }));
         return createJsonResource(uri.href, {
           pages: formattedPages,
-          total: data.size,
-          start: startVal,
-          limit: limitVal,
-          message: `Found ${data.size} page(s) in space ${normalizedSpaceKey}, showing from ${startVal + 1} to ${startVal + formattedPages.length}`
+          total: data.size || formattedPages.length,
+          limit: filterParams.limit,
+          message: `Found ${formattedPages.length} page(s) in space ${normalizedSpaceKey}`
         });
       } catch (error) {
         logger.error(`Error getting Confluence pages in space ${normalizedSpaceKey}:`, error);

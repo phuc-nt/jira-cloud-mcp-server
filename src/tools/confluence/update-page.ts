@@ -5,6 +5,7 @@ import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
+import { updateConfluencePageV2 } from '../../utils/atlassian-api.js';
 
 // Initialize logger
 const logger = Logger.getLogger('ConfluenceTools:updatePage');
@@ -33,136 +34,52 @@ interface UpdatePageResult {
   labelsRemoved?: string[];
 }
 
-// Main handler to update a page
+// Main handler to update a page (API v2)
 export async function updatePageHandler(
   params: UpdatePageParams,
   config: AtlassianConfig
 ): Promise<UpdatePageResult> {
   try {
-    logger.info(`Updating page with ID: ${params.pageId}`);
-    
-    // Call API to get current page info
-    const currentPage = await callConfluenceApi<any>(
-      config,
-      `/content/${params.pageId}?expand=body.storage,version`,
-      'GET'
-    );
-    
-    // Check version number
-    if (currentPage.version.number !== params.version) {
-      throw new ApiError(
-        ApiErrorType.VALIDATION_ERROR,
-        `Version conflict. The page has been updated to version ${currentPage.version.number}, you are using version ${params.version}`,
-        409
-      );
-    }
-    
-    // Prepare data for API call
-    const requestData: any = {
-      type: 'page',
-      title: params.title || currentPage.title,
-      body: {
-        storage: {
-          value: params.content || currentPage.body.storage.value,
-          representation: 'storage'
-        }
-      },
-      version: {
-        number: params.version + 1
-      }
+    logger.info(`Updating page (v2) with ID: ${params.pageId}`);
+    // Lấy version hiện tại
+    const baseUrl = config.baseUrl.endsWith('/wiki') ? config.baseUrl : `${config.baseUrl}/wiki`;
+    const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
+    const headers = {
+      'Authorization': `Basic ${auth}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'User-Agent': 'MCP-Atlassian-Server/1.0.0'
     };
-    
-    // If no title, content, addLabels, or removeLabels, return error
-    if (!params.title && !params.content && !params.addLabels?.length && !params.removeLabels?.length) {
-      return {
-        id: params.pageId,
-        title: currentPage.title,
-        version: currentPage.version.number,
-        self: currentPage._links.self,
-        webui: currentPage._links.webui,
-        success: false,
-        message: 'No information provided to update'
-      };
-    }
-    
-    // Call Confluence API to update the page
-    const response = await callConfluenceApi<any>(
-      config,
-      `/content/${params.pageId}`,
-      'PUT',
-      requestData
-    );
-    
-    // Handle labels if provided
-    let labelsAdded: string[] = [];
-    let labelsRemoved: string[] = [];
-    
-    // Add new labels if provided
-    if (params.addLabels && params.addLabels.length > 0) {
-      const labelsData = params.addLabels.map(label => ({ name: label }));
-      
-      await callConfluenceApi(
-        config,
-        `/content/${params.pageId}/label`,
-        'POST',
-        labelsData
-      );
-      
-      labelsAdded = params.addLabels;
-    }
-    
-    // Remove labels if provided
-    if (params.removeLabels && params.removeLabels.length > 0) {
-      for (const label of params.removeLabels) {
-        const res = await callConfluenceApi(
-          config,
-          `/content/${params.pageId}/label?name=${encodeURIComponent(label)}`,
-          'DELETE'
-        );
-        // Không parse JSON khi DELETE label (response body rỗng)
-        // Chỉ cần kiểm tra status code trong callConfluenceApi
-      }
-      labelsRemoved = params.removeLabels;
-    }
-    
-    // Build message based on actions performed
-    const actions = [];
-    if (params.title) actions.push('title');
-    if (params.content) actions.push('content');
-    if (labelsAdded.length > 0) actions.push('add label');
-    if (labelsRemoved.length > 0) actions.push('remove label');
-    
-    const message = `Successfully updated page: ${actions.join(', ')}`;
-    
-    // Return result
-    const result: UpdatePageResult = {
-      id: response.id,
-      title: response.title,
-      version: response.version.number,
-      self: response._links.self,
-      webui: response._links.webui,
+    const url = `${baseUrl}/api/v2/pages/${encodeURIComponent(params.pageId)}`;
+    const res = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+    if (!res.ok) throw new Error(`Failed to get page info: ${params.pageId}`);
+    const pageData = await res.json();
+    let version = pageData.version.number;
+    // Gọi helper updateConfluencePageV2
+    const data = await updateConfluencePageV2(config, {
+      pageId: params.pageId,
+      title: params.title,
+      content: params.content,
+      version
+    });
+    return {
+      id: data.id,
+      title: data.title,
+      version: data.version.number,
+      self: data._links?.self || '',
+      webui: data._links?.webui || '',
       success: true,
-      message: message
+      message: 'Successfully updated page'
     };
-    
-    if (labelsAdded.length > 0) {
-      result.labelsAdded = labelsAdded;
-    }
-    
-    if (labelsRemoved.length > 0) {
-      result.labelsRemoved = labelsRemoved;
-    }
-    
-    return result;
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
     }
-    
-    logger.error(`Error updating page ${params.pageId}:`, error);
+    logger.error(`Error updating page (v2) with ID ${params.pageId}:`, error);
+    let message = `Failed to update page: ${error instanceof Error ? error.message : String(error)}`;
     throw new ApiError(
       ApiErrorType.SERVER_ERROR,
-      `Failed to update page: ${error instanceof Error ? error.message : String(error)}`,
+      message,
       500
     );
   }

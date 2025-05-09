@@ -6,7 +6,7 @@
 
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { labelListSchema, attachmentListSchema, versionListSchema } from '../../schemas/confluence.js';
-import { getPageLabels, getPageAttachments, getPageVersions } from '../../utils/atlassian-api.js';
+import { AtlassianConfig, getConfluencePageLabelsV2, getConfluencePageAttachmentsV2, getConfluencePageVersionsV2 } from '../../utils/atlassian-api.js';
 import { Logger } from '../../utils/logger.js';
 import { createStandardResource, extractPagingParams, registerResource } from '../../utils/mcp-resource.js';
 
@@ -20,94 +20,79 @@ export function registerContentMetadataResources(server: McpServer) {
   logger.info('Registering Confluence content metadata resources...');
 
   // Resource: Page labels
-  registerResource(
-    server,
-    'confluence-page-labels',
-    new ResourceTemplate('confluence://pages/{pageId}/labels', { list: undefined }),
-    'List all labels for a Confluence page',
-    async (params, { config, uri }) => {
-      try {
-        const pageId = Array.isArray(params.pageId) ? params.pageId[0] : params.pageId;
-        const { limit, offset } = extractPagingParams(params);
-        const response = await getPageLabels(config, pageId, offset, limit);
-        return createStandardResource(
-          uri,
-          response.results,
-          'labels',
-          labelListSchema,
-          response.size || response.results.length,
-          limit,
-          offset,
-          `${config.baseUrl}/pages/viewpage.action?pageId=${pageId}`
-        );
-      } catch (error) {
-        logger.error(`Error getting labels for page ${params.pageId}:`, error);
-        throw error;
-      }
-    }
-  );
+  // registerResource(
+  //   server,
+  //   'confluence-page-labels',
+  //   new ResourceTemplate('confluence://pages/{pageId}/labels', { list: undefined }),
+  //   'List all labels for a Confluence page',
+  //   async (params, { config, uri }) => { ... }
+  // );
 
   // Resource: Page attachments
-  registerResource(
-    server,
-    'confluence-page-attachments',
-    new ResourceTemplate('confluence://pages/{pageId}/attachments', { list: undefined }),
-    'List all attachments for a Confluence page',
-    async (params, { config, uri }) => {
-      try {
-        const pageId = Array.isArray(params.pageId) ? params.pageId[0] : params.pageId;
-        const { limit, offset } = extractPagingParams(params);
-        const response = await getPageAttachments(config, pageId, offset, limit);
-        const formattedAttachments = response.results.map((attachment: any) => {
-          return {
-            ...attachment,
-            downloadUrl: `${config.baseUrl}${attachment._links.download}`
-          };
-        });
-        return createStandardResource(
-          uri,
-          formattedAttachments,
-          'attachments',
-          attachmentListSchema,
-          response.size || response.results.length,
-          limit,
-          offset,
-          `${config.baseUrl}/pages/viewpage.action?pageId=${pageId}`
-        );
-      } catch (error) {
-        logger.error(`Error getting attachments for page ${params.pageId}:`, error);
-        throw error;
-      }
-    }
-  );
+  // registerResource(
+  //   server,
+  //   'confluence-page-attachments',
+  //   new ResourceTemplate('confluence://pages/{pageId}/attachments', { list: undefined }),
+  //   'List all attachments for a Confluence page',
+  //   async (params, { config, uri }) => { ... }
+  // );
 
   // Resource: Page versions
-  registerResource(
-    server,
-    'confluence-page-versions',
-    new ResourceTemplate('confluence://pages/{pageId}/versions', { list: undefined }),
-    'List all versions of a Confluence page',
-    async (params, { config, uri }) => {
-      try {
-        const pageId = Array.isArray(params.pageId) ? params.pageId[0] : params.pageId;
-        const { limit, offset } = extractPagingParams(params);
-        const response = await getPageVersions(config, pageId, offset, limit);
-        return createStandardResource(
-          uri,
-          response.results,
-          'versions',
-          versionListSchema,
-          response.size || response.results.length,
-          limit,
-          offset,
-          `${config.baseUrl}/pages/viewpage.action?pageId=${pageId}`
-        );
-      } catch (error) {
-        logger.error(`Error getting versions for page ${params.pageId}:`, error);
-        throw error;
-      }
-    }
-  );
+  // registerResource(
+  //   server,
+  //   'confluence-page-versions',
+  //   new ResourceTemplate('confluence://pages/{pageId}/versions', { list: undefined }),
+  //   'List all versions of a Confluence page',
+  //   async (params, { config, uri }) => { ... }
+  // );
+
+  // Resource: Page labels (API v2, cursor-based)
+  // registerResource(
+  //   server,
+  //   'confluence-page-labels-v2',
+  //   new ResourceTemplate('confluence://pages/{pageId}/labels', { list: undefined }),
+  //   'List all labels for a Confluence page (v2)',
+  //   async (params, { config, uri }) => { ... }
+  // );
+
+  // Resource: Page attachments (API v2, cursor-based)
+  // registerResource(
+  //   server,
+  //   'confluence-page-attachments-v2',
+  //   new ResourceTemplate('confluence://pages/{pageId}/attachments', { list: undefined }),
+  //   'List all attachments for a Confluence page (v2)',
+  //   async (params, { config, uri }) => { ... }
+  // );
+
+  // Resource: Page versions (API v2, cursor-based)
+  // registerResource(
+  //   server,
+  //   'confluence-page-versions-v2',
+  //   new ResourceTemplate('confluence://pages/{pageId}/versions', { list: undefined }),
+  //   'List all versions of a Confluence page (v2)',
+  //   async (params, { config, uri }) => { ... }
+  // );
   
   logger.info('Confluence content metadata resources registered successfully');
+}
+
+/**
+ * Helper function to get page labels from Confluence API v2 (cursor-based)
+ */
+async function getPageLabelsV2(config: AtlassianConfig, pageId: string, cursor: string | undefined = undefined, limit: number = 25): Promise<any> {
+  return await getConfluencePageLabelsV2(config, pageId, cursor, limit);
+}
+
+/**
+ * Helper function to get page attachments from Confluence API v2 (cursor-based)
+ */
+async function getPageAttachmentsV2(config: AtlassianConfig, pageId: string, cursor: string | undefined = undefined, limit: number = 25): Promise<any> {
+  return await getConfluencePageAttachmentsV2(config, pageId, cursor, limit);
+}
+
+/**
+ * Helper function to get page versions from Confluence API v2 (cursor-based)
+ */
+async function getPageVersionsV2(config: AtlassianConfig, pageId: string, cursor: string | undefined = undefined, limit: number = 25): Promise<any> {
+  return await getConfluencePageVersionsV2(config, pageId, cursor, limit);
 } 

@@ -5,6 +5,7 @@ import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import fetch from 'cross-fetch';
 import { projectsListSchema, projectSchema } from '../../schemas/jira.js';
+import { getProjects as getProjectsApi, getProject as getProjectApi } from '../../utils/atlassian-api.js';
 
 const logger = Logger.getLogger('JiraResource:Projects');
 
@@ -25,127 +26,14 @@ function createBasicHeaders(email: string, apiToken: string) {
  * Helper function to get the list of projects
  */
 async function getProjects(config: AtlassianConfig): Promise<any[]> {
-  try {
-    const headers = createBasicHeaders(config.email, config.apiToken);
-    
-    // Normalize baseUrl
-    let baseUrl = config.baseUrl;
-    if (!baseUrl.startsWith('https://')) {
-      baseUrl = `https://${baseUrl}`;
-    }
-    
-    // API URL to get the list of projects
-    const url = `${baseUrl}/rest/api/3/project`;
-    
-    logger.debug(`Getting projects with direct fetch: ${url}`);
-    
-    // Use fetch
-    const response = await fetch(url, {
-      method: 'GET',
-      headers,
-      credentials: 'omit'
-    });
-    
-    // Check status code
-    if (!response.ok) {
-      const statusCode = response.status;
-      const responseText = await response.text();
-      
-      logger.error(`Jira API error (${statusCode}):`, responseText);
-      
-      throw new ApiError(
-        ApiErrorType.SERVER_ERROR,
-        `Jira API error: ${responseText}`,
-        statusCode,
-        new Error(responseText)
-      );
-    }
-    
-    // Parse JSON
-    const projects = await response.json();
-    return projects;
-  } catch (error: any) {
-    logger.error(`Error getting projects:`, error);
-    
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    
-    throw new ApiError(
-      ApiErrorType.UNKNOWN_ERROR,
-      `Error getting projects: ${error instanceof Error ? error.message : String(error)}`,
-      500,
-      error instanceof Error ? error : new Error(String(error))
-    );
-  }
+  return await getProjectsApi(config);
 }
 
 /**
  * Helper function to get project details
  */
 async function getProject(config: AtlassianConfig, projectKey: string): Promise<any> {
-  try {
-    const headers = createBasicHeaders(config.email, config.apiToken);
-    
-    // Normalize baseUrl
-    let baseUrl = config.baseUrl;
-    if (!baseUrl.startsWith('https://')) {
-      baseUrl = `https://${baseUrl}`;
-    }
-    
-    // API URL to get project details
-    const url = `${baseUrl}/rest/api/3/project/${projectKey}`;
-    
-    logger.debug(`Getting project details with direct fetch: ${url}`);
-    
-    // Use fetch
-    const response = await fetch(url, {
-      method: 'GET',
-      headers,
-      credentials: 'omit'
-    });
-    
-    // Check status code
-    if (!response.ok) {
-      const statusCode = response.status;
-      const responseText = await response.text();
-      
-      logger.error(`Jira API error (${statusCode}):`, responseText);
-      
-      if (statusCode === 404) {
-        throw new ApiError(
-          ApiErrorType.NOT_FOUND_ERROR,
-          `Project ${projectKey} not found`,
-          statusCode,
-          new Error(responseText)
-        );
-      }
-      
-      throw new ApiError(
-        ApiErrorType.SERVER_ERROR,
-        `Jira API error: ${responseText}`,
-        statusCode,
-        new Error(responseText)
-      );
-    }
-    
-    // Parse JSON
-    const project = await response.json();
-    return project;
-  } catch (error: any) {
-    logger.error(`Error getting project ${projectKey}:`, error);
-    
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    
-    throw new ApiError(
-      ApiErrorType.UNKNOWN_ERROR,
-      `Error getting project: ${error instanceof Error ? error.message : String(error)}`,
-      500,
-      error instanceof Error ? error : new Error(String(error))
-    );
-  }
+  return await getProjectApi(config, projectKey);
 }
 
 /**

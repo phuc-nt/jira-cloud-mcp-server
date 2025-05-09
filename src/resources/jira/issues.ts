@@ -1,7 +1,7 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../../utils/logger.js';
 import { AtlassianConfig } from '../../utils/atlassian-api.js';
-import fetch from 'cross-fetch';
+import { getIssue as getIssueApi, searchIssues as searchIssuesApi } from '../../utils/atlassian-api.js';
 import { createJsonResource, createStandardResource, extractPagingParams, registerResource } from '../../utils/mcp-resource.js';
 import { issueSchema, issuesListSchema, transitionsListSchema, commentsListSchema } from '../../schemas/jira.js';
 
@@ -11,105 +11,22 @@ const logger = Logger.getLogger('JiraResource:Issues');
  * Helper function to get issue details from Jira
  */
 async function getIssue(config: AtlassianConfig, issueKey: string): Promise<any> {
-  try {
-    const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
-    const headers = {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'User-Agent': 'MCP-Atlassian-Server/1.0.0'
-    };
-    let baseUrl = config.baseUrl;
-    if (!baseUrl.startsWith('https://')) {
-      baseUrl = `https://${baseUrl}`;
-    }
-    const url = `${baseUrl}/rest/api/3/issue/${issueKey}`;
-    logger.debug(`Getting Jira issue: ${url}`);
-    const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
-    if (!response.ok) {
-      const statusCode = response.status;
-      const responseText = await response.text();
-      logger.error(`Jira API error (${statusCode}):`, responseText);
-      throw new Error(`Jira API error: ${responseText}`);
-    }
-    const issue = await response.json();
-    return issue;
-  } catch (error) {
-    logger.error(`Error getting Jira issue ${issueKey}:`, error);
-    throw error;
-  }
+  return await getIssueApi(config, issueKey);
 }
 
 /**
  * Helper function to get a list of issues from Jira (supports pagination)
  */
 async function getIssues(config: AtlassianConfig, startAt = 0, maxResults = 20, jql = ''): Promise<any> {
-  try {
-    const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
-    const headers = {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'User-Agent': 'MCP-Atlassian-Server/1.0.0'
-    };
-    let baseUrl = config.baseUrl;
-    if (!baseUrl.startsWith('https://')) {
-      baseUrl = `https://${baseUrl}`;
-    }
-    
-    // Build URL with optional JQL
-    let url = `${baseUrl}/rest/api/3/search?startAt=${startAt}&maxResults=${maxResults}`;
-    if (jql && jql.trim()) {
-      url += `&jql=${encodeURIComponent(jql.trim())}`;
-    }
-    
-    logger.debug(`Getting Jira issues: ${url}`);
-    const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
-    if (!response.ok) {
-      const statusCode = response.status;
-      const responseText = await response.text();
-      logger.error(`Jira API error (${statusCode}):`, responseText);
-      throw new Error(`Jira API error: ${responseText}`);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    logger.error(`Error getting Jira issues:`, error);
-    throw error;
-  }
+  const jqlQuery = jql && jql.trim() ? jql.trim() : '';
+  return await searchIssuesApi(config, jqlQuery, maxResults);
 }
 
 /**
  * Helper function to search issues by JQL from Jira (supports pagination)
  */
 async function searchIssuesByJql(config: AtlassianConfig, jql: string, startAt = 0, maxResults = 20): Promise<any> {
-  try {
-    const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
-    const headers = {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'User-Agent': 'MCP-Atlassian-Server/1.0.0'
-    };
-    let baseUrl = config.baseUrl;
-    if (!baseUrl.startsWith('https://')) {
-      baseUrl = `https://${baseUrl}`;
-    }
-    const url = `${baseUrl}/rest/api/3/search?jql=${encodeURIComponent(jql)}&startAt=${startAt}&maxResults=${maxResults}`;
-    logger.debug(`Searching Jira issues by JQL: ${url}`);
-    const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
-    if (!response.ok) {
-      const statusCode = response.status;
-      const responseText = await response.text();
-      logger.error(`Jira API error (${statusCode}):`, responseText);
-      throw new Error(`Jira API error: ${responseText}`);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    logger.error(`Error searching Jira issues by JQL:`, error);
-    throw error;
-  }
+  return await searchIssuesApi(config, jql, maxResults);
 }
 
 /**

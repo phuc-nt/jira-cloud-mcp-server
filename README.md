@@ -233,3 +233,13 @@ Try asking Cline these queries after installation:
 > While the server uses the open MCP standard, it is primarily designed and tested for Cline users.
 
 **Lưu ý:** Từ tháng 6/2025, toàn bộ resource Jira đã migrate sang API v3 (endpoint `/rest/api/3/...`). Các trường rich text như description/comment trả về dạng ADF, đã tự động chuyển sang text thuần cho client không hỗ trợ ADF.
+
+## Confluence API (v2)
+
+Từ tháng 5/2025, MCP Server chỉ hỗ trợ Confluence REST API v2 (`/wiki/api/v2/`).
+
+- Tất cả resource và tool Confluence đã migrate sang API v2.
+- Không còn sử dụng endpoint `/rest/api/`.
+- Schema dữ liệu đã cập nhật theo API v2 (xem chi tiết trong docs/dev-guide/confluence-migrate-to-v2.md).
+
+> **Lưu ý:** Nếu bạn còn sử dụng API v1, cần migrate ngay để tránh gián đoạn dịch vụ.

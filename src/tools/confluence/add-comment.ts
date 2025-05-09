@@ -5,6 +5,7 @@ import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
+import { addConfluenceCommentV2 } from '../../utils/atlassian-api.js';
 
 // Initialize logger
 const logger = Logger.getLogger('ConfluenceTools:addComment');
@@ -18,55 +19,40 @@ export const addCommentSchema = z.object({
 type AddCommentParams = z.infer<typeof addCommentSchema>;
 
 interface AddCommentResult {
-  commentId: string;
-  status: string;
+  id: string;
+  created: string;
+  author: string;
+  body: string;
+  success: boolean;
 }
 
-// Main handler to add a comment to a page
+// Main handler to add a comment to a page (API v2)
 export async function addCommentHandler(
   params: AddCommentParams,
   config: AtlassianConfig
 ): Promise<AddCommentResult> {
   try {
-    logger.info(`Adding comment to page: ${params.pageId}`);
-    
-    // Prepare data for API call
-    const requestData = {
-      type: 'comment',
-      container: {
-        type: 'page',
-        id: params.pageId
-      },
-      body: {
-        storage: {
-          value: params.content,
-          representation: 'storage'
-        }
-      }
-    };
-    
-    // Call Confluence API to add comment
-    const response = await callConfluenceApi<any>(
-      config,
-      '/content',
-      'POST',
-      requestData
-    );
-    
-    // Return result
+    logger.info(`Adding comment (v2) to page: ${params.pageId}`);
+    const data = await addConfluenceCommentV2(config, {
+      pageId: params.pageId,
+      content: params.content
+    });
     return {
-      commentId: response.id,
-      status: response.status
+      id: data.id,
+      created: data.createdAt,
+      author: data.createdBy?.displayName || '',
+      body: data.body?.value || '',
+      success: true
     };
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
     }
-    
-    logger.error(`Error adding comment to page ${params.pageId}:`, error);
+    logger.error(`Error adding comment (v2) to page ${params.pageId}:`, error);
+    let message = `Failed to add comment: ${error instanceof Error ? error.message : String(error)}`;
     throw new ApiError(
       ApiErrorType.SERVER_ERROR,
-      `Failed to add comment: ${error instanceof Error ? error.message : String(error)}`,
+      message,
       500
     );
   }
@@ -91,8 +77,8 @@ export const registerAddCommentTool = (server: McpServer) => {
         
         // Return result in MCP Response format
         return createTextResponse(
-          `Comment added successfully with ID: ${result.commentId}`,
-          { commentId: result.commentId, status: result.status }
+          `Comment added successfully with ID: ${result.id}`,
+          { id: result.id, created: result.created, author: result.author, body: result.body }
         );
       } catch (error) {
         if (error instanceof ApiError) {

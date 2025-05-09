@@ -87,6 +87,7 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 
 - [x] Refactor toàn bộ resource/tool chỉ dùng `atlassian-api.ts`, loại bỏ hoàn toàn JS cũ, đồng bộ type-safe.
 - [x] Migrate toàn bộ resource Jira sang API v3, xử lý ADF, cập nhật schema, bổ sung hàm chuyển ADF.
+- [x] Migrate toàn bộ resource/tool Confluence sang API v2, loại bỏ hoàn toàn endpoint v1, cập nhật schema, tài liệu, test.
 - [x] Mở rộng resource/tool nâng cao: Dashboards, Gadgets, Board Actions, Sprint Actions, Backlog Actions, Dashboard/Gadget Actions.
 - [x] Đăng ký đồng bộ tất cả tool qua `registerAllTools`, Cline nhận đủ tool nâng cao.
 - [x] Chuẩn hóa tài liệu: cập nhật README.md, docs/introduction/resources-and-tools.md, roadmap.
@@ -176,4 +177,7 @@ Các phase tiếp theo sẽ liên tục được cập nhật dựa trên tiến
 ### 2025-06-xx
 - Chuẩn hóa metadata/schema cho tất cả resource MCP Atlassian Server.
 - Chia nhỏ file test thành nhiều file theo nhóm resource, dễ bảo trì và mở rộng.
-- Tiếng Anh hóa toàn bộ code test client, đảm bảo tất cả comment, log, biến mô tả đều bằng tiếng Anh. 
+- Tiếng Anh hóa toàn bộ code test client, đảm bảo tất cả comment, log, biến mô tả đều bằng tiếng Anh.
+- Đã migrate hoàn toàn resource/tool Confluence sang API v2, không còn hỗ trợ API v1.
+
+> **Lưu ý:** MCP Atlassian Server đã migrate hoàn toàn resource và tool Confluence sang API v2 (`/wiki/api/v2/`). Không còn hỗ trợ API v1. Nếu còn sử dụng API v1, bạn sẽ không thể truy cập resource/tool Confluence. 

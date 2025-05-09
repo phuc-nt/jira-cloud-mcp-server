@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../../utils/logger.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
-import { addLabelsToPage, removeLabelsFromPage } from '../../utils/atlassian-api.js';
+import { addConfluenceLabelsV2, removeConfluenceLabelV2 } from '../../utils/atlassian-api.js';
 
 // Initialize logger
 const logger = Logger.getLogger('ConfluenceTools:labelPage');
@@ -25,40 +25,48 @@ type RemoveLabelsParams = z.infer<typeof removeLabelsSchema>;
 interface LabelResult {
   success: boolean;
   labelsCount: number;
+  pageId: string;
+  labels: string[];
 }
 
-// Main handler to add labels to a page
+// Main handler to add labels to a page (API v2)
 export async function addLabelsHandler(
   params: AddLabelsParams,
   config: any
 ): Promise<LabelResult> {
   try {
-    logger.info(`Adding ${params.labels.length} labels to page ${params.pageId}`);
-    const result = await addLabelsToPage(config, params.pageId, params.labels);
+    logger.info(`Adding ${params.labels.length} labels (v2) to page ${params.pageId}`);
+    await addConfluenceLabelsV2(config, params.pageId, params.labels);
     return {
+      pageId: params.pageId,
+      labels: params.labels,
       success: true,
-      labelsCount: result.labelsCount || params.labels.length
+      labelsCount: params.labels.length
     };
   } catch (error) {
-    logger.error(`Error adding labels to page ${params.pageId}:`, error);
+    logger.error(`Error adding labels (v2) to page ${params.pageId}:`, error);
     throw error;
   }
 }
 
-// Main handler to remove labels from a page
+// Main handler to remove labels from a page (API v2)
 export async function removeLabelsHandler(
   params: RemoveLabelsParams,
   config: any
 ): Promise<LabelResult> {
   try {
-    logger.info(`Removing ${params.labels.length} labels from page ${params.pageId}`);
-    const result = await removeLabelsFromPage(config, params.pageId, params.labels);
+    logger.info(`Removing ${params.labels.length} labels (v2) from page ${params.pageId}`);
+    for (const label of params.labels) {
+      await removeConfluenceLabelV2(config, params.pageId, label);
+    }
     return {
+      pageId: params.pageId,
+      labels: params.labels,
       success: true,
-      labelsCount: result.labelsCount || params.labels.length
+      labelsCount: params.labels.length
     };
   } catch (error) {
-    logger.error(`Error removing labels from page ${params.pageId}:`, error);
+    logger.error(`Error removing labels (v2) from page ${params.pageId}:`, error);
     throw error;
   }
 }

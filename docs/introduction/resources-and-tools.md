@@ -82,15 +82,15 @@ Resources là các endpoint chỉ đọc, trả về dữ liệu từ Atlassian 
 
 | Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
 |----------|-----|-------|-----------------------|----------------|
-| Spaces | `confluence://spaces` | Danh sách không gian | `/rest/api/space` | Array của Space objects |
-| Space Details | `confluence://spaces/{spaceKey}` | Chi tiết không gian | `/rest/api/space/{spaceKey}` | Single Space object |
-| Pages | `confluence://pages` | Danh sách trang | `/rest/api/content/search` | Array của Page objects |
-| Page Details | `confluence://pages/{pageId}` | Chi tiết trang | `/rest/api/content/{pageId}` | Single Page object với content/body |
-| Page Children | `confluence://pages/{pageId}/children` | Danh sách trang con | `/rest/api/content/{pageId}/child/page` | Array của Page objects |
-| Page Ancestors | `confluence://pages/{pageId}/ancestors` | Danh sách tổ tiên | `/rest/api/content/{pageId}?expand=ancestors` | Array của Page objects |
-| Page Labels | `confluence://pages/{pageId}/labels` | Nhãn của trang | `/rest/api/content/{pageId}/label` | Array của Label objects |
-| Page Attachments | `confluence://pages/{pageId}/attachments` | Tập tin đính kèm | `/rest/api/content/{pageId}/child/attachment` | Array của Attachment objects |
-| Page Versions | `confluence://pages/{pageId}/versions` | Lịch sử phiên bản | `/rest/api/content/{pageId}/version` | Array của Version objects |
+| Spaces | `confluence://spaces` | Danh sách không gian | `/wiki/api/v2/spaces` | Array của Space objects (v2) |
+| Space Details | `confluence://spaces/{spaceKey}` | Chi tiết không gian | `/wiki/api/v2/spaces/{spaceKey}` | Single Space object (v2) |
+| Pages | `confluence://pages` | Danh sách trang | `/wiki/api/v2/pages` | Array của Page objects (v2) |
+| Page Details | `confluence://pages/{pageId}` | Chi tiết trang | `/wiki/api/v2/pages/{pageId}` + `/wiki/api/v2/pages/{pageId}/body` | Single Page object với content/body (v2) |
+| Page Children | `confluence://pages/{pageId}/children` | Danh sách trang con | `/wiki/api/v2/pages/{pageId}/children` | Array của Page objects (v2) |
+| Page Ancestors | `confluence://pages/{pageId}/ancestors` | Danh sách tổ tiên | `/wiki/api/v2/pages/{pageId}/ancestors` | Array của Page objects (v2) |
+| Page Labels | `confluence://pages/{pageId}/labels` | Nhãn của trang | `/wiki/api/v2/pages/{pageId}/labels` | Array của Label objects (v2) |
+| Page Attachments | `confluence://pages/{pageId}/attachments` | Tập tin đính kèm | `/wiki/api/v2/pages/{pageId}/attachments` | Array của Attachment objects (v2) |
+| Page Versions | `confluence://pages/{pageId}/versions` | Lịch sử phiên bản | `/wiki/api/v2/pages/{pageId}/versions` | Array của Version objects (v2) |
 
 ## Tools
 
@@ -140,11 +140,11 @@ Tools là các endpoint thực hiện hành động, có thể tạo, cập nh�
 
 | Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
 |------|-------|---------------|-----------------------|----------------|
-| createPage | Tạo trang mới | spaceKey, title, content | `/rest/api/content` | Page ID mới |
-| updatePage | Cập nhật trang | pageId, title, content, version, addLabels, removeLabels | `/rest/api/content/{pageId}` (PUT) | Status của update |
-| addComment | Thêm comment vào page | pageId, content | `/rest/api/content` (type=comment) | Comment mới |
-| addLabelsToPage | Thêm nhãn vào trang | pageId, labels | `/rest/api/content/{pageId}/label` | Status của thêm |
-| removeLabelsFromPage | Xóa nhãn khỏi trang | pageId, labels | `/rest/api/content/{pageId}/label?name=...` | Status của xoá |
+| createPage | Tạo trang mới | spaceKey, title, content, parentId | `/wiki/api/v2/pages` | Page ID mới |
+| updatePage | Cập nhật trang | pageId, title, content, version, addLabels, removeLabels | `/wiki/api/v2/pages/{pageId}` (PUT), `/wiki/api/v2/pages/{pageId}/body` (PUT) | Status của update |
+| addComment | Thêm comment vào page | pageId, content | `/wiki/api/v2/pages/{pageId}/comments` | Comment mới |
+| addLabelsToPage | Thêm nhãn vào trang | pageId, labels | `/wiki/api/v2/pages/{pageId}/labels` | Status của thêm |
+| removeLabelsFromPage | Xóa nhãn khỏi trang | pageId, labels | `/wiki/api/v2/pages/{pageId}/labels/{label}` | Status của xoá |
 
 ## Migration Notes (API v2 → v3)
 
@@ -249,44 +249,131 @@ export function registerCustomResource(server: McpServer) {
   // Resource: Custom resource
   registerResource(
     server,
-    'jira-custom-resource',
-    new ResourceTemplate('jira://custom/{param}', { list: undefined }),
-    'Custom resource description',
+    'resource-id',
+    new ResourceTemplate('jira://custom-path', { list: undefined }),
+    'Description of resource',
     async (params, { config, uri }) => {
-      // Code gọi API và xử lý dữ liệu
+      // Call API and return data
     }
   );
 }
 ```
 
-### 2. Xử lý ADF trong Tools
+## Chuẩn triển khai API
 
-Khi gửi request tạo/cập nhật thông tin, API v3 yêu cầu ADF:
+Để đảm bảo tính nhất quán, an toàn và dễ bảo trì, tất cả các Resource và Tool **phải** tuân theo các nguyên tắc sau:
+
+### 1. Tập trung API calls qua atlassian-api.ts
+
+- **Không tự gọi `fetch()`**: Không tự triển khai API calls trong Resource/Tool, mà phải sử dụng các hàm helper trong `src/utils/atlassian-api.ts`.
+- **Không tự build headers/URL**: Không tự xây dựng authentication headers hoặc URL, để tránh trùng lặp code và tiềm ẩn lỗi.
 
 ```typescript
-// Helpers chuyển text thành ADF:
-function textToAdf(text: string) {
-  return {
-    version: 1,
-    type: 'doc',
-    content: [{
-      type: 'paragraph',
-      content: [{ type: 'text', text: text }]
-    }]
-  };
+// ❌ KHÔNG làm như này
+async function getCustomData(config: AtlassianConfig) {
+  const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
+  const headers = { 'Authorization': `Basic ${auth}`, ... };
+  const response = await fetch(`${config.baseUrl}/rest/api/3/custom`, { headers });
+  return await response.json();
 }
 
-// Sử dụng trong tool:
-if (params.description) {
-  fields.description = textToAdf(params.description);
+// ✅ Nên làm như này
+import { getCustomData } from '../../utils/atlassian-api.js';
+async function fetchCustomData(config: AtlassianConfig) {
+  return await getCustomData(config);
 }
 ```
 
-### 3. Common Issues & Solutions
+### 2. Bổ sung helper function trong atlassian-api.ts
 
-- **Version Conflicts trong Confluence**: Luôn lấy version hiện tại trước khi update
-- **JQL Special Characters**: Cần encode các ký tự đặc biệt trong JQL parameters
-- **Empty DELETE Response**: Khi xóa label hoặc resource, Atlassian có thể trả về body rỗng
+Khi cần thêm API endpoint mới, hãy tạo helper function mới trong `src/utils/atlassian-api.ts`:
+
+```typescript
+// Thêm vào atlassian-api.ts
+export async function getCustomData(config: AtlassianConfig, param: string): Promise<any> {
+  return await callJiraApi<any>(
+    config,
+    `/rest/api/3/custom?param=${encodeURIComponent(param)}`,
+    'GET'
+  );
+}
+```
+
+Hoặc sử dụng hàm generic `callJiraApi` và `callConfluenceApi` cho các endpoint không thường xuyên dùng.
+
+### 3. Xử lý lỗi nhất quán
+
+- Sử dụng lớp `ApiError` cho mọi lỗi API.
+- Xử lý các HTTP status code một cách nhất quán (401, 403, 404, 429).
+- Log đầy đủ thông tin lỗi.
+
+### 4. Versioning và Backward Compatibility
+
+- Khi update API version (v1 → v2 → v3), giữ lại các hàm cũ với dấu hiệu deprecated.
+- Đặt tên hàm helper thể hiện rõ version API: `getConfluencePageV2`, `getJiraIssueV3`.
+- Hỗ trợ cả các định dạng cũ (như text) và mới (như ADF) trong schema trả về.
+
+### 5. Cấu trúc Resource file và Tool file
+
+Resource file:
+```typescript
+// 1. Imports
+import { ... } from '../../utils/atlassian-api.js';
+
+// 2. Helper functions (đơn giản, gọi các hàm từ atlassian-api.ts)
+async function getSomeData(config, param) {
+  return await getSomeDataFromApi(config, param);
+}
+
+// 3. Resource registration
+export function registerSomeResource(server) {
+  registerResource(
+    server,
+    'resource-id',
+    new ResourceTemplate('jira://some-path', ...),
+    'Description',
+    async (params, { config, uri }) => {
+      // Call helper function
+      const data = await getSomeData(config, params.someParam);
+      // Format data and return
+      return createStandardResource(...);
+    }
+  );
+}
+```
+
+Tool file:
+```typescript
+// 1. Imports
+import { ... } from '../../utils/atlassian-api.js';
+
+// 2. Handler function
+export async function someToolHandler(params, config) {
+  try {
+    // Call API helper function
+    const result = await someFunctionFromApi(config, params);
+    return { success: true, data: result };
+  } catch (error) {
+    // Error handling
+  }
+}
+
+// 3. Tool registration
+export const registerSomeTool = (server) => {
+  server.tool(
+    'tool-name',
+    'Description',
+    someSchema.shape,
+    async (params, context) => {
+      // Call handler
+      const result = await someToolHandler(params, context.config);
+      return createResponse(...);
+    }
+  );
+};
+```
+
+Tuân thủ các nguyên tắc trên sẽ giúp codebase luôn nhất quán, dễ bảo trì, và dễ mở rộng khi cần.
 
 ## Common Workflows
 
@@ -312,3 +399,5 @@ Future enhancements will include:
 - Advanced features: Prompts, Sampling, Smart caching, personalization 
 
 **Lưu ý:** Từ tháng 6/2025, toàn bộ resource Jira đã migrate sang API v3 (endpoint `/rest/api/3/...`). Các trường rich text như description/comment trả về dạng ADF, đã tự động chuyển sang text thuần cho client không hỗ trợ ADF. 
+
+> **Lưu ý:** Tất cả resource và tool Confluence hiện tại chỉ sử dụng API v2 (`/wiki/api/v2/`). Các endpoint v1 đã bị loại bỏ hoàn toàn. Schema dữ liệu đã cập nhật theo API v2. 

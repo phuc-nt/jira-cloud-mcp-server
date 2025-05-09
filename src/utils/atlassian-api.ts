@@ -205,7 +205,7 @@ export async function callConfluenceApi<T>(
       );
     }
     // API URL as per docs
-    let url = `${baseUrl}/wiki/rest/api${endpoint}`;
+    let url = `${baseUrl}/wiki${endpoint}`;
     // Add params to URL if any
     if (params && Object.keys(params).length > 0) {
       const queryParams = new URLSearchParams();
@@ -1231,70 +1231,72 @@ export async function getSprintIssues(config: AtlassianConfig, sprintId: string,
 }
 
 /**
- * Get labels of a Confluence page
+ * Get labels of a Confluence page (API v2, cursor-based)
  */
-export async function getPageLabels(config: AtlassianConfig, pageId: string, start = 0, limit = 50): Promise<any> {
+export async function getConfluencePageLabelsV2(config: AtlassianConfig, pageId: string, cursor?: string, limit: number = 25): Promise<any> {
+  const params: Record<string, any> = { limit };
+  if (cursor) params.cursor = cursor;
   return await callConfluenceApi<any>(
     config,
-    `/content/${pageId}/label`,
+    `/api/v2/pages/${encodeURIComponent(pageId)}/labels`,
     'GET',
     null,
-    { start, limit }
+    params
   );
 }
 
 /**
- * Get attachments of a Confluence page
+ * Get attachments of a Confluence page (API v2, cursor-based)
  */
-export async function getPageAttachments(config: AtlassianConfig, pageId: string, start = 0, limit = 50): Promise<any> {
+export async function getConfluencePageAttachmentsV2(config: AtlassianConfig, pageId: string, cursor?: string, limit: number = 25): Promise<any> {
+  const params: Record<string, any> = { limit };
+  if (cursor) params.cursor = cursor;
   return await callConfluenceApi<any>(
     config,
-    `/content/${pageId}/child/attachment`,
+    `/api/v2/pages/${encodeURIComponent(pageId)}/attachments`,
     'GET',
     null,
-    { start, limit, expand: 'version' }
+    params
   );
 }
 
 /**
- * Get versions of a Confluence page
+ * Get versions of a Confluence page (API v2, cursor-based)
  */
-export async function getPageVersions(config: AtlassianConfig, pageId: string, start = 0, limit = 50): Promise<any> {
+export async function getConfluencePageVersionsV2(config: AtlassianConfig, pageId: string, cursor?: string, limit: number = 25): Promise<any> {
+  const params: Record<string, any> = { limit };
+  if (cursor) params.cursor = cursor;
   return await callConfluenceApi<any>(
     config,
-    `/content/${pageId}/version`,
+    `/api/v2/pages/${encodeURIComponent(pageId)}/versions`,
     'GET',
     null,
-    { start, limit, expand: 'content.version' }
+    params
   );
 }
 
 /**
- * Add labels to a Confluence page
+ * Add labels to a Confluence page (API v2)
  */
-export async function addLabelsToPage(config: AtlassianConfig, pageId: string, labels: string[]): Promise<{ labelsCount: number }> {
+export async function addConfluenceLabelsV2(config: AtlassianConfig, pageId: string, labels: string[]): Promise<any> {
   const labelObjects = labels.map(label => ({ name: label }));
-  const response = await callConfluenceApi<any>(
+  return await callConfluenceApi<any>(
     config,
-    `/content/${pageId}/label`,
+    `/api/v2/pages/${encodeURIComponent(pageId)}/labels`,
     'POST',
     labelObjects
   );
-  return { labelsCount: response.length || labelObjects.length };
 }
 
 /**
- * Remove labels from a Confluence page
+ * Remove a label from a Confluence page (API v2)
  */
-export async function removeLabelsFromPage(config: AtlassianConfig, pageId: string, labels: string[]): Promise<{ labelsCount: number }> {
-  for (const label of labels) {
-    await callConfluenceApi<any>(
-      config,
-      `/content/${pageId}/label?name=${encodeURIComponent(label)}`,
-      'DELETE'
-    );
-  }
-  return { labelsCount: labels.length };
+export async function removeConfluenceLabelV2(config: AtlassianConfig, pageId: string, label: string): Promise<any> {
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/pages/${encodeURIComponent(pageId)}/labels/${encodeURIComponent(label)}`,
+    'DELETE'
+  );
 }
 
 /**
@@ -1707,4 +1709,265 @@ export async function removeGadgetFromDashboard(config: AtlassianConfig, dashboa
   });
   if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
   return { success: true };
+}
+
+/**
+ * Get list of Confluence pages (API v2, cursor-based)
+ */
+export async function getConfluencePagesV2(config: AtlassianConfig, cursor?: string, limit: number = 25): Promise<any> {
+  const params: Record<string, any> = { limit };
+  if (cursor) params.cursor = cursor;
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/pages`,
+    'GET',
+    null,
+    params
+  );
+}
+
+/**
+ * Get Confluence page details (API v2, metadata only)
+ */
+export async function getConfluencePageV2(config: AtlassianConfig, pageId: string): Promise<any> {
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/pages/${encodeURIComponent(pageId)}`,
+    'GET'
+  );
+}
+
+/**
+ * Get Confluence page body (API v2)
+ */
+export async function getConfluencePageBodyV2(config: AtlassianConfig, pageId: string): Promise<any> {
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/pages/${encodeURIComponent(pageId)}/body`,
+    'GET'
+  );
+}
+
+/**
+ * Get Confluence page ancestors (API v2)
+ */
+export async function getConfluencePageAncestorsV2(config: AtlassianConfig, pageId: string): Promise<any> {
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/pages/${encodeURIComponent(pageId)}/ancestors`,
+    'GET'
+  );
+}
+
+/**
+ * Get list of Confluence spaces (API v2, cursor-based)
+ */
+export async function getConfluenceSpacesV2(config: AtlassianConfig, cursor?: string, limit: number = 25): Promise<any> {
+  const params: Record<string, any> = { limit };
+  if (cursor) params.cursor = cursor;
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/spaces`,
+    'GET',
+    null,
+    params
+  );
+}
+
+/**
+ * Get Confluence space details (API v2)
+ */
+export async function getConfluenceSpaceV2(config: AtlassianConfig, spaceKey: string): Promise<any> {
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/spaces/${encodeURIComponent(spaceKey)}`,
+    'GET'
+  );
+}
+
+/**
+ * Create a new Confluence page (API v2)
+ */
+export async function createConfluencePageV2(config: AtlassianConfig, params: { spaceKey: string, title: string, content: string, parentId?: string }): Promise<any> {
+  // Lấy spaceId từ spaceKey nếu cần
+  let spaceId = params.spaceKey;
+  if (/^[a-zA-Z0-9\-]+$/.test(params.spaceKey)) {
+    // Nếu là key, gọi API để lấy id
+    const spaceRes = await getConfluenceSpaceV2(config, params.spaceKey);
+    spaceId = spaceRes.id;
+  }
+  // Validate content
+  if (!params.content.trim().startsWith('<')) {
+    throw new Error('Content must be in Confluence storage format (XML-like HTML).');
+  }
+  // Chuẩn bị payload
+  const requestData: any = {
+    spaceId: spaceId,
+    title: params.title,
+    body: {
+      representation: 'storage',
+      value: params.content
+    }
+  };
+  if (params.parentId) requestData.parentId = params.parentId;
+  // Gọi API tạo page
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/pages`,
+    'POST',
+    requestData
+  );
+}
+
+/**
+ * Update a Confluence page (API v2)
+ * Có thể update title hoặc body hoặc cả hai. Mỗi lần update phải tăng version.
+ */
+export async function updateConfluencePageV2(config: AtlassianConfig, params: { pageId: string, title?: string, content?: string, version: number }): Promise<any> {
+  // Update title nếu có
+  let result: any = null;
+  if (params.title) {
+    result = await callConfluenceApi<any>(
+      config,
+      `/api/v2/pages/${encodeURIComponent(params.pageId)}/title`,
+      'PUT',
+      { title: params.title, version: params.version }
+    );
+    params.version++;
+  }
+  // Update body nếu có
+  if (params.content) {
+    if (!params.content.trim().startsWith('<')) {
+      throw new Error('Content must be in Confluence storage format (XML-like HTML).');
+    }
+    result = await callConfluenceApi<any>(
+      config,
+      `/api/v2/pages/${encodeURIComponent(params.pageId)}/body`,
+      'PUT',
+      { body: { representation: 'storage', value: params.content }, version: params.version }
+    );
+  }
+  return result;
+}
+
+/**
+ * Add a comment to a Confluence page (API v2)
+ */
+export async function addConfluenceCommentV2(config: AtlassianConfig, params: { pageId: string, content: string }): Promise<any> {
+  if (!params.content.trim().startsWith('<')) {
+    throw new Error('Comment content must be in Confluence storage format (XML-like HTML).');
+  }
+  const requestData = {
+    body: {
+      representation: 'storage',
+      value: params.content
+    }
+  };
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/pages/${encodeURIComponent(params.pageId)}/comments`,
+    'POST',
+    requestData
+  );
+}
+
+/**
+ * Get list of Jira projects (API v3)
+ */
+export async function getProjects(config: AtlassianConfig): Promise<any[]> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/project`;
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Get Jira project details (API v3)
+ */
+export async function getProject(config: AtlassianConfig, projectKey: string): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/project/${projectKey}`;
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  return await response.json();
+}
+
+/**
+ * Get children of a Confluence page (API v2)
+ */
+export async function getConfluencePageChildrenV2(config: AtlassianConfig, pageId: string): Promise<any> {
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/pages/${encodeURIComponent(pageId)}/children`,
+    'GET'
+  );
+}
+
+/**
+ * Get comments of a Confluence page (API v2)
+ */
+export async function getConfluencePageCommentsV2(config: AtlassianConfig, pageId: string): Promise<any> {
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/pages/${encodeURIComponent(pageId)}/comments`,
+    'GET'
+  );
+}
+
+/**
+ * Search Confluence pages by CQL (API v2)
+ */
+export async function searchConfluencePagesByCqlV2(config: AtlassianConfig, cql: string, start: number = 0, limit: number = 20): Promise<any> {
+  const params: Record<string, any> = { cql, start, limit };
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/pages/search`,
+    'GET',
+    null,
+    params
+  );
+}
+
+/**
+ * Get footer comments of a Confluence page (API v2)
+ */
+export async function getConfluencePageFooterCommentsV2(config: AtlassianConfig, pageId: string, params: { limit?: number, cursor?: string } = {}): Promise<any> {
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/pages/${encodeURIComponent(pageId)}/footer-comments`,
+    'GET',
+    null,
+    params
+  );
+}
+
+/**
+ * Get inline comments of a Confluence page (API v2)
+ */
+export async function getConfluencePageInlineCommentsV2(config: AtlassianConfig, pageId: string, params: { limit?: number, cursor?: string } = {}): Promise<any> {
+  return await callConfluenceApi<any>(
+    config,
+    `/api/v2/pages/${encodeURIComponent(pageId)}/inline-comments`,
+    'GET',
+    null,
+    params
+  );
+}
+
+/**
+ * Get list of Confluence pages (API v2, hỗ trợ filter nâng cao)
+ * @param config AtlassianConfig
+ * @param filters object chứa các filter hợp lệ v2 (space-id, label, status, title, body-format, sort, cursor, limit)
+ */
+export async function getConfluencePagesWithFilters(config: AtlassianConfig, filters: Record<string, any> = {}): Promise<any> {
+  return await callConfluenceApi<any>(
+    config,
+    '/api/v2/pages',
+    'GET',
+    null,
+    filters
+  );
 }

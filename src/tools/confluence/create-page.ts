@@ -5,6 +5,7 @@ import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
+import { createConfluencePageV2 } from '../../utils/atlassian-api.js';
 
 // Initialize logger
 const logger = Logger.getLogger('ConfluenceTools:createPage');
@@ -28,100 +29,33 @@ interface CreatePageResult {
   success: boolean;
 }
 
-// Main handler to create a new page
+// Main handler to create a new page (API v2)
 export async function createPageHandler(
   params: CreatePageParams,
   config: AtlassianConfig
 ): Promise<CreatePageResult> {
   try {
-    logger.info(`Creating new page "${params.title}" in space ${params.spaceKey}`);
-
-    // Validate parentId nếu có
-    if (params.parentId) {
-      // Gọi API kiểm tra parentId có tồn tại và thuộc cùng space không
-      try {
-        const parentPage = await callConfluenceApi<any>(
-          config,
-          `/content/${params.parentId}?expand=space`,
-          'GET'
-        );
-        if (!parentPage || !parentPage.space || parentPage.space.key !== params.spaceKey) {
-          throw new ApiError(
-            ApiErrorType.VALIDATION_ERROR,
-            `Parent page not found or does not belong to space ${params.spaceKey}`,
-            400
-          );
-        }
-      } catch (err) {
-        logger.error(`Parent page validation failed:`, err);
-        throw new ApiError(
-          ApiErrorType.VALIDATION_ERROR,
-          `Parent page not found or does not belong to space ${params.spaceKey}`,
-          400
-        );
-      }
-    }
-
-    // Validate content storage format cơ bản (chỉ kiểm tra có tag XML hoặc <p>...)
-    if (!params.content.trim().startsWith('<')) {
-      throw new ApiError(
-        ApiErrorType.VALIDATION_ERROR,
-        'Content must be in Confluence storage format (XML-like HTML). See documentation for details.',
-        400
-      );
-    }
-
-    // Prepare data for API call
-    const requestData: any = {
-      type: 'page',
+    logger.info(`Creating new page (v2) "${params.title}" in space ${params.spaceKey}`);
+    const data = await createConfluencePageV2(config, {
+      spaceKey: params.spaceKey,
       title: params.title,
-      space: {
-        key: params.spaceKey
-      },
-      body: {
-        storage: {
-          value: params.content,
-          representation: 'storage'
-        }
-      }
-    };
-
-    // If parentId is provided, set this page as a child
-    if (params.parentId) {
-      requestData.ancestors = [
-        {
-          id: params.parentId
-        }
-      ];
-    }
-
-    // Call Confluence API to create the page
-    const response = await callConfluenceApi<any>(
-      config,
-      '/content',
-      'POST',
-      requestData
-    );
-
-    // Build result for the Tool
+      content: params.content,
+      parentId: params.parentId
+    });
     return {
-      id: response.id,
-      key: response.key || '',
-      title: response.title,
-      self: response._links.self,
-      webui: response._links.webui,
+      id: data.id,
+      key: data.key || '',
+      title: data.title,
+      self: data._links.self,
+      webui: data._links.webui,
       success: true
     };
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
     }
-    logger.error(`Error creating page in space ${params.spaceKey}:`, error);
-    // Cải thiện thông báo lỗi
+    logger.error(`Error creating page (v2) in space ${params.spaceKey}:`, error);
     let message = `Failed to create page: ${error instanceof Error ? error.message : String(error)}`;
-    if (message.includes('storage format')) {
-      message += ' (Tip: Use storage format. You can get a sample by calling GET /rest/api/content/{pageId}?expand=body.storage)';
-    }
     throw new ApiError(
       ApiErrorType.SERVER_ERROR,
       message,
