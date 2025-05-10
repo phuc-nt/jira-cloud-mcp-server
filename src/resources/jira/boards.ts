@@ -100,6 +100,58 @@ export function registerBoardResources(server: McpServer) {
       }
     }
   );
+
+  // Resource: Board configuration
+  registerResource(
+    server,
+    'jira-board-configuration',
+    new ResourceTemplate('jira://boards/{boardId}/configuration', { list: undefined }),
+    'Get configuration of a specific Jira board',
+    async (params, { config, uri }) => {
+      try {
+        const boardId = Array.isArray(params.boardId) ? params.boardId[0] : params.boardId;
+        // Gọi API lấy cấu hình board
+        const response = await fetch(`${config.baseUrl}/rest/agile/1.0/board/${boardId}/configuration`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`${config.email}:${config.apiToken}`).toString('base64')}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+        const configData = await response.json();
+        // Inline schema (mô tả cơ bản, không validate sâu)
+        const boardConfigurationSchema = {
+          type: 'object',
+          properties: {
+            id: { type: 'number' },
+            name: { type: 'string' },
+            type: { type: 'string' },
+            self: { type: 'string' },
+            location: { type: 'object' },
+            filter: { type: 'object' },
+            subQuery: { type: 'object' },
+            columnConfig: { type: 'object' },
+            estimation: { type: 'object' },
+            ranking: { type: 'object' }
+          },
+          required: ['id', 'name', 'type', 'self', 'columnConfig']
+        };
+        return {
+          contents: [{
+            uri: uri,
+            mimeType: 'application/json',
+            text: JSON.stringify(configData),
+            schema: boardConfigurationSchema
+          }]
+        };
+      } catch (error) {
+        logger.error(`Error getting board configuration for board ${params.boardId}:`, error);
+        throw error;
+      }
+    }
+  );
   
   logger.info('Jira board resources registered successfully');
 } 

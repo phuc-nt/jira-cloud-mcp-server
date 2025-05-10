@@ -14,7 +14,6 @@ import { registerUpdatePageTitleTool } from './confluence/update-page-title.js';
 import { registerUpdateFooterCommentTool } from './confluence/update-footer-comment.js';
 import { registerDeleteFooterCommentTool } from './confluence/delete-footer-comment.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { registerConfigureBoardColumnsTool } from './jira/configure-board-columns.js';
 import { registerStartSprintTool } from './jira/start-sprint.js';
 import { registerCloseSprintTool } from './jira/close-sprint.js';
 import { registerAddIssuesToBacklogTool } from './jira/add-issues-to-backlog.js';
