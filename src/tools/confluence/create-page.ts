@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { callConfluenceApi } from '../../utils/atlassian-api.js';
+import { callConfluenceApi } from '../../utils/atlassian-api-base.js';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
@@ -12,19 +12,19 @@ const logger = Logger.getLogger('ConfluenceTools:createPage');
 
 // Input parameter schema
 export const createPageSchema = z.object({
-  spaceId: z.string().describe('ID số của space muốn tạo page (bắt buộc, lấy từ API v2, không phải key như TX, DEV, ...)'),
-  title: z.string().describe('Title of the page'),
-  content: z.string().describe(`Content của page (bắt buộc, chỉ hỗ trợ Confluence storage format - XML-like HTML).
+  spaceId: z.string().describe('Space ID (required, must be the numeric ID from API v2, NOT the key like TX, DEV, ...)'),
+  title: z.string().describe('Title of the page (required)'),
+  content: z.string().describe(`Content of the page (required, must be in Confluence storage format - XML-like HTML).
 
-- KHÔNG hỗ trợ plain text hoặc markdown (nếu truyền sẽ báo lỗi).
-- HỖ TRỢ các thẻ HTML dạng XML-like, macro Confluence (<ac:structured-macro>, <ac:rich-text-body>, ...), bảng, panel, info, warning, v.v. nếu đúng storage format.
-- Nội dung phải tuân thủ đúng chuẩn storage format của Confluence.
+- Plain text or markdown is NOT supported (will throw error).
+- Only XML-like HTML tags, Confluence macros (<ac:structured-macro>, <ac:rich-text-body>, ...), tables, panels, info, warning, etc. are supported if valid storage format.
+- Content MUST strictly follow Confluence storage format.
 
-Ví dụ hợp lệ:
-- <p>Đây là đoạn văn bản</p>
-- <ac:structured-macro ac:name="info"><ac:rich-text-body>Thông tin</ac:rich-text-body></ac:structured-macro>
+Valid examples:
+- <p>This is a paragraph</p>
+- <ac:structured-macro ac:name="info"><ac:rich-text-body>Information</ac:rich-text-body></ac:structured-macro>
 `),
-  parentId: z.string().optional().describe('ID of the parent page (if creating a child page)')
+  parentId: z.string().describe('Parent page ID (required, must specify the parent page to create a child page)')
 });
 
 type CreatePageParams = z.infer<typeof createPageSchema>;

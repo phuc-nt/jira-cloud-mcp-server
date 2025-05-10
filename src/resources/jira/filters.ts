@@ -7,7 +7,7 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { filterListSchema, filterSchema } from '../../schemas/jira.js';
 import { createStandardMetadata } from '../../schemas/common.js';
-import { getFilters, getFilterById, getMyFilters } from '../../utils/atlassian-api.js';
+import { getFilters, getFilterById, getMyFilters } from '../../utils/jira-resource-api.js';
 import { Logger } from '../../utils/logger.js';
 import { createStandardResource, extractPagingParams, registerResource } from '../../utils/mcp-resource.js';
 

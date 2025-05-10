@@ -6,7 +6,7 @@
 
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { boardListSchema, boardSchema, issuesListSchema } from '../../schemas/jira.js';
-import { getBoards, getBoardById, getBoardIssues } from '../../utils/atlassian-api.js';
+import { getBoards, getBoardById, getBoardIssues } from '../../utils/jira-resource-api.js';
 import { Logger } from '../../utils/logger.js';
 import { createStandardResource, extractPagingParams, registerResource } from '../../utils/mcp-resource.js';
 

@@ -4,14 +4,14 @@ import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
-import { deleteConfluencePageV2 } from '../../utils/atlassian-api.js';
+import { deleteConfluencePageV2 } from '../../utils/confluence-tool-api.js';
 
 const logger = Logger.getLogger('ConfluenceTools:deletePage');
 
 export const deletePageSchema = z.object({
-  pageId: z.string().describe('ID của trang cần xóa (bắt buộc)'),
-  draft: z.boolean().optional().describe('Xóa bản nháp (draft) nếu true'),
-  purge: z.boolean().optional().describe('Xóa vĩnh viễn (purge) nếu true')
+  pageId: z.string().describe('ID of the page to delete (required)'),
+  draft: z.boolean().optional().describe('Delete draft version if true'),
+  purge: z.boolean().optional().describe('Permanently delete (purge) if true')
 });
 
 type DeletePageParams = z.infer<typeof deletePageSchema>;

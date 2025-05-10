@@ -1,7 +1,7 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../../utils/logger.js';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
-import { getIssue as getIssueApi, searchIssues as searchIssuesApi } from '../../utils/atlassian-api.js';
+import { getIssue as getIssueApi, searchIssues as searchIssuesApi } from '../../utils/jira-resource-api.js';
 import { createJsonResource, createStandardResource, extractPagingParams, registerResource } from '../../utils/mcp-resource.js';
 import { issueSchema, issuesListSchema, transitionsListSchema, commentsListSchema } from '../../schemas/jira.js';
 

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { callConfluenceApi } from '../../utils/atlassian-api.js';
+import { callConfluenceApi } from '../../utils/atlassian-api-base.js';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
@@ -13,7 +13,7 @@ const logger = Logger.getLogger('ConfluenceTools:addComment');
 // Input parameter schema
 export const addCommentSchema = z.object({
   pageId: z.string().describe('ID of the page to add a comment to'),
-  content: z.string().describe('Content of the comment (in Confluence storage/HTML format)')
+  content: z.string().describe('Content of the comment (Confluence storage format, XML-like HTML)')
 });
 
 type AddCommentParams = z.infer<typeof addCommentSchema>;

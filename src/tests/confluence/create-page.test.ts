@@ -1,6 +1,6 @@
 import { createPageHandler } from '../../tools/confluence/create-page.js';
-import { callConfluenceApi } from '../../utils/atlassian-api.js';
-import { ApiError } from '../../utils/error-handler.js';
+import { callConfluenceApi } from '../../utils/atlassian-api-base.js';
+import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 
 // Mock cho các dependencies
 jest.mock('../../utils/atlassian-api.js');
@@ -45,7 +45,7 @@ describe('createPageHandler', () => {
   test('should create page successfully', async () => {
     // Arrange
     const mockParams = {
-      spaceKey: 'TESTSPACE',
+      spaceId: 'TEST',
       title: 'Test Page Title',
       content: '<p>This is test content</p>'
     };
@@ -90,7 +90,7 @@ describe('createPageHandler', () => {
   test('should create page with parent ID', async () => {
     // Arrange
     const mockParams = {
-      spaceKey: 'TESTSPACE',
+      spaceId: 'TEST',
       title: 'Child Page Title',
       content: '<p>This is child page content</p>',
       parentId: '98765'
@@ -120,7 +120,7 @@ describe('createPageHandler', () => {
   test('should create page with labels', async () => {
     // Arrange
     const mockParams = {
-      spaceKey: 'TESTSPACE',
+      spaceId: 'TEST',
       title: 'Labeled Page',
       content: '<p>This page has labels</p>',
       labels: ['test', 'documentation']
@@ -162,12 +162,12 @@ describe('createPageHandler', () => {
   test('should handle API error', async () => {
     // Arrange
     const mockParams = {
-      spaceKey: 'INVALID',
+      spaceId: 'INVALID',
       title: 'Error Page',
       content: '<p>This will cause an error</p>'
     };
     
-    const mockError = new ApiError('ERROR_TYPE', 'API Error', 500);
+    const mockError = new ApiError(ApiErrorType.SERVER_ERROR, 'Simulated error');
     (callConfluenceApi as jest.Mock).mockRejectedValue(mockError);
     
     // Act & Assert

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { deleteFilter as deleteJiraFilter } from '../../utils/atlassian-api.js';
+import { deleteFilter as deleteJiraFilter } from '../../utils/jira-tool-api.js';
 import { Logger } from '../../utils/logger.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
 

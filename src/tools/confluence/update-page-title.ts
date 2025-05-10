@@ -4,14 +4,14 @@ import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
-import { updateConfluencePageTitleV2 } from '../../utils/atlassian-api.js';
+import { updateConfluencePageTitleV2 } from '../../utils/confluence-tool-api.js';
 
 const logger = Logger.getLogger('ConfluenceTools:updatePageTitle');
 
 export const updatePageTitleSchema = z.object({
-  pageId: z.string().describe('ID của trang cần cập nhật tiêu đề (bắt buộc)'),
-  title: z.string().describe('Tiêu đề mới của trang (bắt buộc)'),
-  version: z.number().describe('Số phiên bản mới (bắt buộc, phải lớn hơn phiên bản hiện tại 1 đơn vị)')
+  pageId: z.string().describe('ID of the page to update the title (required)'),
+  title: z.string().describe('New title of the page (required)'),
+  version: z.number().describe('New version number (required, must be exactly one greater than the current version)')
 });
 
 type UpdatePageTitleParams = z.infer<typeof updatePageTitleSchema>;

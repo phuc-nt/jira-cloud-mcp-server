@@ -7,7 +7,7 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { sprintListSchema, sprintSchema, issuesListSchema } from '../../schemas/jira.js';
 import { createStandardResource, extractPagingParams, registerResource } from '../../utils/mcp-resource.js';
-import { getSprintsByBoard, getSprintById, getSprintIssues } from '../../utils/atlassian-api.js';
+import { getSprintsByBoard, getSprintById, getSprintIssues } from '../../utils/jira-resource-api.js';
 import { Logger } from '../../utils/logger.js';
 
 const logger = Logger.getLogger('JiraSprintResources');

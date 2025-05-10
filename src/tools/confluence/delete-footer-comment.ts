@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
-import { deleteConfluenceFooterCommentV2 } from '../../utils/atlassian-api.js';
+import { deleteConfluenceFooterCommentV2 } from '../../utils/confluence-tool-api.js';
 import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -9,7 +9,7 @@ import { McpResponse, createTextResponse, createErrorResponse } from '../../util
 const logger = Logger.getLogger('ConfluenceTools:deleteFooterComment');
 
 export const deleteFooterCommentSchema = z.object({
-  commentId: z.union([z.string(), z.number()]).describe('ID của comment cần xóa (bắt buộc)')
+  commentId: z.union([z.string(), z.number()]).describe('ID of the comment to delete (required)')
 });
 
 type DeleteFooterCommentParams = z.infer<typeof deleteFooterCommentSchema>;

@@ -1,5 +1,5 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { getDashboards, getMyDashboards, getDashboardById, getDashboardGadgets } from '../../utils/atlassian-api.js';
+import { getDashboards, getMyDashboards, getDashboardById, getDashboardGadgets } from '../../utils/jira-resource-api.js';
 import { createStandardResource, extractPagingParams, registerResource } from '../../utils/mcp-resource.js';
 import { Logger } from '../../utils/logger.js';
 import { dashboardSchema, dashboardListSchema, gadgetListSchema } from '../../schemas/jira.js';

@@ -5,7 +5,7 @@ import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import fetch from 'cross-fetch';
 import { projectsListSchema, projectSchema } from '../../schemas/jira.js';
-import { getProjects as getProjectsApi, getProject as getProjectApi } from '../../utils/atlassian-api.js';
+import { getProjects as getProjectsApi, getProject as getProjectApi } from '../../utils/jira-resource-api.js';
 
 const logger = Logger.getLogger('JiraResource:Projects');
 

@@ -1,5 +1,5 @@
 import { AtlassianConfig, logger, createBasicHeaders } from './atlassian-api-base.js';
-import { normalizeAtlassianBaseUrl } from './atlassian-api.js';
+import { normalizeAtlassianBaseUrl } from './atlassian-api-base.js';
 
 // Get list of Jira dashboards (all)
 export async function getDashboards(config: AtlassianConfig, startAt = 0, maxResults = 50): Promise<any> {

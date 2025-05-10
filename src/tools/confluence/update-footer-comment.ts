@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
-import { updateConfluenceFooterCommentV2 } from '../../utils/atlassian-api.js';
+import { updateConfluenceFooterCommentV2 } from '../../utils/confluence-tool-api.js';
 import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -9,11 +9,11 @@ import { McpResponse, createTextResponse, createErrorResponse } from '../../util
 const logger = Logger.getLogger('ConfluenceTools:updateFooterComment');
 
 export const updateFooterCommentSchema = z.object({
-  commentId: z.union([z.string(), z.number()]).describe('ID của comment cần cập nhật (bắt buộc)'),
-  version: z.number().describe('Số phiên bản mới (bắt buộc, phải lớn hơn phiên bản hiện tại 1 đơn vị)'),
-  value: z.string().describe('Nội dung comment mới (bắt buộc)'),
-  representation: z.string().optional().describe('Định dạng nội dung, mặc định là "storage"'),
-  message: z.string().optional().describe('Thông điệp mô tả lý do cập nhật (tùy chọn)')
+  commentId: z.union([z.string(), z.number()]).describe('ID of the comment to update (required)'),
+  version: z.number().describe('New version number (required, must be exactly one greater than the current version)'),
+  value: z.string().describe('New content of the comment (required)'),
+  representation: z.string().optional().describe('Content representation, default is "storage"'),
+  message: z.string().optional().describe('Update message (optional)')
 });
 
 type UpdateFooterCommentParams = z.infer<typeof updateFooterCommentSchema>;

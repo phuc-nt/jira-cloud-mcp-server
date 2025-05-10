@@ -1,5 +1,5 @@
 import { AtlassianConfig } from './atlassian-api-base.js';
-import { callConfluenceApi } from './atlassian-api.js';
+import { callConfluenceApi } from './atlassian-api-base.js';
 
 // Create a new Confluence page (API v2)
 export async function createConfluencePageV2(config: AtlassianConfig, params: { spaceId: string, title: string, content: string, parentId?: string }): Promise<any> {

@@ -1,5 +1,5 @@
 import { AtlassianConfig } from './atlassian-api-base.js';
-import { callConfluenceApi } from './atlassian-api.js';
+import { callConfluenceApi } from './atlassian-api-base.js';
 
 // Get labels of a Confluence page (API v2, cursor-based)
 export async function getConfluencePageLabelsV2(config: AtlassianConfig, pageId: string, cursor?: string, limit: number = 25): Promise<any> {

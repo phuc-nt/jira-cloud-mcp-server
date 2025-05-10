@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../../utils/logger.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
-import { updateFilter as updateJiraFilter } from '../../utils/atlassian-api.js';
+import { updateFilter as updateJiraFilter } from '../../utils/jira-tool-api.js';
 
 // Initialize logger
 const logger = Logger.getLogger('JiraTools:updateFilter');

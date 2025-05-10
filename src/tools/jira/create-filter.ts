@@ -6,7 +6,7 @@
 
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { createFilter as createJiraFilter } from '../../utils/atlassian-api.js';
+import { createFilter as createJiraFilter } from '../../utils/jira-tool-api.js';
 import { Logger } from '../../utils/logger.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
 
