@@ -1,6 +1,6 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerResource, createJsonResource, createStandardResource } from '../../utils/mcp-resource.js';
-import { AtlassianConfig } from '../../utils/atlassian-api.js';
+import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import fetch from 'cross-fetch';

@@ -1,6 +1,6 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../../utils/logger.js';
-import { AtlassianConfig } from '../../utils/atlassian-api.js';
+import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import fetch from 'cross-fetch';
 import { createJsonResource, createStandardResource } from '../../utils/mcp-resource.js';
 import { pagesListSchema, pageSchema, commentsListSchema } from '../../schemas/confluence.js';

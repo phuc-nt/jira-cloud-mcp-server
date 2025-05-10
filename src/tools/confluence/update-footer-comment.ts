@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { AtlassianConfig, updateConfluenceFooterCommentV2 } from '../../utils/atlassian-api.js';
+import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
+import { updateConfluenceFooterCommentV2 } from '../../utils/atlassian-api.js';
 import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';

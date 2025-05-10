@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { AtlassianConfig, updateIssue } from '../../utils/atlassian-api.js';
+import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
+import { updateIssue } from '../../utils/atlassian-api.js';
 import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';

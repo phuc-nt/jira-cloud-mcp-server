@@ -1,5 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { AtlassianConfig } from './atlassian-api.js';
+import { AtlassianConfig } from './atlassian-api-base.js';
 import { Logger } from './logger.js';
 import { StandardMetadata, createStandardMetadata } from '../schemas/common.js';
 

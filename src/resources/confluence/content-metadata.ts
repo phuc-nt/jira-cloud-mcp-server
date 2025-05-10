@@ -6,7 +6,8 @@
 
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { labelListSchema, attachmentListSchema, versionListSchema } from '../../schemas/confluence.js';
-import { AtlassianConfig, getConfluencePageLabelsV2, getConfluencePageAttachmentsV2, getConfluencePageVersionsV2 } from '../../utils/atlassian-api.js';
+import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
+import { getConfluencePageLabelsV2, getConfluencePageAttachmentsV2, getConfluencePageVersionsV2 } from '../../utils/atlassian-api.js';
 import { Logger } from '../../utils/logger.js';
 import { createStandardResource, extractPagingParams, registerResource } from '../../utils/mcp-resource.js';
 

@@ -1,7 +1,7 @@
 import { McpClient } from '@modelcontextprotocol/sdk/client/mcp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { InMemoryClientServerPair } from '@modelcontextprotocol/sdk/server/memory.js';
-import { AtlassianConfig } from '../../utils/atlassian-api.js';
+import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import { registerGetIssueTool } from '../../tools/jira/get-issue.js';
 import { registerSearchIssuesTool } from '../../tools/jira/search-issues.js';
 import { registerGetPageTool } from '../../tools/confluence/get-page.js';

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { AtlassianConfig, createIssue } from '../../utils/atlassian-api.js';
+import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
+import { createIssue } from '../../utils/atlassian-api.js';
 import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import { JiraIssueType } from '../../utils/jira-interfaces.js';
