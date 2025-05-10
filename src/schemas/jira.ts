@@ -51,6 +51,11 @@ export const issueSchema = {
       },
       nullable: true
     },
+    labels: {
+      type: "array",
+      items: { type: "string" },
+      description: "List of labels attached to the issue"
+    },
     created: { type: "string", format: "date-time", description: "Creation date" },
     updated: { type: "string", format: "date-time", description: "Last update date" },
     issueType: {

@@ -142,6 +142,7 @@ function formatIssueData(issue: any, baseUrl: string): any {
       name: issue.fields.priority.name,
       id: issue.fields.priority.id
     } : null,
+    labels: issue.fields?.labels || [],
     created: issue.fields?.created || null,
     updated: issue.fields?.updated || null,
     issueType: {

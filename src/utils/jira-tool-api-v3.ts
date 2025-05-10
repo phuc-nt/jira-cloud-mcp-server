@@ -2,7 +2,34 @@ import { AtlassianConfig, logger, createBasicHeaders } from './atlassian-api-bas
 import { normalizeAtlassianBaseUrl } from './atlassian-api-base.js';
 import { ApiError, ApiErrorType } from './error-handler.js';
 
-// Create a new Jira issue
+// Helper: Fetch Jira create metadata for a project/issueType
+export async function fetchJiraCreateMeta(
+  config: AtlassianConfig,
+  projectKey: string,
+  issueType: string
+): Promise<Record<string, any>> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  // Lấy metadata cho project và issueType (dùng name hoặc id)
+  const url = `${baseUrl}/rest/api/3/issue/createmeta?projectKeys=${encodeURIComponent(projectKey)}&issuetypeNames=${encodeURIComponent(issueType)}&expand=projects.issuetypes.fields`;
+  const response = await fetch(url, { headers, credentials: 'omit' });
+  if (!response.ok) {
+    const responseText = await response.text();
+    logger.error(`Jira API error (createmeta, ${response.status}):`, responseText);
+    throw new Error(`Jira API error (createmeta): ${response.status} ${responseText}`);
+  }
+  const meta = await response.json();
+  // Trả về object các trường hợp lệ
+  try {
+    const fields = meta.projects?.[0]?.issuetypes?.[0]?.fields || {};
+    return fields;
+  } catch (e) {
+    logger.error('Cannot parse createmeta fields', e);
+    return {};
+  }
+}
+
+// Create a new Jira issue (fix: chỉ gửi các trường có trong createmeta)
 export async function createIssue(
   config: AtlassianConfig,
   projectKey: string,
@@ -15,6 +42,25 @@ export async function createIssue(
     const headers = createBasicHeaders(config.email, config.apiToken);
     const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
     const url = `${baseUrl}/rest/api/3/issue`;
+
+    // Lấy metadata các trường hợp lệ
+    const createmetaFields = await fetchJiraCreateMeta(config, projectKey, issueType);
+    
+    // Chỉ map các trường có trong createmeta
+    const safeFields: Record<string, any> = {};
+    let labelsToUpdate: string[] | undefined = undefined;
+    for (const key of Object.keys(additionalFields)) {
+      if (createmetaFields[key]) {
+        safeFields[key] = additionalFields[key];
+      } else {
+        logger.warn(`[createIssue] Field '${key}' is not available on create screen for project ${projectKey} / issueType ${issueType}, will be ignored.`);
+        // Nếu là labels thì lưu lại để update sau
+        if (key === 'labels') {
+          labelsToUpdate = additionalFields[key];
+        }
+      }
+    }
+
     const data: {
       fields: {
         project: { key: string };
@@ -28,10 +74,11 @@ export async function createIssue(
         project: { key: projectKey },
         summary: summary,
         issuetype: { name: issueType },
-        ...additionalFields,
+        ...safeFields,
       },
     };
-    if (description) {
+
+    if (description && createmetaFields['description']) {
       data.fields.description = {
         type: "doc",
         version: 1,
@@ -48,15 +95,18 @@ export async function createIssue(
         ],
       };
     }
+
     logger.debug(`Creating issue in project ${projectKey}`);
-    const curlCmd = `curl -X POST -H "Content-Type: application/json" -H "Accept: application/json" -H "User-Agent: MCP-Atlassian-Server/1.0.0" -u "${config.email}:${config.apiToken.substring(0, 5)}..." "${url}" -d '${JSON.stringify(data)}'`;
+    const curlCmd = `curl -X POST -H \"Content-Type: application/json\" -H \"Accept: application/json\" -H \"User-Agent: MCP-Atlassian-Server/1.0.0\" -u \"${config.email}:${config.apiToken.substring(0, 5)}...\" \"${url}\" -d '${JSON.stringify(data)}'`;
     logger.info(`Debug with curl: ${curlCmd}`);
+
     const response = await fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify(data),
       credentials: "omit",
     });
+
     if (!response.ok) {
       const statusCode = response.status;
       const responseText = await response.text();
@@ -98,9 +148,30 @@ export async function createIssue(
         );
       }
     }
+
     const newIssue = await response.json();
+
+    // Nếu không tạo được labels khi tạo issue, update lại ngay sau khi tạo
+    if (labelsToUpdate && newIssue && newIssue.key) {
+      logger.info(`[createIssue] Updating labels for issue ${newIssue.key} ngay sau khi tạo (do không khả dụng trên màn hình tạo issue)`);
+      const updateUrl = `${baseUrl}/rest/api/3/issue/${newIssue.key}`;
+      const updateData = { fields: { labels: labelsToUpdate } };
+      const updateResponse = await fetch(updateUrl, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(updateData),
+        credentials: "omit",
+      });
+      if (!updateResponse.ok) {
+        const updateText = await updateResponse.text();
+        logger.error(`[createIssue] Failed to update labels for issue ${newIssue.key}:`, updateText);
+      } else {
+        logger.info(`[createIssue] Labels updated for issue ${newIssue.key}`);
+      }
+    }
+
     return newIssue;
-  } catch (error: any) {
+  } catch (error) {
     logger.error(`Error creating issue:`, error);
     if (error instanceof ApiError) {
       throw error;

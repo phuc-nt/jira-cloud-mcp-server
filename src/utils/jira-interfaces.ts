@@ -252,6 +252,7 @@ export interface JiraIssue {
       id: string;
       name: string;
     };
+    labels?: string[];
     assignee?: {
       accountId: string;
       displayName: string;
