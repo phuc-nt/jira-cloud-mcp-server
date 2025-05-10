@@ -34,9 +34,13 @@ export async function getDashboardById(config: AtlassianConfig, dashboardId: str
 
 // Get gadgets (widgets) of a Jira dashboard
 export async function getDashboardGadgets(config: AtlassianConfig, dashboardId: string): Promise<any> {
-  // Gadgets nằm trong trường gadgets của dashboard details
-  const dashboard = await getDashboardById(config, dashboardId);
-  return dashboard.gadgets || [];
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  let baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/dashboard/${dashboardId}/gadget`;
+  const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
+  if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
+  const data = await response.json();
+  return data.gadgets || [];
 }
 
 // Get Jira issue by key or id

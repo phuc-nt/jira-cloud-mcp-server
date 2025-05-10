@@ -675,4 +675,18 @@ export async function deleteFilter(
     logger.error(`Error deleting Jira filter ${filterId}:`, error);
     throw error;
   }
+}
+
+// Lấy danh sách tất cả gadget có sẵn để thêm vào dashboard
+export async function getJiraAvailableGadgets(config: AtlassianConfig): Promise<any> {
+  const headers = createBasicHeaders(config.email, config.apiToken);
+  const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+  const url = `${baseUrl}/rest/api/3/dashboard/gadgets`;
+  const response = await fetch(url, { headers, credentials: 'omit' });
+  if (!response.ok) {
+    const responseText = await response.text();
+    logger.error(`Jira API error (gadgets, ${response.status}):`, responseText);
+    throw new Error(`Jira API error (gadgets): ${response.status} ${responseText}`);
+  }
+  return await response.json();
 } 

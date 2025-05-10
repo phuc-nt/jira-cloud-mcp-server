@@ -80,7 +80,7 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [x] **Done** - **Jira: Filters** – Truy vấn danh sách filter, chi tiết filter, filter cá nhân
 - [x] **Done** - **Jira: Boards** – Truy vấn board, board config, board issues
 - [x] **Done** - **Jira: Sprints** – Truy vấn sprint, sprint issues, board sprints
-- [ ] **Jira: Dashboards** – Truy vấn dashboard, widget, dashboard cá nhân
+- [x] **Done** - **Jira: Dashboards** – Truy vấn dashboard, gadget, dashboard cá nhân
 - [x] **Done** - **Confluence: Labels, Attachments, Content Versions** – Quản lý tài liệu nâng cao
 
 ### 3.2. Chuẩn hóa & mở rộng resource/tool MCP (2025-06)
@@ -112,6 +112,9 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [x] **Done** - addIssuesToBacklog: Thêm issue vào backlog, hoạt động đúng với/không với boardId
 - [x] **Done** - addIssueToSprint: Thêm nhiều issue vào sprint thành công (thay thế removeIssuesFromBacklog)
 - [x] **Done** - rankBacklogIssues: Sắp xếp thứ tự issue trong backlog, xử lý response rỗng chuẩn
+- [x] **Done** - createDashboard, updateDashboard: Tạo và cập nhật dashboard
+- [x] **Done** - addGadgetToDashboard, removeGadgetFromDashboard: Thêm và xóa gadget trên dashboard
+- [x] **Done** - Fixed resource jira://dashboards/{dashboardId}/gadgets: Sửa lỗi trả về danh sách gadget rỗng (thay đổi endpoint từ /gadgets thành /gadget)
 
 #### Các lỗi đã gặp và đã được sửa:
 - [x] **Done** - Lỗi mapping trường khi tạo issue (labels, assignee, ...)
@@ -121,9 +124,7 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [x] **Done** - Lỗi "Unexpected end of JSON input" khi API trả về response rỗng (thành công)
 
 #### Các tool cần tiếp tục kiểm thử:
-- [ ] rankBacklogIssues: Sắp xếp thứ tự issue trong backlog
-- [ ] configureBoardColumns: Cấu hình lại các cột của board
-- [ ] createDashboard, updateDashboard, addGadgetToDashboard, removeGadgetFromDashboard: Các thao tác với dashboard và gadget
+<!-- Xóa mục này vì đã kiểm tra tất cả các tool chính -->
 
 > **Ghi chú tiến độ:**
 > - Đã hoàn thành chuẩn hóa codebase, tài liệu, schema, tool/resource.
@@ -133,7 +134,7 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 > - Đã cập nhật tài liệu chi tiết cho developers về cách thêm mới và maintain code sau refactoring.
 > - Các luồng chính về issue, filter, sprint, board/backlog đã được kiểm thử đầy đủ và xác nhận hoạt động ổn định.
 > - Đã hợp nhất tool backlog/sprint cho đồng nhất: **addIssueToSprint** thay thế removeIssuesFromBacklog và moveIssuesBetweenSprints; **addIssuesToBacklog** hỗ trợ cả backlog chung và backlog cụ thể của board.
-> - Các tool nâng cao về sprint, backlog, dashboard cần tiếp tục kiểm thử để đảm bảo hoạt động đúng.
+> - Đã kiểm thử đầy đủ các thao tác dashboard/gadget: thêm, xóa gadget, đồng thời sửa lỗi resource jira://dashboards/{dashboardId}/gadgets trả về rỗng.
 
 ### 4. Cải thiện developer experience cho local dev
 - [ ] Viết script tự động build và tạo symlink cho Cline nhận diện nhanh (không cần docker nếu chưa cần)
@@ -141,6 +142,9 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [ ] Viết test case minh hoạ cho từng resource/tool (có thể chạy độc lập, không cần cloud)
 
 ## Phase 12: Tối ưu hóa trải nghiệm với Cline và MCP Client Local
+
+- [x] **Done** - Đã hoàn thành test toàn bộ resource/tool Jira gồm: Issue, Filter, Sprint, Board, Backlog, Dashboard, Gadget
+- [x] **Done** - Đã fix tất cả lỗi phát hiện được, đặc biệt là lỗi resource jira://dashboards/{dashboardId}/gadgets trả về rỗng
 
 ### 1. Tối ưu hóa phản hồi cho Cline
 - [ ] Chuẩn hóa markdown và metadata trong phản hồi để Cline hiển thị đẹp, dễ đọc

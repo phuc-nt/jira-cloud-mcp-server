@@ -24,8 +24,14 @@ Tài liệu này liệt kê các task quan trọng cần thực hiện ngay đ�
   - [x] Tool issue (createIssue): Đã test và fix thành công
   - [x] Tool filter (createFilter, updateFilter, deleteFilter): Đã test và fix thành công
   - [x] Tool sprint (createSprint, startSprint, closeSprint): Đã test, hoạt động ổn định, closeSprint hỗ trợ completeDate chuẩn
-  - [ ] Tool board 
-  - [ ] Tool dashboard/gadget
+  - [x] Tool board: Đã test thành công với addIssuesToBacklog, rankBacklogIssues 
+  - [x] Tool dashboard/gadget: Đã test thành công toàn bộ quy trình thao tác với dashboard và gadget
+    - Tạo/cập nhật dashboard
+    - Lấy danh sách gadget khả dụng (resource jira://gadgets)
+    - Thêm gadget vào dashboard (addGadgetToDashboard)
+    - Lấy danh sách gadget trên dashboard (resource jira://dashboards/{dashboardId}/gadgets)
+    - Xóa gadget khỏi dashboard (removeGadgetFromDashboard)
+    - Đã sửa lỗi resource jira://dashboards/{dashboardId}/gadgets trả về danh sách rỗng (do dùng sai endpoint /gadgets thay vì /gadget)
 - [ ] Ghi chú lại tất cả bug, edge case, behavior bất thường khi test thực tế với Cline
 - [ ] Ưu tiên kiểm thử thực tế với Cline, so sánh kết quả với Atlassian UI
 - [ ] Bổ sung test case minh hoạ cho từng resource/tool Jira (có thể chạy độc lập)
