@@ -111,6 +111,7 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [x] **Done** - addIssueToBoard: Thêm issue vào board Kanban và Scrum
 - [x] **Done** - addIssuesToBacklog: Thêm issue vào backlog, hoạt động đúng với/không với boardId
 - [x] **Done** - addIssueToSprint: Thêm nhiều issue vào sprint thành công (thay thế removeIssuesFromBacklog)
+- [x] **Done** - rankBacklogIssues: Sắp xếp thứ tự issue trong backlog, xử lý response rỗng chuẩn
 
 #### Các lỗi đã gặp và đã được sửa:
 - [x] **Done** - Lỗi mapping trường khi tạo issue (labels, assignee, ...)

@@ -105,7 +105,18 @@ export async function rankBacklogIssues(config: AtlassianConfig, boardId: string
       logger.error(`Jira API error (${response.status}):`, responseText);
       throw new Error(`Jira API error: ${response.status} ${responseText}`);
     }
-    return await response.json();
+    // Xử lý response rỗng
+    const contentLength = response.headers.get('content-length');
+    if (contentLength === '0' || response.status === 204) {
+      return { success: true };
+    }
+    const text = await response.text();
+    if (!text) return { success: true };
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return { success: true };
+    }
   } catch (error) {
     logger.error(`Error ranking backlog issues:`, error);
     throw error;
