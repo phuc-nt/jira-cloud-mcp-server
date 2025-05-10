@@ -72,86 +72,93 @@ npx -y @smithery/cli install @phuc-nt/mcp-atlassian-server --client claude
 
 ## Feature Overview
 
-> For complete technical details including actual Atlassian API endpoints and implementation notes, see [Resource & Tools Documentation](./docs/introduction/resources-and-tools.md).
+MCP Atlassian Server enables AI assistants (like Cline, Claude Desktop, Cursor...) to access and manage Jira & Confluence with a full set of features, grouped for clarity:
 
-| Type      | Group       | Feature                                         | Description                                      | Status |
-|-----------|-------------|-------------------------------------------------|--------------------------------------------------|--------|
-| Resource  | Jira        | View issues, projects, users, comments, roles, filters, boards, sprints, dashboards, gadgets | Query Jira data (JQL, details, lists, roles, assignable users, users by role, filters, boards, sprints, dashboards, gadgets) | ✔      |
-| Resource  | Confluence  | View spaces, pages, child pages, ancestors, labels, attachments, versions | Query Confluence data (spaces, pages, children, ancestors, labels, attachments, versions) | ✔      |
-| Tool      | Jira        | Create, update, transition, assign issues; manage filters, sprints        | Direct actions on Jira (createIssue, updateIssue, transitionIssue, assignIssue, createFilter, updateFilter, deleteFilter, createSprint) | ✔      |
-| Tool      | Confluence  | Create, update pages, add comments, manage labels                        | Direct actions on Confluence (createPage, updatePage, addComment, addLabelsToPage, removeLabelsFromPage) | ✔      |
-| Tool      | Other       | Prompts, Sampling, Personalization              | AI optimization, personalization, advanced flows | 🚧     |
+### Jira
 
-### Resource Endpoints (Jira & Confluence)
+- **Issue Management**
+  - View, search, and filter issues
+  - Create, update, transition, and assign issues
+  - Add issues to backlog or sprint, rank issues
 
-| Resource | URI Pattern | Description |
-|----------|-------------|-------------|
-| Projects | `jira://projects` | List all Jira projects |
-| Project | `jira://projects/{projectKey}` | Project details |
-| Project Roles | `jira://projects/{projectKey}/roles` | List project roles |
-| Issues | `jira://issues` | List/search issues (JQL, pagination) |
-| Issue | `jira://issues/{issueKey}` | Issue details |
-| Issue Transitions | `jira://issues/{issueKey}/transitions` | List available transitions |
-| Comments | `jira://issues/{issueKey}/comments` | List comments of an issue |
-| User | `jira://users/{accountId}` | User details |
-| Assignable Users | `jira://users/assignable/{projectKey}` | Users assignable to a project |
-| Users by Role | `jira://users/role/{projectKey}/{roleId}` | Users in a project role |
-| Filters | `jira://filters` | List all Jira filters |
-| Filter Details | `jira://filters/{filterId}` | Filter details |
-| My Filters | `jira://filters/my` | My filters |
-| Boards | `jira://boards` | List all Jira boards |
-| Board Details | `jira://boards/{boardId}` | Board details |
-| Board Issues | `jira://boards/{boardId}/issues` | Issues in a board |
-| Board Sprints | `jira://boards/{boardId}/sprints` | Sprints in a board |
-| Sprint Details | `jira://sprints/{sprintId}` | Sprint details |
-| Sprint Issues | `jira://sprints/{sprintId}/issues` | Issues in a sprint |
-| Confluence Spaces | `confluence://spaces` | List all Confluence spaces |
-| Confluence Space | `confluence://spaces/{spaceKey}` | Space details |
-| Confluence Pages | `confluence://pages` | List all pages |
-| Confluence Page | `confluence://pages/{pageId}` | Page details |
-| Page Children | `confluence://pages/{pageId}/children` | List child pages |
-| Page Ancestors | `confluence://pages/{pageId}/ancestors` | List ancestor pages |
-| Page Labels | `confluence://pages/{pageId}/labels` | Labels of a page |
-| Page Attachments | `confluence://pages/{pageId}/attachments` | Attachments of a page |
-| Page Versions | `confluence://pages/{pageId}/versions` | Version history of a page |
-| Dashboards | `jira://dashboards` | List all Jira dashboards |
-| My Dashboards | `jira://dashboards/my` | List dashboards owned by current user |
-| Dashboard Details | `jira://dashboards/{dashboardId}` | Dashboard details |
-| Dashboard Gadgets | `jira://dashboards/{dashboardId}/gadgets` | List gadgets of a dashboard |
+- **Project Management**
+  - View project list, project details, and project roles
 
-> For complete technical details including actual Atlassian API endpoints and implementation notes, see [Resource & Tools Documentation](./docs/introduction/resources-and-tools.md).
+- **Board & Sprint Management**
+  - View boards, board configuration, issues and sprints on boards
+  - Create, start, and close sprints
 
-### Tool Endpoints
+- **Filter Management**
+  - View, create, update, and delete filters
 
-| Tool | Description | Main Parameters |
-|------|-------------|-----------------|
-| createIssue | Create a new Jira issue | projectKey, summary, description... |
-| updateIssue | Update a Jira issue | issueKey, summary, description... |
-| transitionIssue | Transition issue status | issueKey, transitionId |
-| assignIssue | Assign issue to user | issueKey, accountId |
-| createFilter | Create a Jira filter | name, jql, description, favourite |
-| updateFilter | Update a Jira filter | filterId, name, jql, description, favourite |
-| deleteFilter | Delete a Jira filter | filterId |
-| createSprint | Create a Jira sprint | boardId, name, startDate, endDate, goal |
-| createPage | Create a Confluence page | title, content, spaceKey |
-| updatePage | Update a Confluence page | pageId, title, content, version |
-| updatePageTitle | Update a Confluence page title | pageId, title, version |
-| addComment | Add comment to a page | pageId, content |
-| updateFooterComment | Update a footer comment | commentId, version, value, representation, message |
-| deleteFooterComment | Delete a footer comment | commentId |
-| deletePage | Delete a Confluence page | pageId, draft, purge |
-| addIssueToBoard | Add issue(s) to a Jira board | boardId, issueKey |
-| configureBoardColumns | Configure columns of a Jira board | boardId, columns |
-| startSprint | Start a Jira sprint | sprintId, startDate, endDate, goal |
-| closeSprint | Close a Jira sprint | sprintId, completeDate, moveToSprintId, createNewSprint |
-| moveIssuesBetweenSprints | Move issues between sprints | fromSprintId, toSprintId, issueKeys |
-| addIssuesToBacklog | Add issues to backlog | boardId, issueKeys |
-| removeIssuesFromBacklog | Remove issues from backlog (move to sprint) | boardId, sprintId, issueKeys |
-| rankBacklogIssues | Rank issues in backlog | boardId, issueKeys, rankBeforeIssue, rankAfterIssue |
-| createDashboard | Create a Jira dashboard | name, description, sharePermissions |
-| updateDashboard | Update a Jira dashboard | dashboardId, name, description, sharePermissions |
-| addGadgetToDashboard | Add gadget to dashboard | dashboardId, uri, color, position, title, properties |
-| removeGadgetFromDashboard | Remove gadget from dashboard | dashboardId, gadgetId |
+- **Dashboard & Gadget Management**
+  - View dashboards and gadgets
+  - Create and update dashboards
+  - Add or remove gadgets on dashboards
+
+- **User Management**
+  - View user details, assignable users, and users by project role
+
+### Confluence
+
+- **Space Management**
+  - View space list, space details, and pages in a space
+
+- **Page Management**
+  - View, search, and get details of pages, child pages, ancestors, attachments, and version history
+  - Create, update, rename, and delete pages
+
+- **Comment Management**
+  - View, add, update, and delete comments on pages
+
+---
+
+> For a full technical breakdown of all features, resources, and tools, see:
+> [docs/introduction/resources-and-tools.md](./docs/introduction/resources-and-tools.md)
+
+---
+
+## Example Use Cases
+
+You can try these queries with Cline or any compatible AI assistant:
+
+### Jira
+
+- **Create and manage tasks**
+  - "Create a new issue in project DEMO about login errors"
+  - "Update the description of issue DEMO-123"
+  - "Transition issue DEMO-43 to Done"
+  - "Assign issue DEMO-99 to me"
+  - "Add issue DEMO-100 to the current sprint"
+  - "Reorder issues in the backlog"
+
+- **Project insights**
+  - "List all issues in project DEMO"
+  - "Who is assigned to issues in project DEMO?"
+  - "Show unassigned issues in the current sprint"
+  - "Show the configuration of the Kanban board for team X"
+
+- **Dashboard & filter management**
+  - "Create a new dashboard for the team"
+  - "Add a report gadget to the dashboard"
+  - "Create a filter for high-priority issues"
+
+### Confluence
+
+- **Documentation management**
+  - "Create a new page in space TEAM X titled 'Project Plan'"
+  - "Update the content of the page 'API Documentation'"
+  - "Rename the page 'Meeting Notes' to 'Weekly Meeting Notes'"
+  - "Delete the old page about last year's project"
+
+- **Collaboration & comments**
+  - "Add a comment to the page 'API Documentation'"
+  - "Update my comment on the page 'Meeting Notes'"
+  - "Delete a comment from the page 'Meeting Notes'"
+
+---
+
+For more details and advanced usage, see [docs/introduction/resources-and-tools.md](./docs/introduction/resources-and-tools.md).
 
 ## Request Flow
 
@@ -176,46 +183,6 @@ sequenceDiagram
     MCP->>Cline: Success Response
     Cline->>User: "Created issue DEMO-123"
 ```
-
-## Example Use Cases
-Try asking Cline these queries after installation:
-
-1. **Create and Manage Tasks**
-   - "Create a new issue in project DEMO about login errors"
-   - "Find all issues assigned to me in the current sprint"
-   - "Transition issue DEMO-43 to Done status"
-
-2. **Project Information Summary**
-   - "Summarize all issues in project DEMO"
-   - "Who is assigned issues in project DEMO?"
-   - "List unassigned issues in the current sprint"
-
-3. **Documentation with Confluence**
-   - "Create a Confluence page titled 'Meeting Notes'"
-   - "Update the Confluence page 'API Documentation' with new examples"
-   - "Change the title of the 'Meeting Notes' page to 'Weekly Meeting Notes'"
-   - "Add a comment to the Confluence page about API Documentation"
-   - "Update my comment on the API Documentation page"
-   - "Delete my comment from the Meeting Notes page" 
-   - "Delete the outdated page about last year's project"
-
-4. **Analysis and Reporting**
-   - "Compare the number of completed issues between the current and previous sprint"
-   - "Who has the most issues in 'To Do' status?"
-
-> These queries work best within the Cline environment, which has been thoroughly tested with this MCP server.
-
-### Usage Notes
-
-1. **Simple JQL**: When searching for issues, use simple JQL without spaces or special characters (e.g., `project=DEMO` instead of `project = DEMO AND key = DEMO-43`).
-
-2. **Create Confluence Page**: When creating a Confluence page, use simple HTML content and do not specify parentId to avoid errors.
-
-3. **Update Confluence Page**: When updating a page, always include the current version number to avoid conflicts. You can also update labels (add/remove) and must use valid storage format for content.
-
-4. **Create Issue**: When creating new issues, only provide the minimum required fields (projectKey, summary) for best success.
-
-5. **Access Rights**: Ensure the configured Atlassian account has access to the projects and spaces you want to interact with.
 
 ## Security Note
 

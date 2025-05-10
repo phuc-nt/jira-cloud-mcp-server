@@ -11,559 +11,234 @@ Tài liệu này cung cấp thông tin chi tiết về implementation, API endpo
 - Xử lý các trường hợp đặc biệt (ADF, version conflicts, error handling)
 - Debugging và maintenance
 
-## Resources
+## JIRA
 
-Resources là các endpoint chỉ đọc, trả về dữ liệu từ Atlassian theo mẫu URI: `jira://resource-name` hoặc `confluence://resource-name`.
+### 1. Issue
 
-### Jira Resources
-
-| Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về | 
-|----------|-----|-------|-----------------------|----------------|
-| Projects | `jira://projects` | Danh sách project | `/rest/api/3/project` | Array của Project objects |
-| Project Details | `jira://projects/{projectKey}` | Chi tiết project | `/rest/api/3/project/{projectKey}` | Single Project object |
-| Project Roles | `jira://projects/{projectKey}/roles` | Danh sách role của project | `/rest/api/3/project/{projectKey}/role` | Array các role (name, id) |
-| Issues | `jira://issues` | Danh sách issues, hỗ trợ JQL, phân trang | `/rest/api/3/search` | Array của Issue objects, có phân trang |
-| Issue Details | `jira://issues/{issueKey}` | Chi tiết issue | `/rest/api/3/issue/{issueKey}` | Single Issue object với description (ADF→text) |
-| Issue Transitions | `jira://issues/{issueKey}/transitions` | Danh sách transitions | `/rest/api/3/issue/{issueKey}/transitions` | Array của Transition objects |
-| Issue Comments | `jira://issues/{issueKey}/comments` | Danh sách comment | `/rest/api/3/issue/{issueKey}/comment` | Array của Comment objects với body (ADF→text) |
-| User Details | `jira://users/{accountId}` | Thông tin user | `/rest/api/3/user?accountId=...` | Single User object |
-| Assignable Users | `jira://users/assignable/{projectKey}` | User có thể gán cho issue | `/rest/api/3/user/assignable/search?project=...` | Array của User objects |
-| Users by Role | `jira://users/role/{projectKey}/{roleId}` | User theo role trong project | `/rest/api/3/project/{projectKey}/role/{roleId}` | Array của User objects |
-| Filters | `jira://filters` | Danh sách filter | `/rest/api/3/filter/search` | Array của Filter objects |
-| Filter Details | `jira://filters/{filterId}` | Chi tiết filter | `/rest/api/3/filter/{filterId}` | Single Filter object |
-| My Filters | `jira://filters/my` | Filter của tôi | `/rest/api/3/filter/my` | Array của Filter objects |
-| Boards | `jira://boards` | Danh sách board | `/rest/agile/1.0/board` | Array của Board objects |
-| Board Details | `jira://boards/{boardId}` | Chi tiết board | `/rest/agile/1.0/board/{boardId}` | Single Board object |
-| Board Issues | `jira://boards/{boardId}/issues` | Issues trong board | `/rest/agile/1.0/board/{boardId}/issue` | Array của Issue objects |
-| Board Sprints | `jira://boards/{boardId}/sprints` | Sprints trong board | `/rest/agile/1.0/board/{boardId}/sprint` | Array của Sprint objects |
-| Sprint Details | `jira://sprints/{sprintId}` | Chi tiết sprint | `/rest/agile/1.0/sprint/{sprintId}` | Single Sprint object |
-| Sprint Issues | `jira://sprints/{sprintId}/issues` | Issues trong sprint | `/rest/agile/1.0/sprint/{sprintId}/issue` | Array của Issue objects |
-| Dashboards | `jira://dashboards` | Danh sách dashboard | `/rest/api/3/dashboard` | Array của Dashboard objects |
-| My Dashboards | `jira://dashboards/my` | Dashboard của tôi | `/rest/api/3/dashboard?filter=my` | Array của Dashboard objects |
-| Dashboard Details | `jira://dashboards/{dashboardId}` | Chi tiết dashboard | `/rest/api/3/dashboard/{dashboardId}` | Single Dashboard object |
-| Dashboard Gadgets | `jira://dashboards/{dashboardId}/gadgets` | Danh sách gadget của dashboard | `/rest/api/3/dashboard/{dashboardId}/gadget` | Array của Gadget objects |
-
-#### Cấu trúc dữ liệu chính
-
-**Issue Object Schema**:  
-```
-{
-  "id": "string",
-  "key": "string", 
-  "summary": "string",
-  "description": "string", // Đã convert từ ADF sang text
-  "rawDescription": object|string, // ADF nguyên bản
-  "status": { "name": "string", "id": "string" },
-  "assignee": { "displayName": "string", "accountId": "string" }, 
-  "reporter": { "displayName": "string", "accountId": "string" },
-  "priority": { "name": "string", "id": "string" },
-  "created": "date-time",
-  "updated": "date-time",
-  "issueType": { "name": "string", "id": "string" },
-  "projectKey": "string",
-  "projectName": "string",
-  "url": "string"
-}
-```
-
-**Comment Object Schema**:
-```
-{
-  "id": "string",
-  "body": "string", // Đã convert từ ADF sang text
-  "rawBody": object|string, // ADF nguyên bản
-  "author": { "displayName": "string", "accountId": "string" },
-  "created": "date-time",
-  "updated": "date-time"
-}
-```
-
-### Confluence Resources
-
+#### Resource
 | Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
 |----------|-----|-------|-----------------------|----------------|
-| Spaces | `confluence://spaces` | Danh sách không gian | `/wiki/api/v2/spaces` | Array của Space objects (v2) |
-| Space Details | `confluence://spaces/{spaceKey}` | Chi tiết không gian | `/wiki/api/v2/spaces/{spaceKey}` | Single Space object (v2) |
-| Pages | `confluence://pages` | Danh sách trang (hỗ trợ filter, phân trang) | `/wiki/api/v2/pages` | Array của Page objects (v2) |
-| Page Details | `confluence://pages/{pageId}` | Chi tiết trang | `/wiki/api/v2/pages/{pageId}` + `/wiki/api/v2/pages/{pageId}/body` | Single Page object với content/body (v2) |
-| Page Children | `confluence://pages/{pageId}/children` | Danh sách trang con | `/wiki/api/v2/pages/{pageId}/children` | Array của Page objects (v2) |
-| Page Ancestors | `confluence://pages/{pageId}/ancestors` | Danh sách tổ tiên | `/wiki/api/v2/pages/{pageId}/ancestors` | Array của Page objects (v2) |
-| Page Comments | `confluence://pages/{pageId}/comments` | Danh sách comment (footer + inline) | `/wiki/api/v2/pages/{pageId}/footer-comments`, `/wiki/api/v2/pages/{pageId}/inline-comments` | Array của Comment objects (v2) |
-| Page Attachments | `confluence://pages/{pageId}/attachments` | Tập tin đính kèm | `/wiki/api/v2/pages/{pageId}/attachments` | Array của Attachment objects (v2) |
-| Page Versions | `confluence://pages/{pageId}/versions` | Lịch sử phiên bản | `/wiki/api/v2/pages/{pageId}/versions` | Array của Version objects (v2) |
+| Issues | `jira://issues` | Danh sách issue | `/rest/api/3/search` | Array của Issue objects |
+| Issue Details | `jira://issues/{issueKey}` | Chi tiết issue | `/rest/api/3/issue/{issueKey}` | Single Issue object |
+| Issue Transitions | `jira://issues/{issueKey}/transitions` | Các transition khả dụng của issue | `/rest/api/3/issue/{issueKey}/transitions` | Array của Transition objects |
+| Issue Comments | `jira://issues/{issueKey}/comments` | Danh sách comment của issue | `/rest/api/3/issue/{issueKey}/comment` | Array của Comment objects |
 
-## Tools
-
-Tools là các endpoint thực hiện hành động, có thể tạo, cập nhật, hoặc sửa đổi dữ liệu trong Atlassian.
-
-### Jira Tools
-
+#### Tool
 | Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
 |------|-------|---------------|-----------------------|----------------|
 | createIssue | Tạo issue mới | projectKey, summary, ... | `/rest/api/3/issue` | Issue key và ID mới |
 | updateIssue | Cập nhật issue | issueKey, summary, ... | `/rest/api/3/issue/{issueIdOrKey}` | Status của update |
 | transitionIssue | Chuyển trạng thái issue | issueKey, transitionId | `/rest/api/3/issue/{issueIdOrKey}/transitions` | Status của transition |
 | assignIssue | Gán issue cho user | issueKey, accountId | `/rest/api/3/issue/{issueIdOrKey}/assignee` | Status của assignment |
-| createFilter | Tạo filter | name, jql, description, favourite | `/rest/api/3/filter` | Filter ID mới |
-| updateFilter | Cập nhật filter | filterId, name, jql, description, favourite | `/rest/api/3/filter/{filterId}` | Status của update |
-| deleteFilter | Xóa filter | filterId | `/rest/api/3/filter/{filterId}` | Status của xoá |
-| createSprint | Tạo sprint | boardId, name, startDate, endDate, goal | `/rest/agile/1.0/sprint` | Sprint ID mới |
-| addIssueToBoard | Thêm issue vào board | boardId, issueKey | `/rest/agile/1.0/board/{boardId}/issue` | Status của thêm |
-| configureBoardColumns | Cấu hình cột board | boardId, columns | `/rest/agile/1.0/board/{boardId}/column` | Status của cấu hình |
-| startSprint | Bắt đầu sprint | sprintId, startDate, endDate, goal | `/rest/agile/1.0/sprint/{sprintId}/start` | Status của bắt đầu |
-| closeSprint | Đóng sprint | sprintId, completeDate, moveToSprintId, createNewSprint | `/rest/agile/1.0/sprint/{sprintId}/close` | Status của đóng |
-| moveIssuesBetweenSprints | Di chuyển issue giữa các sprint | fromSprintId, toSprintId, issueKeys | `/rest/agile/1.0/sprint/{fromSprintId}/issue/{issueKey}/move` | Status của di chuyển |
-| addIssuesToBacklog | Thêm issue vào backlog | boardId, issueKeys | `/rest/agile/1.0/board/{boardId}/issue` | Status của thêm |
-| removeIssuesFromBacklog | Xóa issue khỏi backlog | boardId, sprintId, issueKeys | `/rest/agile/1.0/sprint/{sprintId}/issue/{issueKey}/remove` | Status của xóa |
-| rankBacklogIssues | Sắp xếp thứ tự backlog | boardId, issueKeys, rankBeforeIssue, rankAfterIssue | `/rest/agile/1.0/board/{boardId}/issue/{issueKey}/rank` | Status của sắp xếp |
-| createDashboard | Tạo dashboard | name, description, sharePermissions | `/rest/api/3/dashboard` | Dashboard ID mới |
-| updateDashboard | Cập nhật dashboard | dashboardId, name, description, sharePermissions | `/rest/api/3/dashboard/{dashboardId}` | Status của update |
-| addGadgetToDashboard | Thêm gadget vào dashboard | dashboardId, uri, color, position, title, properties | `/rest/api/3/dashboard/{dashboardId}/gadget` | Gadget ID mới |
-| removeGadgetFromDashboard | Xóa gadget khỏi dashboard | dashboardId, gadgetId | `/rest/api/3/dashboard/{dashboardId}/gadget/{gadgetId}` | Status của xóa |
+| addIssuesToBacklog | Đưa issue vào backlog | boardId, issueKeys | `/rest/agile/1.0/board/{boardId}/issue` | Status của thêm |
+| addIssueToSprint | Đưa issue vào sprint | sprintId, issueKeys | `/rest/agile/1.0/sprint/{sprintId}/issue` | Status của thêm |
+| rankBacklogIssues | Sắp xếp thứ tự issue trong backlog | boardId, issueKeys, rankBeforeIssue, rankAfterIssue | `/rest/agile/1.0/board/{boardId}/issue/{issueKey}/rank` | Status của sắp xếp |
 
-#### Cấu trúc dữ liệu input quan trọng
+### 2. Project
 
-**createIssue**:
-```
-{
-  "projectKey": "string", // (bắt buộc) Project key
-  "summary": "string", // (bắt buộc) Tiêu đề issue
-  "description": "string", // Mô tả (sẽ tự convert sang ADF)
-  "issueType": "string", // Loại issue (default: "Task") 
-  "priority": "string", // Độ ưu tiên
-  "assignee": "string", // accountId của người được gán
-  "labels": "string[]" // Nhãn
-}
-```
+#### Resource
+| Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
+|----------|-----|-------|-----------------------|----------------|
+| Projects | `jira://projects` | Danh sách project | `/rest/api/3/project` | Array của Project objects |
+| Project Details | `jira://projects/{projectKey}` | Chi tiết project | `/rest/api/3/project/{projectKey}` | Single Project object |
+| Project Roles | `jira://projects/{projectKey}/roles` | Danh sách role của project | `/rest/api/3/project/{projectKey}/role` | Array các role (name, id) |
 
-### Confluence Tools
+### 3. Board
 
+#### Resource
+| Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
+|----------|-----|-------|-----------------------|----------------|
+| Boards | `jira://boards` | Danh sách board | `/rest/agile/1.0/board` | Array của Board objects |
+| Board Details | `jira://boards/{boardId}` | Chi tiết board | `/rest/agile/1.0/board/{boardId}` | Single Board object |
+| Board Issues | `jira://boards/{boardId}/issues` | Danh sách issue trên board | `/rest/agile/1.0/board/{boardId}/issue` | Array của Issue objects |
+| Board Configuration | `jira://boards/{boardId}/configuration` | Cấu hình board | `/rest/agile/1.0/board/{boardId}/configuration` | Board config object |
+| Board Sprints | `jira://boards/{boardId}/sprints` | Danh sách sprint trên board | `/rest/agile/1.0/board/{boardId}/sprint` | Array của Sprint objects |
+
+#### Tool
 | Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
 |------|-------|---------------|-----------------------|----------------|
-| createPage | Tạo trang mới | spaceId, title, content, parentId | `/wiki/api/v2/pages` | Page ID mới |
-| updatePage | Cập nhật trang | pageId, title, content, version | `/wiki/api/v2/pages/{pageId}` (PUT) | Status của update |
-| updatePageTitle | Cập nhật tiêu đề trang | pageId, title, version | `/wiki/api/v2/pages/{pageId}/title` (PUT) | Status của update |
-| addComment | Thêm comment footer vào page | pageId, content | `/wiki/api/v2/footer-comments` | Comment mới |
-| updateFooterComment | Cập nhật comment | commentId, version, value, representation, message | `/wiki/api/v2/footer-comments/{commentId}` (PUT) | Status của update |
-| deleteFooterComment | Xóa comment | commentId | `/wiki/api/v2/footer-comments/{commentId}` (DELETE) | Status của xóa |
-| deletePage | Xóa trang | pageId, draft, purge | `/wiki/api/v2/pages/{pageId}` (DELETE) | Status của xóa |
+| createSprint | Tạo sprint mới trên board | boardId, name, ... | `/rest/agile/1.0/sprint` | Sprint ID mới |
+| rankBacklogIssues | Sắp xếp issue trên board | boardId, issueKeys, ... | `/rest/agile/1.0/board/{boardId}/issue/{issueKey}/rank` | Status của sắp xếp |
 
-## Migration Notes (API v2 → v3)
+### 4. Sprint
 
-**Việc migrate từ API v2 sang v3 (Tháng 6/2025):**
+#### Resource
+| Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
+|----------|-----|-------|-----------------------|----------------|
+| Sprint Details | `jira://sprints/{sprintId}` | Chi tiết sprint | `/rest/agile/1.0/sprint/{sprintId}` | Single Sprint object |
+| Sprint Issues | `jira://sprints/{sprintId}/issues` | Danh sách issue trong sprint | `/rest/agile/1.0/sprint/{sprintId}/issue` | Array của Issue objects |
 
-1. **Thay đổi Endpoint**: Toàn bộ endpoint `/rest/api/2/...` đã chuyển thành `/rest/api/3/...`
+#### Tool
+| Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
+|------|-------|---------------|-----------------------|----------------|
+| createSprint | Tạo sprint mới | boardId, name, ... | `/rest/agile/1.0/sprint` | Sprint ID mới |
+| startSprint | Bắt đầu sprint | sprintId, ... | `/rest/agile/1.0/sprint/{sprintId}/start` | Status của bắt đầu |
+| closeSprint | Đóng sprint | sprintId, ... | `/rest/agile/1.0/sprint/{sprintId}/close` | Status của đóng |
+| addIssueToSprint | Thêm issue vào sprint | sprintId, issueKeys | `/rest/agile/1.0/sprint/{sprintId}/issue` | Status của thêm |
 
-2. **Xử lý ADF**: 
-   - API v3 trả về các trường như `description`, `comment` ở định dạng ADF (Atlassian Document Format), thay vì text thuần  
-   - Đã thêm hàm `extractTextFromADF()` để tự động chuyển ADF thành text trong các trường:
-     - Issue description (issue.fields.description)
-     - Comment body (comment.body)
+### 5. Filter
 
-3. **Schema Update**:
-   - Đã cập nhật schema để hỗ trợ cả dạng ADF và text thuần
-   - Thêm trường `rawDescription` và `rawBody` để lưu giữ data ADF nguyên bản
-   - Đảm bảo backward compatibility
+#### Resource
+| Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
+|----------|-----|-------|-----------------------|----------------|
+| Filters | `jira://filters` | Danh sách filter | `/rest/api/3/filter/search` | Array của Filter objects |
+| Filter Details | `jira://filters/{filterId}` | Chi tiết filter | `/rest/api/3/filter/{filterId}` | Single Filter object |
+| My Filters | `jira://filters/my` | Filter của tôi | `/rest/api/3/filter/my` | Array của Filter objects |
 
-4. **Files Update**:
-   - `src/resources/jira/*.ts`: Cập nhật endpoint URLs và xử lý ADF
-   - `src/schemas/jira.ts`: Cập nhật schema để hỗ trợ ADF
+#### Tool
+| Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
+|------|-------|---------------|-----------------------|----------------|
+| createFilter | Tạo filter mới | name, jql, ... | `/rest/api/3/filter` | Filter ID mới |
+| updateFilter | Cập nhật filter | filterId, ... | `/rest/api/3/filter/{filterId}` | Status của update |
+| deleteFilter | Xóa filter | filterId | `/rest/api/3/filter/{filterId}` | Status của xoá |
 
-## Implementation Details
+### 6. Dashboard & Gadget
 
-### Cấu trúc Code
+#### Resource
+| Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
+|----------|-----|-------|-----------------------|----------------|
+| Dashboards | `jira://dashboards` | Danh sách dashboard | `/rest/api/3/dashboard` | Array của Dashboard objects |
+| My Dashboards | `jira://dashboards/my` | Dashboard của tôi | `/rest/api/3/dashboard?filter=my` | Array của Dashboard objects |
+| Dashboard Details | `jira://dashboards/{dashboardId}` | Chi tiết dashboard | `/rest/api/3/dashboard/{dashboardId}` | Single Dashboard object |
+| Dashboard Gadgets | `jira://dashboards/{dashboardId}/gadgets` | Danh sách gadget trên dashboard | `/rest/api/3/dashboard/{dashboardId}/gadget` | Array của Gadget objects |
+| Gadgets | `jira://gadgets` | Danh sách gadget | `/rest/api/3/dashboard/gadgets` | Array của Gadget objects |
 
-```
-src/
-  resources/           # Các resource (read-only)
-    jira/              # Resource Jira
-      issues.ts        # Issues, comments, transitions
-      projects.ts      # Projects, roles
-      users.ts         # User details, assignable users
-    confluence/        # Resource Confluence
-      spaces.ts        # Spaces
-      pages.ts         # Pages, child pages, content
-  tools/               # Các tool (actions/mutations)
-    jira/              # Tool Jira
-      create-issue.ts
-      update-issue.ts
-      transition-issue.ts
-      assign-issue.ts
-    confluence/        # Tool Confluence
-      create-page.ts
-      update-page.ts
-      add-comment.ts
-  schemas/             # Schema validation
-    jira.ts            # Schema cho Jira resources/tools
-    confluence.ts      # Schema cho Confluence resources/tools
-  utils/               # Common utilities
-    atlassian-api.js   # Xử lý API calls, authentication
-    mcp-resource.js    # Helper functions cho MCP resources
-```
+#### Tool
+| Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
+|------|-------|---------------|-----------------------|----------------|
+| createDashboard | Tạo dashboard mới | name, ... | `/rest/api/3/dashboard` | Dashboard ID mới |
+| updateDashboard | Cập nhật dashboard | dashboardId, ... | `/rest/api/3/dashboard/{dashboardId}` | Status của update |
+| addGadgetToDashboard | Thêm gadget vào dashboard | dashboardId, uri, ... | `/rest/api/3/dashboard/{dashboardId}/gadget` | Gadget ID mới |
+| removeGadgetFromDashboard | Xóa gadget khỏi dashboard | dashboardId, gadgetId | `/rest/api/3/dashboard/{dashboardId}/gadget/{gadgetId}` | Status của xóa |
 
-### Xử lý ADF
+### 7. User
 
-ADF (Atlassian Document Format) là định dạng rich text phức tạp. Hàm chuyển đổi sang text:
+#### Resource
+| Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
+|----------|-----|-------|-----------------------|----------------|
+| User Details | `jira://users/{accountId}` | Thông tin user | `/rest/api/3/user?accountId=...` | Single User object |
+| Assignable Users | `jira://users/assignable/{projectKey}` | User có thể gán cho project | `/rest/api/3/user/assignable/search?project=...` | Array của User objects |
+| Users by Role | `jira://users/role/{projectKey}/{roleId}` | User theo role trong project | `/rest/api/3/project/{projectKey}/role/{roleId}` | Array của User objects |
 
-```typescript
-function extractTextFromADF(adf: any): string {
-  if (!adf || typeof adf === 'string') return adf || '';
-  let text = '';
-  if (adf.content) {
-    adf.content.forEach((node: any) => {
-      if (node.type === 'paragraph' && node.content) {
-        node.content.forEach((inline: any) => {
-          if (inline.type === 'text') {
-            text += inline.text;
-          }
-        });
-        text += '\n';
-      }
-    });
-  }
-  return text.trim();
-}
-```
+---
+
+## CONFLUENCE
+
+### 1. Space
+
+#### Resource
+| Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
+|----------|-----|-------|-----------------------|----------------|
+| Spaces | `confluence://spaces` | Danh sách space | `/wiki/api/v2/spaces` | Array của Space objects (v2) |
+| Space Details | `confluence://spaces/{spaceKey}` | Chi tiết space | `/wiki/api/v2/spaces/{spaceKey}` | Single Space object (v2) |
+| Space Pages | `confluence://spaces/{spaceKey}/pages` | Danh sách page trong space | `/wiki/api/v2/pages?space-id=...` | Array của Page objects (v2) |
+
+### 2. Page
+
+#### Resource
+| Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
+|----------|-----|-------|-----------------------|----------------|
+| Page Details | `confluence://pages/{pageId}` | Chi tiết page (v2) | `/wiki/api/v2/pages/{pageId}` + `/wiki/api/v2/pages/{pageId}/body` | Single Page object (v2) |
+| Page Children | `confluence://pages/{pageId}/children` | Danh sách page con | `/wiki/api/v2/pages/{pageId}/children` | Array của Page objects (v2) |
+| Page Ancestors | `confluence://pages/{pageId}/ancestors` | Danh sách ancestor của page | `/wiki/api/v2/pages/{pageId}/ancestors` | Array của Page objects (v2) |
+| Page Attachments | `confluence://pages/{pageId}/attachments` | Danh sách file đính kèm | `/wiki/api/v2/pages/{pageId}/attachments` | Array của Attachment objects (v2) |
+| Page Versions | `confluence://pages/{pageId}/versions` | Lịch sử version của page | `/wiki/api/v2/pages/{pageId}/versions` | Array của Version objects (v2) |
+| Pages | `confluence://pages` | Tìm kiếm page theo filter | `/wiki/api/v2/pages` | Array của Page objects (v2) |
+
+#### Tool
+| Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
+|------|-------|---------------|-----------------------|----------------|
+| createPage | Tạo page mới | spaceId, title, content, parentId | `/wiki/api/v2/pages` | Page ID mới |
+| updatePage | Cập nhật nội dung page | pageId, title, content, version | `/wiki/api/v2/pages/{pageId}` (PUT) | Status của update |
+| updatePageTitle | Đổi tiêu đề page | pageId, title, version | `/wiki/api/v2/pages/{pageId}/title` (PUT) | Status của update |
+| deletePage | Xóa page | pageId, draft, purge | `/wiki/api/v2/pages/{pageId}` (DELETE) | Status của xóa |
+
+### 3. Comment
+
+#### Resource
+| Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
+|----------|-----|-------|-----------------------|----------------|
+| Page Comments | `confluence://pages/{pageId}/comments` | Danh sách comment của page | `/wiki/api/v2/pages/{pageId}/footer-comments`, `/wiki/api/v2/pages/{pageId}/inline-comments` | Array của Comment objects (v2) |
+
+#### Tool
+| Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
+|------|-------|---------------|-----------------------|----------------|
+| addComment | Thêm comment vào page | pageId, content | `/wiki/api/v2/footer-comments` | Comment mới |
+| updateFooterComment | Cập nhật comment ở footer | commentId, version, value, ... | `/wiki/api/v2/footer-comments/{commentId}` (PUT) | Status của update |
+| deleteFooterComment | Xóa comment ở footer | commentId | `/wiki/api/v2/footer-comments/{commentId}` (DELETE) | Status của xóa |
+
+---
+
+## Implementation Details: Hướng dẫn mở rộng Resource & Tool cho Developer
+
+Khi muốn thêm mới **Resource** (truy vấn dữ liệu) hoặc **Tool** (thao tác/mutation) cho Jira hoặc Confluence, hãy làm theo các bước sau:
+
+### 1. Xác định loại bạn muốn thêm
+- **Resource**: Trả về dữ liệu, chỉ đọc (GET), ví dụ: danh sách issue, chi tiết project, các comment, v.v.
+- **Tool**: Thực hiện hành động/thao tác (POST/PUT/DELETE), ví dụ: tạo issue, cập nhật filter, thêm comment, v.v.
+
+### 2. Chọn đúng thư mục và file
+- **Resource**
+  - Thêm file mới hoặc cập nhật file trong:
+    - `src/resources/jira/` (cho Jira)
+    - `src/resources/confluence/` (cho Confluence)
+  - Đăng ký resource mới trong file `index.ts` tương ứng (nếu cần).
+- **Tool**
+  - Thêm file mới hoặc cập nhật file trong:
+    - `src/tools/jira/` (cho Jira)
+    - `src/tools/confluence/` (cho Confluence)
+  - Đăng ký tool mới trong `src/tools/index.ts`.
+
+### 3. Sử dụng các helper API đúng chuẩn
+- Không tự gọi trực tiếp fetch() hoặc axios trong resource/tool.
+- Luôn sử dụng các hàm helper đã có trong:
+  - `src/utils/jira-resource-api.ts`, `src/utils/confluence-resource-api.ts` (cho resource)
+  - `src/utils/jira-tool-api-v3.ts`, `src/utils/jira-tool-api-agile.ts`, `src/utils/confluence-tool-api.ts` (cho tool)
+- Nếu cần gọi API mới, hãy bổ sung helper function vào các file trên.
+
+### 4. Định nghĩa schema dữ liệu
+- Mỗi resource/tool mới **bắt buộc phải có schema** validate input/output.
+- Thêm hoặc cập nhật schema trong:
+  - `src/schemas/jira.ts` (cho Jira)
+  - `src/schemas/confluence.ts` (cho Confluence)
+- Đảm bảo schema phản ánh đúng dữ liệu thực tế trả về/tạo ra từ Atlassian API.
+
+### 5. Đăng ký resource/tool vào MCP server
+- **Resource**: Đăng ký qua hàm `registerResource` hoặc `server.resource` trong file resource tương ứng.
+- **Tool**: Đăng ký qua hàm `server.tool` trong file tool, sau đó gọi đăng ký trong `registerAllTools` ở `src/tools/index.ts`.
+
+### 6. Cập nhật tài liệu
+- Sau khi thêm resource/tool mới, cập nhật lại tài liệu:
+  - Bảng liệt kê resource/tool trong `docs/introduction/resources-and-tools.md`
+  - Schema mô tả input/output nếu có thay đổi
+
+### 7. Lưu ý quan trọng
+- Luôn kiểm tra và test thực tế với Cline hoặc client MCP để đảm bảo hoạt động đúng.
+- Log và xử lý lỗi nhất quán: Sử dụng logger và error handler chung.
+- Đặt tên hàm, biến, schema rõ ràng, nhất quán theo tiếng Anh.
+- Không thay đổi signature các hàm cũ nếu không thực sự cần thiết (giữ backward compatibility).
+- Tách biệt rõ resource (read-only) và tool (mutation), không gộp chung logic.
+
+**Tóm tắt trình tự khi thêm mới:**
+1. Xác định loại (resource/tool) và vị trí file.
+2. Thêm/cập nhật file resource/tool.
+3. Bổ sung helper API nếu cần.
+4. Định nghĩa/cập nhật schema.
+5. Đăng ký vào MCP server.
+6. Cập nhật tài liệu.
+7. Test thực tế và kiểm tra log/error.
+
+Nếu tuân thủ đúng các bước trên, việc mở rộng MCP Atlassian Server sẽ luôn nhất quán, dễ bảo trì và dễ mở rộng về sau!
 
 ## Best Practices
 
-1. **Start Simple**: Begin with basic queries and parameters
-2. **Check Permissions**: Ensure the Atlassian account has access to the projects/spaces
-3. **Handle Errors**: Always check for error responses
-4. **Chain Resources and Tools**: Use resources to get information before performing actions with tools
-5. **Use Clear Examples**: When instructing AI assistants, provide clear examples of what you want
+1. **Start Simple**: Bắt đầu với truy vấn và tham số cơ bản.
+2. **Check Permissions**: Đảm bảo tài khoản Atlassian có quyền truy cập phù hợp.
+3. **Handle Errors**: Luôn kiểm tra và xử lý lỗi trả về từ API.
+4. **Chain Resources and Tools**: Lấy dữ liệu từ resource trước khi thao tác với tool.
+5. **Use Clear Examples**: Khi hướng dẫn AI assistant, luôn đưa ví dụ rõ ràng.
 
-## Developer Tips
+## Notes & Versioning
 
-### 1. Extending Resources
-
-Để thêm resource mới:
-
-1. Tạo file trong thư mục tương ứng (src/resources/jira/ hoặc src/resources/confluence/)
-2. Định nghĩa function để gọi API Atlassian
-3. Tạo resource trong server với `server.resource()` hoặc `registerResource()`
-4. Thêm schema vào file schema tương ứng
-5. Import/export thích hợp
-
-```typescript
-// Template add resource mới
-export function registerCustomResource(server: McpServer) {
-  // Resource: Custom resource
-  registerResource(
-    server,
-    'resource-id',
-    new ResourceTemplate('jira://custom-path', { list: undefined }),
-    'Description of resource',
-    async (params, { config, uri }) => {
-      // Call API and return data
-    }
-  );
-}
-```
-
-## Chuẩn triển khai API
-
-Để đảm bảo tính nhất quán, an toàn và dễ bảo trì, tất cả các Resource và Tool **phải** tuân theo các nguyên tắc sau:
-
-### 1. Tập trung API calls qua atlassian-api.ts
-
-- **Không tự gọi `fetch()`**: Không tự triển khai API calls trong Resource/Tool, mà phải sử dụng các hàm helper trong `src/utils/atlassian-api.ts`.
-- **Không tự build headers/URL**: Không tự xây dựng authentication headers hoặc URL, để tránh trùng lặp code và tiềm ẩn lỗi.
-
-```typescript
-// ❌ KHÔNG làm như này
-async function getCustomData(config: AtlassianConfig) {
-  const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
-  const headers = { 'Authorization': `Basic ${auth}`, ... };
-  const response = await fetch(`${config.baseUrl}/rest/api/3/custom`, { headers });
-  return await response.json();
-}
-
-// ✅ Nên làm như này
-import { getCustomData } from '../../utils/atlassian-api.js';
-async function fetchCustomData(config: AtlassianConfig) {
-  return await getCustomData(config);
-}
-```
-
-### 2. Bổ sung helper function trong atlassian-api.ts
-
-Khi cần thêm API endpoint mới, hãy tạo helper function mới trong `src/utils/atlassian-api.ts`:
-
-```typescript
-// Thêm vào atlassian-api.ts
-export async function getCustomData(config: AtlassianConfig, param: string): Promise<any> {
-  return await callJiraApi<any>(
-    config,
-    `/rest/api/3/custom?param=${encodeURIComponent(param)}`,
-    'GET'
-  );
-}
-```
-
-Hoặc sử dụng hàm generic `callJiraApi` và `callConfluenceApi` cho các endpoint không thường xuyên dùng.
-
-### 3. Xử lý lỗi nhất quán
-
-- Sử dụng lớp `ApiError` cho mọi lỗi API.
-- Xử lý các HTTP status code một cách nhất quán (401, 403, 404, 429).
-- Log đầy đủ thông tin lỗi.
-
-### 4. Versioning và Backward Compatibility
-
-- Khi update API version (v1 → v2 → v3), giữ lại các hàm cũ với dấu hiệu deprecated.
-- Đặt tên hàm helper thể hiện rõ version API: `getConfluencePageV2`, `getJiraIssueV3`.
-- Hỗ trợ cả các định dạng cũ (như text) và mới (như ADF) trong schema trả về.
-
-### 5. Cấu trúc Resource file và Tool file
-
-Resource file:
-```typescript
-// 1. Imports
-import { ... } from '../../utils/atlassian-api.js';
-
-// 2. Helper functions (đơn giản, gọi các hàm từ atlassian-api.ts)
-async function getSomeData(config, param) {
-  return await getSomeDataFromApi(config, param);
-}
-
-// 3. Resource registration
-export function registerSomeResource(server) {
-  registerResource(
-    server,
-    'resource-id',
-    new ResourceTemplate('jira://some-path', ...),
-    'Description',
-    async (params, { config, uri }) => {
-      // Call helper function
-      const data = await getSomeData(config, params.someParam);
-      // Format data and return
-      return createStandardResource(...);
-    }
-  );
-}
-```
-
-Tool file:
-```typescript
-// 1. Imports
-import { ... } from '../../utils/atlassian-api.js';
-
-// 2. Handler function
-export async function someToolHandler(params, config) {
-  try {
-    // Call API helper function
-    const result = await someFunctionFromApi(config, params);
-    return { success: true, data: result };
-  } catch (error) {
-    // Error handling
-  }
-}
-
-// 3. Tool registration
-export const registerSomeTool = (server) => {
-  server.tool(
-    'tool-name',
-    'Description',
-    someSchema.shape,
-    async (params, context) => {
-      // Call handler
-      const result = await someToolHandler(params, context.config);
-      return createResponse(...);
-    }
-  );
-};
-```
-
-Tuân thủ các nguyên tắc trên sẽ giúp codebase luôn nhất quán, dễ bảo trì, và dễ mở rộng khi cần.
-
-## Common Workflows
-
-### Project Management
-
-1. Get project list: `jira://projects`
-2. View issues in project: `jira://issues?jql=project=DEMO`
-3. Create new issue: Use `createIssue` tool
-4. Update status: Use `transitionIssue` tool
-
-### Documentation
-
-1. Get space list: `confluence://spaces`
-2. View pages in space: `confluence://spaces/TEAM/pages`
-3. Create new page: Use `createPage` tool
-4. Add comments: Use `addComment` tool
-
-## What's Coming Next
-
-Future enhancements will include:
-- Jira: Filters, Boards, Dashboards, Sprints, Backlog Management
-- Confluence: Labels, Attachments, Content Versions History
-- Advanced features: Prompts, Sampling, Smart caching, personalization 
-
-**Lưu ý:** Từ tháng 6/2025, toàn bộ resource Jira đã migrate sang API v3 (endpoint `/rest/api/3/...`). Các trường rich text như description/comment trả về dạng ADF, đã tự động chuyển sang text thuần cho client không hỗ trợ ADF. 
-
-> **Lưu ý:** Tất cả resource và tool Confluence hiện tại chỉ sử dụng API v2 (`/wiki/api/v2/`). Các endpoint v1 đã bị loại bỏ hoàn toàn. Schema dữ liệu đã cập nhật theo API v2. 
-
-## Develop Tip: Luôn cập nhật schema khi implement resource/tool mới
-
-- Khi implement resource hoặc tool mới (đặc biệt với Confluence/Jira API v2), **luôn phải cập nhật schema** (ở `src/schemas/...`) cho đúng chuẩn response thực tế của API.
-- Nếu không cập nhật schema, phía client (như Cline) sẽ không validate hoặc hiển thị đúng dữ liệu, dẫn đến lỗi hoặc thiếu thông tin.
-- Kinh nghiệm thực tế: mỗi khi sửa logic hoặc response của resource/tool, phải kiểm tra và update schema tương ứng. Đặc biệt chú ý các trường required, kiểu dữ liệu, và các trường mới/cũ bị thay đổi do API Atlassian update.
-- Nên test lại resource/tool với Cline hoặc client thực tế để đảm bảo schema và dữ liệu trả về đã đồng bộ. 
-
-## Hướng dẫn sau Refactoring
-
-Codebase Atlassian API đã được refactor từ file lớn `src/utils/atlassian-api.ts` thành các module nhỏ hơn, dễ bảo trì. Dưới đây là các thông tin quan trọng cho developers:
-
-### Cấu trúc File Mới
-
-```
-src/utils/
-  atlassian-api-base.ts          # Helper functions, config, caching, authentication
-  confluence-resource-api.ts     # GET/resource APIs cho Confluence
-  confluence-tool-api.ts         # Tool APIs cho Confluence (tạo, cập nhật, xóa)
-  jira-resource-api.ts           # GET/resource APIs cho Jira
-  jira-tool-api.ts               # Re-export từ 2 file tool Jira bên dưới
-  jira-tool-api-v3.ts            # Tool APIs cho Jira endpoint /rest/api/3
-  jira-tool-api-agile.ts         # Tool APIs cho Jira endpoint /rest/agile/1.0
-```
-
-### Nguyên tắc Phân Chia
-
-1. **Base Helper**: `atlassian-api-base.ts` chứa các hàm helper dùng chung (config, headers, cache, logging, authentication)
-2. **Resource vs. Tool**: 
-   - **Resource**: Các hàm GET/read-only, không thay đổi dữ liệu
-   - **Tool**: Các hàm tạo, cập nhật, xóa dữ liệu
-3. **Theo Endpoint**: API Jira Tool chia thành 2 file theo endpoint:
-   - `/rest/api/3/...` → `jira-tool-api-v3.ts`
-   - `/rest/agile/1.0/...` → `jira-tool-api-agile.ts`
-
-### Hướng Dẫn Thêm API Mới
-
-#### Thêm Resource Mới
-
-```typescript
-// 1. Trong file src/utils/confluence-resource-api.ts hoặc jira-resource-api.ts
-import { callConfluenceApi, normalizeAtlassianBaseUrl, logger } from './atlassian-api-base.js';
-
-// 2. Thêm hàm resource mới
-export async function getCustomResource(
-  baseUrl: string,
-  auth: any,
-  params: { id: string, otherParam?: string }
-): Promise<any> {
-  const normalizedBaseUrl = normalizeAtlassianBaseUrl(baseUrl);
-  
-  try {
-    // 3. Gọi API tương ứng
-    const response = await callConfluenceApi(
-      normalizedBaseUrl,
-      '/wiki/api/v2/custom-endpoint',
-      auth,
-      'GET',
-      { queryParams: { id: params.id } }
-    );
-    
-    // 4. Xử lý và trả về kết quả
-    return response.data;
-  } catch (error) {
-    logger.error('Error getting custom resource', { error });
-    throw error;
-  }
-}
-```
-
-#### Thêm Tool Mới
-
-```typescript
-// 1. Xác định file thích hợp dựa vào endpoint
-// Ví dụ với Jira API /rest/api/3/... → src/utils/jira-tool-api-v3.ts
-import { callJiraApi, normalizeAtlassianBaseUrl, logger } from './atlassian-api-base.js';
-
-// 2. Thêm hàm tool mới
-export async function createCustomItem(
-  baseUrl: string,
-  auth: any,
-  params: { name: string, description: string }
-): Promise<any> {
-  const normalizedBaseUrl = normalizeAtlassianBaseUrl(baseUrl);
-  
-  try {
-    // 3. Chuẩn bị payload
-    const payload = {
-      name: params.name,
-      description: params.description
-    };
-    
-    // 4. Gọi API tương ứng
-    const response = await callJiraApi(
-      normalizedBaseUrl,
-      '/rest/api/3/custom-endpoint',
-      auth,
-      'POST',
-      { body: payload }
-    );
-    
-    // 5. Trả về kết quả
-    return {
-      id: response.data.id,
-      status: 'created'
-    };
-  } catch (error) {
-    logger.error('Error creating custom item', { error, params });
-    throw error;
-  }
-}
-```
-
-### Lưu Ý Quan Trọng
-
-1. **Import từ file Base**:
-   ```typescript
-   import { 
-     callJiraApi, 
-     callConfluenceApi, 
-     normalizeAtlassianBaseUrl, 
-     logger, 
-     adfToMarkdown 
-   } from './atlassian-api-base.js';
-   ```
-
-2. **Chuẩn hóa Error Handling**:
-   ```typescript
-   try {
-     // Gọi API
-   } catch (error) {
-     logger.error('Error message in English', { error, additionalContext });
-     throw error; // Hoặc throw custom error
-   }
-   ```
-
-3. **Chuẩn hóa tiếng Anh**:
-   - Tất cả comment, log message, error message nên dùng tiếng Anh
-   - Schema và mô tả tham số dùng tiếng Anh để dễ onboard dev mới
-
-4. **Backward compatibility**:
-   - File `jira-tool-api.ts` chỉ re-export từ 2 file mới
-   - Không thay đổi tên hoặc tham số của các hàm hiện tại
-   - Nếu cần thay đổi signature, phải tạo version mới của hàm
-
-5. **Mẫu ADF**:
-   - Khi làm việc với issue description, comment, hoặc Confluence page content:
-   ```typescript
-   import { adfToMarkdown } from './atlassian-api-base.js';
-   
-   // Convert ADF to text if needed
-   const description = adfToMarkdown(issue.fields.description);
-   ```
-
-6. **Testing**:
-   - Mỗi API mới cần test thực tế trước khi merge
-   - Xác nhận response format đúng schema
-   - Kiểm tra error handling với các trường hợp lỗi phổ biến
-
-### Quy Trình Cập Nhật Schema
-
-1. Cập nhật schema trong `src/schemas/jira.ts` hoặc `src/schemas/confluence.ts`
-2. Đảm bảo tương thích với schema trong file resource/tool tương ứng
-3. Mô tả rõ ràng các tham số bắt buộc, mặc định và định dạng
+- Từ 6/2025, toàn bộ resource Jira đã migrate sang API v3 (`/rest/api/3/...`). Các trường rich text (description/comment) trả về dạng ADF, đã tự động convert sang text nếu client không hỗ trợ ADF.
+- Tất cả resource và tool Confluence hiện tại chỉ sử dụng API v2 (`/wiki/api/v2/` và `/rest/agile/1.0`). Các endpoint v1 đã bị loại bỏ hoàn toàn.
