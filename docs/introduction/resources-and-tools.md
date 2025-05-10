@@ -410,3 +410,160 @@ Future enhancements will include:
 - Nếu không cập nhật schema, phía client (như Cline) sẽ không validate hoặc hiển thị đúng dữ liệu, dẫn đến lỗi hoặc thiếu thông tin.
 - Kinh nghiệm thực tế: mỗi khi sửa logic hoặc response của resource/tool, phải kiểm tra và update schema tương ứng. Đặc biệt chú ý các trường required, kiểu dữ liệu, và các trường mới/cũ bị thay đổi do API Atlassian update.
 - Nên test lại resource/tool với Cline hoặc client thực tế để đảm bảo schema và dữ liệu trả về đã đồng bộ. 
+
+## Hướng dẫn sau Refactoring
+
+Codebase Atlassian API đã được refactor từ file lớn `src/utils/atlassian-api.ts` thành các module nhỏ hơn, dễ bảo trì. Dưới đây là các thông tin quan trọng cho developers:
+
+### Cấu trúc File Mới
+
+```
+src/utils/
+  atlassian-api-base.ts          # Helper functions, config, caching, authentication
+  confluence-resource-api.ts     # GET/resource APIs cho Confluence
+  confluence-tool-api.ts         # Tool APIs cho Confluence (tạo, cập nhật, xóa)
+  jira-resource-api.ts           # GET/resource APIs cho Jira
+  jira-tool-api.ts               # Re-export từ 2 file tool Jira bên dưới
+  jira-tool-api-v3.ts            # Tool APIs cho Jira endpoint /rest/api/3
+  jira-tool-api-agile.ts         # Tool APIs cho Jira endpoint /rest/agile/1.0
+```
+
+### Nguyên tắc Phân Chia
+
+1. **Base Helper**: `atlassian-api-base.ts` chứa các hàm helper dùng chung (config, headers, cache, logging, authentication)
+2. **Resource vs. Tool**: 
+   - **Resource**: Các hàm GET/read-only, không thay đổi dữ liệu
+   - **Tool**: Các hàm tạo, cập nhật, xóa dữ liệu
+3. **Theo Endpoint**: API Jira Tool chia thành 2 file theo endpoint:
+   - `/rest/api/3/...` → `jira-tool-api-v3.ts`
+   - `/rest/agile/1.0/...` → `jira-tool-api-agile.ts`
+
+### Hướng Dẫn Thêm API Mới
+
+#### Thêm Resource Mới
+
+```typescript
+// 1. Trong file src/utils/confluence-resource-api.ts hoặc jira-resource-api.ts
+import { callConfluenceApi, normalizeAtlassianBaseUrl, logger } from './atlassian-api-base.js';
+
+// 2. Thêm hàm resource mới
+export async function getCustomResource(
+  baseUrl: string,
+  auth: any,
+  params: { id: string, otherParam?: string }
+): Promise<any> {
+  const normalizedBaseUrl = normalizeAtlassianBaseUrl(baseUrl);
+  
+  try {
+    // 3. Gọi API tương ứng
+    const response = await callConfluenceApi(
+      normalizedBaseUrl,
+      '/wiki/api/v2/custom-endpoint',
+      auth,
+      'GET',
+      { queryParams: { id: params.id } }
+    );
+    
+    // 4. Xử lý và trả về kết quả
+    return response.data;
+  } catch (error) {
+    logger.error('Error getting custom resource', { error });
+    throw error;
+  }
+}
+```
+
+#### Thêm Tool Mới
+
+```typescript
+// 1. Xác định file thích hợp dựa vào endpoint
+// Ví dụ với Jira API /rest/api/3/... → src/utils/jira-tool-api-v3.ts
+import { callJiraApi, normalizeAtlassianBaseUrl, logger } from './atlassian-api-base.js';
+
+// 2. Thêm hàm tool mới
+export async function createCustomItem(
+  baseUrl: string,
+  auth: any,
+  params: { name: string, description: string }
+): Promise<any> {
+  const normalizedBaseUrl = normalizeAtlassianBaseUrl(baseUrl);
+  
+  try {
+    // 3. Chuẩn bị payload
+    const payload = {
+      name: params.name,
+      description: params.description
+    };
+    
+    // 4. Gọi API tương ứng
+    const response = await callJiraApi(
+      normalizedBaseUrl,
+      '/rest/api/3/custom-endpoint',
+      auth,
+      'POST',
+      { body: payload }
+    );
+    
+    // 5. Trả về kết quả
+    return {
+      id: response.data.id,
+      status: 'created'
+    };
+  } catch (error) {
+    logger.error('Error creating custom item', { error, params });
+    throw error;
+  }
+}
+```
+
+### Lưu Ý Quan Trọng
+
+1. **Import từ file Base**:
+   ```typescript
+   import { 
+     callJiraApi, 
+     callConfluenceApi, 
+     normalizeAtlassianBaseUrl, 
+     logger, 
+     adfToMarkdown 
+   } from './atlassian-api-base.js';
+   ```
+
+2. **Chuẩn hóa Error Handling**:
+   ```typescript
+   try {
+     // Gọi API
+   } catch (error) {
+     logger.error('Error message in English', { error, additionalContext });
+     throw error; // Hoặc throw custom error
+   }
+   ```
+
+3. **Chuẩn hóa tiếng Anh**:
+   - Tất cả comment, log message, error message nên dùng tiếng Anh
+   - Schema và mô tả tham số dùng tiếng Anh để dễ onboard dev mới
+
+4. **Backward compatibility**:
+   - File `jira-tool-api.ts` chỉ re-export từ 2 file mới
+   - Không thay đổi tên hoặc tham số của các hàm hiện tại
+   - Nếu cần thay đổi signature, phải tạo version mới của hàm
+
+5. **Mẫu ADF**:
+   - Khi làm việc với issue description, comment, hoặc Confluence page content:
+   ```typescript
+   import { adfToMarkdown } from './atlassian-api-base.js';
+   
+   // Convert ADF to text if needed
+   const description = adfToMarkdown(issue.fields.description);
+   ```
+
+6. **Testing**:
+   - Mỗi API mới cần test thực tế trước khi merge
+   - Xác nhận response format đúng schema
+   - Kiểm tra error handling với các trường hợp lỗi phổ biến
+
+### Quy Trình Cập Nhật Schema
+
+1. Cập nhật schema trong `src/schemas/jira.ts` hoặc `src/schemas/confluence.ts`
+2. Đảm bảo tương thích với schema trong file resource/tool tương ứng
+3. Mô tả rõ ràng các tham số bắt buộc, mặc định và định dạng

@@ -238,6 +238,24 @@ Try asking Cline these queries after installation:
 
 **Lưu ý:** Từ tháng 6/2025, toàn bộ resource Jira đã migrate sang API v3 (endpoint `/rest/api/3/...`). Các trường rich text như description/comment trả về dạng ADF, đã tự động chuyển sang text thuần cho client không hỗ trợ ADF.
 
+## Codebase Refactoring (July 2023)
+
+Codebase đã được refactor để dễ dàng bảo trì và mở rộng:
+
+- File lớn `src/utils/atlassian-api.ts` đã được tách thành các module nhỏ theo chức năng:
+  - `atlassian-api-base.ts`: Helper chung, authentication, logging
+  - `confluence-resource-api.ts` & `confluence-tool-api.ts`: API Confluence
+  - `jira-resource-api.ts`: API Jira Resource (read-only)
+  - `jira-tool-api-v3.ts`: API Jira Tool cho endpoint `/rest/api/3`
+  - `jira-tool-api-agile.ts`: API Jira Tool cho endpoint `/rest/agile/1.0`
+
+- Nguyên tắc phân chia:
+  - Base Helper: chứa các hàm dùng chung
+  - Resource API (read-only): tách riêng cho Jira & Confluence
+  - Tool API (mutations): tách riêng cho Jira & Confluence, và tách thêm theo endpoint
+
+> **Dành cho Developers:** Xem hướng dẫn chi tiết về cách maintain, thêm mới resource và tool tại [Resource & Tools Documentation](./docs/introduction/resources-and-tools.md#hướng-dẫn-sau-refactoring).
+
 ## Confluence API (v2)
 
 Từ tháng 5/2025, MCP Server chỉ hỗ trợ Confluence REST API v2 (`/wiki/api/v2/`).
