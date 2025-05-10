@@ -195,8 +195,3 @@ sequenceDiagram
 
 - Contribute by opening Pull Requests or Issues on GitHub.
 - Join the MCP/Cline community for additional support.
-
----
-- Schema dữ liệu đã cập nhật theo API v2 (xem chi tiết trong docs/dev-guide/confluence-migrate-to-v2.md).
-
-> **Lưu ý:** Nếu bạn còn sử dụng API v1, cần migrate ngay để tránh gián đoạn dịch vụ.
