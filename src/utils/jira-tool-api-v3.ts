@@ -616,24 +616,23 @@ export async function createFilter(
 export async function updateFilter(
   config: AtlassianConfig,
   filterId: string,
-  updateData: { name?: string; jql?: string; description?: string; favourite?: boolean }
+  updateData: { name?: string; jql?: string; description?: string; favourite?: boolean; sharePermissions?: any[] }
 ): Promise<any> {
   try {
     const headers = createBasicHeaders(config.email, config.apiToken);
     const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
     const url = `${baseUrl}/rest/api/3/filter/${filterId}`;
     logger.debug(`Updating Jira filter ${filterId}`);
-    // API requires PUT to have all fields, so fetch current first
-    const current = await (async () => {
-      const res = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
-      if (!res.ok) {
-        const responseText = await res.text();
-        logger.error(`Jira API error (${res.status}):`, responseText);
-        throw new Error(`Jira API error: ${res.status} ${responseText}`);
+    // Chỉ build payload với các trường hợp lệ
+    const allowedFields = ['name', 'jql', 'description', 'favourite', 'sharePermissions'] as const;
+    type AllowedField = typeof allowedFields[number];
+    const data: any = {};
+    for (const key of allowedFields) {
+      if (updateData[key as AllowedField] !== undefined) {
+        data[key] = updateData[key as AllowedField];
       }
-      return await res.json();
-    })();
-    const data = { ...current, ...updateData };
+    }
+    logger.debug('Payload for updateFilter:', JSON.stringify(data));
     const response = await fetch(url, {
       method: 'PUT',
       headers,

@@ -43,9 +43,27 @@ export const registerDeleteFilterTool = (server: McpServer) => {
     deleteFilterSchema.shape,
     async (params: DeleteFilterParams, context: Record<string, any>): Promise<McpResponse> => {
       try {
+        // Kiểm tra atlassianConfig và email, fallback sang biến môi trường nếu cần
+        if (!context.atlassianConfig) {
+          logger.error('[deleteFilter] Missing Atlassian config in context:', JSON.stringify(context));
+          return createErrorResponse('Missing Atlassian config in context');
+        }
+        if (!context.atlassianConfig.email) {
+          logger.warn('[deleteFilter] context.atlassianConfig.email is missing. Trying to get from env...');
+          const envEmail = process.env.JIRA_EMAIL || process.env.ATLASSIAN_EMAIL || process.env.ATLASSIAN_USER_EMAIL;
+          logger.warn('[deleteFilter] Env JIRA_EMAIL:', process.env.JIRA_EMAIL);
+          logger.warn('[deleteFilter] Env ATLASSIAN_EMAIL:', process.env.ATLASSIAN_EMAIL);
+          logger.warn('[deleteFilter] Env ATLASSIAN_USER_EMAIL:', process.env.ATLASSIAN_USER_EMAIL);
+          if (envEmail) {
+            logger.info('[deleteFilter] Using email from env:', envEmail);
+            context.atlassianConfig.email = envEmail;
+          } else {
+            logger.error('[deleteFilter] Missing Atlassian user email in context and environment. Context:', JSON.stringify(context));
+            return createErrorResponse('Missing Atlassian user email in context and environment');
+          }
+        }
         // Delete filter
-        const result = await deleteFilterHandler(params, context.config);
-        
+        const result = await deleteFilterHandler(params, context.atlassianConfig);
         // Return MCP-compliant response
         return createTextResponse(
           `Filter ${params.filterId} deleted successfully`,

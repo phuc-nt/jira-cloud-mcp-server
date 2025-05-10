@@ -53,9 +53,27 @@ export const registerUpdateFilterTool = (server: McpServer) => {
     updateFilterSchema.shape,
     async (params: UpdateFilterParams, context: Record<string, any>): Promise<McpResponse> => {
       try {
+        // Kiểm tra atlassianConfig và email, fallback sang biến môi trường nếu cần
+        if (!context.atlassianConfig) {
+          logger.error('[updateFilter] Missing Atlassian config in context:', JSON.stringify(context));
+          return createErrorResponse('Missing Atlassian config in context');
+        }
+        if (!context.atlassianConfig.email) {
+          logger.warn('[updateFilter] context.atlassianConfig.email is missing. Trying to get from env...');
+          const envEmail = process.env.JIRA_EMAIL || process.env.ATLASSIAN_EMAIL || process.env.ATLASSIAN_USER_EMAIL;
+          logger.warn('[updateFilter] Env JIRA_EMAIL:', process.env.JIRA_EMAIL);
+          logger.warn('[updateFilter] Env ATLASSIAN_EMAIL:', process.env.ATLASSIAN_EMAIL);
+          logger.warn('[updateFilter] Env ATLASSIAN_USER_EMAIL:', process.env.ATLASSIAN_USER_EMAIL);
+          if (envEmail) {
+            logger.info('[updateFilter] Using email from env:', envEmail);
+            context.atlassianConfig.email = envEmail;
+          } else {
+            logger.error('[updateFilter] Missing Atlassian user email in context and environment. Context:', JSON.stringify(context));
+            return createErrorResponse('Missing Atlassian user email in context and environment');
+          }
+        }
         // Update filter
-        const result = await updateFilterHandler(params, context.config);
-        
+        const result = await updateFilterHandler(params, context.atlassianConfig);
         // Return MCP-compliant response
         return createTextResponse(
           `Filter ${params.filterId} updated successfully`,

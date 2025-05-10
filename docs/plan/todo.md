@@ -21,11 +21,16 @@ Tài liệu này liệt kê các task quan trọng cần thực hiện ngay đ�
     9. Dashboards: Lấy danh sách dashboard thành công.
     > Tất cả các resource đều trả về dữ liệu hợp lệ, xác nhận khả năng truy xuất và tích hợp JIRA resource qua MCP server cho project XDEMO2 hoạt động đầy đủ.
 - [ ] Test toàn bộ tool Jira (board, sprint, dashboard, gadget, backlog...)
+  - [x] Tool issue (createIssue): Đã test và fix thành công
+  - [x] Tool filter (createFilter, updateFilter, deleteFilter): Đã test và fix thành công
+  - [ ] Tool sprint (createSprint, startSprint, closeSprint...)
+  - [ ] Tool board 
+  - [ ] Tool dashboard/gadget
 - [ ] Ghi chú lại tất cả bug, edge case, behavior bất thường khi test thực tế với Cline
 - [ ] Ưu tiên kiểm thử thực tế với Cline, so sánh kết quả với Atlassian UI
 - [ ] Bổ sung test case minh hoạ cho từng resource/tool Jira (có thể chạy độc lập)
-- [ ] Fix bug, refactor code/tool nếu phát hiện lỗi hoặc chưa chuẩn hóa
-- [ ] Chuẩn hóa lại schema, metadata trả về cho đúng MCP/Cline
+- [x] Fix bug, refactor code/tool nếu phát hiện lỗi hoặc chưa chuẩn hóa
+- [x] Chuẩn hóa lại schema, metadata trả về cho đúng MCP/Cline
 - [ ] Cập nhật lại tài liệu (README, resources-and-tools.md, roadmap) nếu có thay đổi lớn
 
 ### Hướng dẫn thực hiện
@@ -47,5 +52,17 @@ Tài liệu này liệt kê các task quan trọng cần thực hiện ngay đ�
 #### Kế hoạch fix
 - [x] Fix tool createIssue: Kiểm tra metadata (createmeta) trước khi map trường vào payload gửi lên Jira, chỉ gửi các trường có trên screen.
 - [x] Nếu user truyền trường không khả dụng, bỏ qua khi tạo issue và log warning.
+- [x] Test lại với các trường hợp: chỉ trường tối thiểu, thêm từng trường bổ sung, test updateIssue sau khi tạo.
 - [ ] Cập nhật tài liệu, schema, hướng dẫn sử dụng tool createIssue (khuyến nghị tạo issue tối thiểu, update sau nếu cần).
-- [ ] Test lại với các trường hợp: chỉ trường tối thiểu, thêm từng trường bổ sung, test updateIssue sau khi tạo. 
+
+### [BUG] Tool filter (createFilter, updateFilter, deleteFilter) gặp nhiều lỗi
+- Khi test các tool filter, gặp nhiều lỗi liên quan đến context, email và payload.
+- **Nguyên nhân 1**: MCP server inject `atlassianConfig` vào context, nhưng tool lại cố truy cập `context.config` gây lỗi undefined.
+- **Nguyên nhân 2**: Payload khi update filter đang gửi cả các trường không hợp lệ theo API Jira, gây lỗi "Invalid request payload".
+
+#### Kế hoạch fix
+- [x] Fix vấn đề context cho toàn bộ tool filter: sử dụng đúng `context.atlassianConfig` thay vì `context.config`.
+- [x] Fallback sang biến môi trường nếu thiếu thông tin email trong context.
+- [x] Fix việc update filter: chỉ gửi các trường hợp lệ (name, jql, description, favourite, sharePermissions).
+- [x] Test lại các chức năng tạo, cập nhật và xóa filter.
+- [ ] Cập nhật tài liệu, hướng dẫn sử dụng tools filter. 

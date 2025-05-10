@@ -53,9 +53,27 @@ export const registerCreateSprintTool = (server: McpServer) => {
     createSprintSchema.shape,
     async (params: CreateSprintParams, context: Record<string, any>): Promise<McpResponse> => {
       try {
+        // Kiểm tra atlassianConfig và email, fallback sang biến môi trường nếu cần
+        if (!context.atlassianConfig) {
+          logger.error('[createSprint] Missing Atlassian config in context:', JSON.stringify(context));
+          return createErrorResponse('Missing Atlassian config in context');
+        }
+        if (!context.atlassianConfig.email) {
+          logger.warn('[createSprint] context.atlassianConfig.email is missing. Trying to get from env...');
+          const envEmail = process.env.JIRA_EMAIL || process.env.ATLASSIAN_EMAIL || process.env.ATLASSIAN_USER_EMAIL;
+          logger.warn('[createSprint] Env JIRA_EMAIL:', process.env.JIRA_EMAIL);
+          logger.warn('[createSprint] Env ATLASSIAN_EMAIL:', process.env.ATLASSIAN_EMAIL);
+          logger.warn('[createSprint] Env ATLASSIAN_USER_EMAIL:', process.env.ATLASSIAN_USER_EMAIL);
+          if (envEmail) {
+            logger.info('[createSprint] Using email from env:', envEmail);
+            context.atlassianConfig.email = envEmail;
+          } else {
+            logger.error('[createSprint] Missing Atlassian user email in context and environment. Context:', JSON.stringify(context));
+            return createErrorResponse('Missing Atlassian user email in context and environment');
+          }
+        }
         // Create new sprint
-        const result = await createSprintHandler(params, context.config);
-        
+        const result = await createSprintHandler(params, context.atlassianConfig);
         // Return MCP-compliant response
         return createTextResponse(
           `Sprint created successfully with ID: ${result.id}`,
