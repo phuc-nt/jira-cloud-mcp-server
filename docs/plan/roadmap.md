@@ -94,11 +94,17 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [x] Chuẩn hóa tài liệu: cập nhật README.md, docs/introduction/resources-and-tools.md, roadmap.
 - [x] Xóa file JS/TS thừa (bao gồm label-page.ts), kiểm tra lại codebase, build thành công.
 - [x] Test lại toàn bộ với Cline, xác nhận resource/tool mới hoạt động tốt.
+- [x] **Refactor file lớn `atlassian-api.ts` thành các module nhỏ dễ maintain**: tách thành base helper, resource API, tool API riêng biệt cho Jira/Confluence.
+- [x] **Tách module Jira tools theo endpoint** (`/rest/api/3` và `/rest/agile/1.0`) thành hai file riêng, giữ backward compatibility.
+- [x] **Cập nhật hướng dẫn chi tiết** cho developer về cách thêm mới và maintain resource/tool sau refactor.
+- [x] **Bổ sung tài liệu refactor** trong docs/introduction/resources-and-tools.md và cập nhật README.md với thông tin mới.
 
 > **Ghi chú tiến độ:**
 > - Đã hoàn thành chuẩn hóa codebase, tài liệu, schema, tool/resource.
 > - Đã đồng bộ tài liệu, bảng resource/tool, loại bỏ hướng dẫn cũ.
 > - Đã test thực tế với Cline, Cline nhận đủ tool/resource nâng cao.
+> - Đã hoàn tất refactor file `atlassian-api.ts` từ >2000 dòng thành các module nhỏ dễ maintain, với cấu trúc rõ ràng.
+> - Đã cập nhật tài liệu chi tiết cho developers về cách thêm mới và maintain code sau refactoring.
 
 ### 4. Cải thiện developer experience cho local dev
 - [ ] Viết script tự động build và tạo symlink cho Cline nhận diện nhanh (không cần docker nếu chưa cần)
