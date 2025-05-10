@@ -7,11 +7,11 @@ import { createTextResponse, createErrorResponse } from '../../utils/mcp-respons
 const logger = Logger.getLogger('JiraTools:addIssueToBoard');
 
 export const addIssueToBoardSchema = z.object({
-  boardId: z.string().describe('Board ID'),
+  boardId: z.string().describe('Board ID (e.g. 34)'),
   issueKey: z.union([
-    z.string().describe('Issue key (e.g. PROJ-123)'),
-    z.array(z.string()).describe('List of issue keys')
-  ])
+    z.string(),
+    z.array(z.string())
+  ]).describe('Issue key(s) to add to board. Accepts a single issue key (e.g. "PROJ-123") or an array of issue keys (e.g. ["PROJ-123", "PROJ-124"]).')
 });
 
 export const registerAddIssueToBoardTool = (server: McpServer) => {

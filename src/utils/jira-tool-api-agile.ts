@@ -114,16 +114,16 @@ export async function startSprint(config: AtlassianConfig, sprintId: string, sta
 }
 
 // Đóng sprint
-export async function closeSprint(config: AtlassianConfig, sprintId: string, options: { completeDate?: string, moveToSprintId?: string, createNewSprint?: boolean } = {}): Promise<any> {
+export async function closeSprint(config: AtlassianConfig, sprintId: string, options: { completeDate?: string } = {}): Promise<any> {
   try {
     const headers = createBasicHeaders(config.email, config.apiToken);
     const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
     const url = `${baseUrl}/rest/agile/1.0/sprint/${sprintId}`;
-    const data: any = {
-      state: 'closed',
-      ...options
-    };
-    logger.debug(`Closing sprint ${sprintId}`);
+    // Chỉ build payload với các trường hợp lệ
+    const data: any = { state: 'closed' };
+    if (options.completeDate) data.completeDate = options.completeDate;
+    // (Không gửi moveToSprintId, createNewSprint vì API không hỗ trợ)
+    logger.debug(`Closing sprint ${sprintId} with payload:`, JSON.stringify(data));
     const response = await fetch(url, {
       method: 'POST',
       headers,
@@ -201,7 +201,18 @@ export async function addIssueToBoard(config: AtlassianConfig, boardId: string, 
       logger.error(`Jira API error (${response.status}):`, responseText);
       throw new Error(`Jira API error: ${response.status} ${responseText}`);
     }
-    return await response.json();
+    // Xử lý response rỗng
+    const contentLength = response.headers.get('content-length');
+    if (contentLength === '0' || response.status === 204) {
+      return { success: true };
+    }
+    const text = await response.text();
+    if (!text) return { success: true };
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return { success: true };
+    }
   } catch (error) {
     logger.error(`Error adding issue to board:`, error);
     throw error;

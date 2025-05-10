@@ -8,9 +8,7 @@ const logger = Logger.getLogger('JiraTools:closeSprint');
 
 export const closeSprintSchema = z.object({
   sprintId: z.string().describe('Sprint ID'),
-  completeDate: z.string().optional().describe('Complete date (ISO 8601)'),
-  moveToSprintId: z.string().optional().describe('Move incomplete issues to sprint ID'),
-  createNewSprint: z.boolean().optional().describe('Create new sprint after closing')
+  completeDate: z.string().optional().describe('Complete date (ISO 8601, optional, e.g. 2025-05-10T12:45:00.000+07:00)')
 });
 
 export const registerCloseSprintTool = (server: McpServer) => {

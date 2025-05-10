@@ -23,7 +23,7 @@ Tài liệu này liệt kê các task quan trọng cần thực hiện ngay đ�
 - [ ] Test toàn bộ tool Jira (board, sprint, dashboard, gadget, backlog...)
   - [x] Tool issue (createIssue): Đã test và fix thành công
   - [x] Tool filter (createFilter, updateFilter, deleteFilter): Đã test và fix thành công
-  - [ ] Tool sprint (createSprint, startSprint, closeSprint...)
+  - [x] Tool sprint (createSprint, startSprint, closeSprint): Đã test, hoạt động ổn định, closeSprint hỗ trợ completeDate chuẩn
   - [ ] Tool board 
   - [ ] Tool dashboard/gadget
 - [ ] Ghi chú lại tất cả bug, edge case, behavior bất thường khi test thực tế với Cline
