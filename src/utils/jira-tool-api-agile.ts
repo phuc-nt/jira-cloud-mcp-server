@@ -2,14 +2,16 @@ import { AtlassianConfig, logger, createBasicHeaders } from './atlassian-api-bas
 import { normalizeAtlassianBaseUrl } from './atlassian-api-base.js';
 import { ApiError, ApiErrorType } from './error-handler.js';
 
-// Add issues to backlog
-export async function addIssuesToBacklog(config: AtlassianConfig, boardId: string, issueKeys: string[]): Promise<any> {
+// Add issues to backlog (support both /backlog/issue and /backlog/{boardId}/issue)
+export async function addIssuesToBacklog(config: AtlassianConfig, issueKeys: string[], boardId?: string): Promise<any> {
   try {
     const headers = createBasicHeaders(config.email, config.apiToken);
     const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
-    const url = `${baseUrl}/rest/agile/1.0/backlog/issue`;
+    const url = boardId
+      ? `${baseUrl}/rest/agile/1.0/backlog/${boardId}/issue`
+      : `${baseUrl}/rest/agile/1.0/backlog/issue`;
     const data = { issues: issueKeys };
-    logger.debug(`Adding issues to backlog: ${issueKeys.join(', ')}`);
+    logger.debug(`Adding issues to backlog${boardId ? ` for board ${boardId}` : ''}: ${issueKeys.join(', ')}`);
     const response = await fetch(url, {
       method: 'POST',
       headers,
@@ -21,21 +23,38 @@ export async function addIssuesToBacklog(config: AtlassianConfig, boardId: strin
       logger.error(`Jira API error (${response.status}):`, responseText);
       throw new Error(`Jira API error: ${response.status} ${responseText}`);
     }
-    return await response.json();
+    // Xử lý response rỗng
+    const contentLength = response.headers.get('content-length');
+    if (contentLength === '0' || response.status === 204) {
+      return { success: true };
+    }
+    const text = await response.text();
+    if (!text) return { success: true };
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return { success: true };
+    }
   } catch (error) {
     logger.error(`Error adding issues to backlog:`, error);
     throw error;
   }
 }
 
-// Di chuyển issues từ backlog sang sprint
-export async function removeIssuesFromBacklog(config: AtlassianConfig, boardId: string, sprintId: string, issueKeys: string[]): Promise<any> {
+/**
+ * Di chuyển issues vào sprint (POST /rest/agile/1.0/sprint/{sprintId}/issue)
+ * Sprint đích phải là future hoặc active. API trả về response rỗng khi thành công.
+ * @param config cấu hình Atlassian
+ * @param sprintId ID của sprint đích
+ * @param issueKeys mảng issue key cần di chuyển
+ */
+export async function addIssueToSprint(config: AtlassianConfig, sprintId: string, issueKeys: string[]): Promise<any> {
   try {
     const headers = createBasicHeaders(config.email, config.apiToken);
     const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
     const url = `${baseUrl}/rest/agile/1.0/sprint/${sprintId}/issue`;
     const data = { issues: issueKeys };
-    logger.debug(`Moving issues from backlog to sprint ${sprintId}: ${issueKeys.join(', ')}`);
+    logger.debug(`Adding issues to sprint ${sprintId}: ${issueKeys.join(', ')}`);
     const response = await fetch(url, {
       method: 'POST',
       headers,
@@ -47,9 +66,20 @@ export async function removeIssuesFromBacklog(config: AtlassianConfig, boardId: 
       logger.error(`Jira API error (${response.status}):`, responseText);
       throw new Error(`Jira API error: ${response.status} ${responseText}`);
     }
-    return await response.json();
+    // Xử lý response rỗng
+    const contentLength = response.headers.get('content-length');
+    if (contentLength === '0' || response.status === 204) {
+      return { success: true };
+    }
+    const text = await response.text();
+    if (!text) return { success: true };
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return { success: true };
+    }
   } catch (error) {
-    logger.error(`Error moving issues from backlog to sprint:`, error);
+    logger.error(`Error adding issues to sprint:`, error);
     throw error;
   }
 }

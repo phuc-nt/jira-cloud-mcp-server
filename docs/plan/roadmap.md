@@ -99,12 +99,40 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [x] **Cập nhật hướng dẫn chi tiết** cho developer về cách thêm mới và maintain resource/tool sau refactor.
 - [x] **Bổ sung tài liệu refactor** trong docs/introduction/resources-and-tools.md và cập nhật README.md với thông tin mới.
 
+### 3.3. Kết quả kiểm thử JIRA Tool với project XDEMO2 (2025-06)
+
+#### Các tool đã kiểm thử thành công:
+- [x] **Done** - createIssue: Tạo issue với đầy đủ trường, bao gồm labels
+- [x] **Done** - updateIssue: Cập nhật các trường của issue
+- [x] **Done** - assignIssue: Đổi assignee cho issue
+- [x] **Done** - transitionIssue: Chuyển trạng thái issue (lấy đúng transitionId)
+- [x] **Done** - createFilter, updateFilter, deleteFilter: Tạo, cập nhật, xóa filter
+- [x] **Done** - createSprint, startSprint, closeSprint: Tạo, bắt đầu, đóng sprint (có test cả completeDate)
+- [x] **Done** - addIssueToBoard: Thêm issue vào board Kanban và Scrum
+- [x] **Done** - addIssuesToBacklog: Thêm issue vào backlog, hoạt động đúng với/không với boardId
+- [x] **Done** - addIssueToSprint: Thêm nhiều issue vào sprint thành công (thay thế removeIssuesFromBacklog)
+
+#### Các lỗi đã gặp và đã được sửa:
+- [x] **Done** - Lỗi mapping trường khi tạo issue (labels, assignee, ...)
+- [x] **Done** - Lỗi thiếu trường email khi thao tác filter
+- [x] **Done** - Lỗi parse JSON khi thao tác board/backlog
+- [x] **Done** - Lỗi payload khi closeSprint với completeDate
+- [x] **Done** - Lỗi "Unexpected end of JSON input" khi API trả về response rỗng (thành công)
+
+#### Các tool cần tiếp tục kiểm thử:
+- [ ] rankBacklogIssues: Sắp xếp thứ tự issue trong backlog
+- [ ] configureBoardColumns: Cấu hình lại các cột của board
+- [ ] createDashboard, updateDashboard, addGadgetToDashboard, removeGadgetFromDashboard: Các thao tác với dashboard và gadget
+
 > **Ghi chú tiến độ:**
 > - Đã hoàn thành chuẩn hóa codebase, tài liệu, schema, tool/resource.
 > - Đã đồng bộ tài liệu, bảng resource/tool, loại bỏ hướng dẫn cũ.
 > - Đã test thực tế với Cline, Cline nhận đủ tool/resource nâng cao.
 > - Đã hoàn tất refactor file `atlassian-api.ts` từ >2000 dòng thành các module nhỏ dễ maintain, với cấu trúc rõ ràng.
 > - Đã cập nhật tài liệu chi tiết cho developers về cách thêm mới và maintain code sau refactoring.
+> - Các luồng chính về issue, filter, sprint, board/backlog đã được kiểm thử đầy đủ và xác nhận hoạt động ổn định.
+> - Đã hợp nhất tool backlog/sprint cho đồng nhất: **addIssueToSprint** thay thế removeIssuesFromBacklog và moveIssuesBetweenSprints; **addIssuesToBacklog** hỗ trợ cả backlog chung và backlog cụ thể của board.
+> - Các tool nâng cao về sprint, backlog, dashboard cần tiếp tục kiểm thử để đảm bảo hoạt động đúng.
 
 ### 4. Cải thiện developer experience cho local dev
 - [ ] Viết script tự động build và tạo symlink cho Cline nhận diện nhanh (không cần docker nếu chưa cần)

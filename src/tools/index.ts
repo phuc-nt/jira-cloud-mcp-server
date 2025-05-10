@@ -14,18 +14,16 @@ import { registerUpdatePageTitleTool } from './confluence/update-page-title.js';
 import { registerUpdateFooterCommentTool } from './confluence/update-footer-comment.js';
 import { registerDeleteFooterCommentTool } from './confluence/delete-footer-comment.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { registerAddIssueToBoardTool } from './jira/add-issue-to-board.js';
 import { registerConfigureBoardColumnsTool } from './jira/configure-board-columns.js';
 import { registerStartSprintTool } from './jira/start-sprint.js';
 import { registerCloseSprintTool } from './jira/close-sprint.js';
-import { registerMoveIssuesBetweenSprintsTool } from './jira/move-issues-between-sprints.js';
 import { registerAddIssuesToBacklogTool } from './jira/add-issues-to-backlog.js';
-import { registerRemoveIssuesFromBacklogTool } from './jira/remove-issues-from-backlog.js';
 import { registerRankBacklogIssuesTool } from './jira/rank-backlog-issues.js';
 import { registerCreateDashboardTool } from './jira/create-dashboard.js';
 import { registerUpdateDashboardTool } from './jira/update-dashboard.js';
 import { registerAddGadgetToDashboardTool } from './jira/add-gadget-to-dashboard.js';
 import { registerRemoveGadgetFromDashboardTool } from './jira/remove-gadget-from-dashboard.js';
+import { registerAddIssueToSprintTool } from './jira/add-issue-to-sprint.js';
 
 /**
  * Register all tools with MCP Server
@@ -47,15 +45,12 @@ export function registerAllTools(server: McpServer) {
   registerCreateSprintTool(server);
   registerStartSprintTool(server);
   registerCloseSprintTool(server);
-  registerMoveIssuesBetweenSprintsTool(server);
   
   // Jira board tools
-  registerAddIssueToBoardTool(server);
-  registerConfigureBoardColumnsTool(server);
+  // registerAddIssueToBoardTool(server);
   
   // Jira backlog tools
   registerAddIssuesToBacklogTool(server);
-  registerRemoveIssuesFromBacklogTool(server);
   registerRankBacklogIssuesTool(server);
   
   // Jira dashboard/gadget tools
@@ -72,4 +67,6 @@ export function registerAllTools(server: McpServer) {
   registerUpdatePageTitleTool(server);
   registerUpdateFooterCommentTool(server);
   registerDeleteFooterCommentTool(server);
+
+  registerAddIssueToSprintTool(server);
 }

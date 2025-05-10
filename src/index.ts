@@ -136,9 +136,9 @@ async function startServer() {
     // Liệt kê tất cả các tool đã đăng ký
     logger.info('- Jira issue tools: createIssue, updateIssue, transitionIssue, assignIssue');
     logger.info('- Jira filter tools: createFilter, updateFilter, deleteFilter');
-    logger.info('- Jira sprint tools: createSprint, startSprint, closeSprint, moveIssuesBetweenSprints');
+    logger.info('- Jira sprint tools: createSprint, startSprint, closeSprint, addIssueToSprint');
     logger.info('- Jira board tools: addIssueToBoard, configureBoardColumns');
-    logger.info('- Jira backlog tools: addIssuesToBacklog, removeIssuesFromBacklog, rankBacklogIssues');
+    logger.info('- Jira backlog tools: addIssuesToBacklog, rankBacklogIssues');
     logger.info('- Jira dashboard tools: createDashboard, updateDashboard, addGadgetToDashboard, removeGadgetFromDashboard');
     logger.info('- Confluence tools: createPage, updatePage, addComment, addLabelsToPage, removeLabelsFromPage');
     
