@@ -5,7 +5,7 @@ import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
-import { updateConfluencePageV2 } from '../../utils/atlassian-api.js';
+import { updateConfluencePageV2 } from '../../utils/confluence-tool-api.js';
 
 // Initialize logger
 const logger = Logger.getLogger('ConfluenceTools:updatePage');

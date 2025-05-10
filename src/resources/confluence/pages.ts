@@ -4,7 +4,8 @@ import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import fetch from 'cross-fetch';
 import { createJsonResource, createStandardResource } from '../../utils/mcp-resource.js';
 import { pagesListSchema, pageSchema, commentsListSchema } from '../../schemas/confluence.js';
-import { getConfluencePagesV2, getConfluencePageV2, getConfluencePageBodyV2, getConfluencePageAncestorsV2, getConfluencePageChildrenV2, getConfluencePageCommentsV2, searchConfluencePagesByCqlV2, getConfluencePageFooterCommentsV2, getConfluencePageInlineCommentsV2, getConfluencePageLabelsV2, getConfluencePageAttachmentsV2, getConfluencePageVersionsV2, callConfluenceApi, getConfluencePagesWithFilters } from '../../utils/atlassian-api.js';
+import { getConfluencePagesV2, getConfluencePageV2, getConfluencePageBodyV2, getConfluencePageAncestorsV2, getConfluencePageChildrenV2, getConfluencePageCommentsV2, searchConfluencePagesByCqlV2, getConfluencePageLabelsV2, getConfluencePageAttachmentsV2, getConfluencePageVersionsV2, getConfluencePagesWithFilters } from '../../utils/confluence-resource-api.js';
+import { getConfluencePageFooterCommentsV2, getConfluencePageInlineCommentsV2, callConfluenceApi } from '../../utils/atlassian-api.js';
 
 const logger = Logger.getLogger('ConfluenceResource:Pages');
 
