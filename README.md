@@ -163,10 +163,3 @@ sequenceDiagram
 
 - Contribute by opening Pull Requests or Issues on GitHub.
 - Join the MCP/Cline community for additional support.
-
----
-
-**MCP Atlassian Server (by phuc-nt)** is ready for one-click installation from Cline Marketplace!  
-**See detailed instructions in [llms-install.md](./llms-install.md)**
-
-> While the server uses the open MCP standard, it is primarily designed and tested for Cline users.
