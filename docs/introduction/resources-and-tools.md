@@ -37,7 +37,7 @@ Tài liệu này cung cấp thông tin chi tiết về implementation, API endpo
 ### 2. Project
 
 #### Resource
-| Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
+| Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về | 
 |----------|-----|-------|-----------------------|----------------|
 | Projects | `jira://projects` | Danh sách project | `/rest/api/3/project` | Array của Project objects |
 | Project Details | `jira://projects/{projectKey}` | Chi tiết project | `/rest/api/3/project/{projectKey}` | Single Project object |

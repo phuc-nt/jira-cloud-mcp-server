@@ -7,6 +7,17 @@
 [![MCP Atlassian Server (by phuc-nt)](https://img.shields.io/badge/MCP%20Marketplace--Pending%20Review-orange)](https://github.com/phuc-nt/mcp-atlassian-server)
 [![smithery badge](https://smithery.ai/badge/@phuc-nt/mcp-atlassian-server)](https://smithery.ai/server/@phuc-nt/mcp-atlassian-server)
 
+## What's New in Version 2.0.0 🎉
+
+**MCP Atlassian Server v2.0.0** brings a major expansion of features and capabilities!
+
+- **Updated APIs**: Now using the latest Atlassian APIs (Jira API v3, Confluence API v2)
+- **Expanded Features**: Grown from 21 to 48 features, including advanced Jira and Confluence capabilities
+- **Enhanced Board & Sprint Management**: Complete Agile/Scrum workflow support
+- **Advanced Confluence Features**: Page version management, attachments handling, and comment management
+
+For full details on all changes, improvements, and fixes, see the [CHANGELOG](./CHANGELOG.md).
+
 ## Introduction
 
 **MCP Atlassian Server (by phuc-nt)** is a Model Context Protocol (MCP) server that connects AI agents like Cline, Claude Desktop, or Cursor to Atlassian Jira and Confluence, enabling them to query data and perform actions through a standardized interface.
@@ -111,54 +122,11 @@ MCP Atlassian Server enables AI assistants (like Cline, Claude Desktop, Cursor..
 - **Comment Management**
   - View, add, update, and delete comments on pages
 
----
 
 > For a full technical breakdown of all features, resources, and tools, see:
 > [docs/introduction/resources-and-tools.md](./docs/introduction/resources-and-tools.md)
 
 ---
-
-## Example Use Cases
-
-You can try these queries with Cline or any compatible AI assistant:
-
-### Jira
-
-- **Create and manage tasks**
-  - "Create a new issue in project DEMO about login errors"
-  - "Update the description of issue DEMO-123"
-  - "Transition issue DEMO-43 to Done"
-  - "Assign issue DEMO-99 to me"
-  - "Add issue DEMO-100 to the current sprint"
-  - "Reorder issues in the backlog"
-
-- **Project insights**
-  - "List all issues in project DEMO"
-  - "Who is assigned to issues in project DEMO?"
-  - "Show unassigned issues in the current sprint"
-  - "Show the configuration of the Kanban board for team X"
-
-- **Dashboard & filter management**
-  - "Create a new dashboard for the team"
-  - "Add a report gadget to the dashboard"
-  - "Create a filter for high-priority issues"
-
-### Confluence
-
-- **Documentation management**
-  - "Create a new page in space TEAM X titled 'Project Plan'"
-  - "Update the content of the page 'API Documentation'"
-  - "Rename the page 'Meeting Notes' to 'Weekly Meeting Notes'"
-  - "Delete the old page about last year's project"
-
-- **Collaboration & comments**
-  - "Add a comment to the page 'API Documentation'"
-  - "Update my comment on the page 'Meeting Notes'"
-  - "Delete a comment from the page 'Meeting Notes'"
-
----
-
-For more details and advanced usage, see [docs/introduction/resources-and-tools.md](./docs/introduction/resources-and-tools.md).
 
 ## Request Flow
 
@@ -202,33 +170,3 @@ sequenceDiagram
 **See detailed instructions in [llms-install.md](./llms-install.md)**
 
 > While the server uses the open MCP standard, it is primarily designed and tested for Cline users.
-
-**Lưu ý:** Từ tháng 6/2025, toàn bộ resource Jira đã migrate sang API v3 (endpoint `/rest/api/3/...`). Các trường rich text như description/comment trả về dạng ADF, đã tự động chuyển sang text thuần cho client không hỗ trợ ADF.
-
-## Codebase Refactoring (July 2023)
-
-Codebase đã được refactor để dễ dàng bảo trì và mở rộng:
-
-- File lớn `src/utils/atlassian-api.ts` đã được tách thành các module nhỏ theo chức năng:
-  - `atlassian-api-base.ts`: Helper chung, authentication, logging
-  - `confluence-resource-api.ts` & `confluence-tool-api.ts`: API Confluence
-  - `jira-resource-api.ts`: API Jira Resource (read-only)
-  - `jira-tool-api-v3.ts`: API Jira Tool cho endpoint `/rest/api/3`
-  - `jira-tool-api-agile.ts`: API Jira Tool cho endpoint `/rest/agile/1.0`
-
-- Nguyên tắc phân chia:
-  - Base Helper: chứa các hàm dùng chung
-  - Resource API (read-only): tách riêng cho Jira & Confluence
-  - Tool API (mutations): tách riêng cho Jira & Confluence, và tách thêm theo endpoint
-
-> **Dành cho Developers:** Xem hướng dẫn chi tiết về cách maintain, thêm mới resource và tool tại [Resource & Tools Documentation](./docs/introduction/resources-and-tools.md#hướng-dẫn-sau-refactoring).
-
-## Confluence API (v2)
-
-Từ tháng 5/2025, MCP Server chỉ hỗ trợ Confluence REST API v2 (`/wiki/api/v2/`).
-
-- Tất cả resource và tool Confluence đã migrate sang API v2.
-- Không còn sử dụng endpoint `/rest/api/`.
-- Schema dữ liệu đã cập nhật theo API v2 (xem chi tiết trong docs/dev-guide/confluence-migrate-to-v2.md).
-
-> **Lưu ý:** Nếu bạn còn sử dụng API v1, cần migrate ngay để tránh gián đoạn dịch vụ.
