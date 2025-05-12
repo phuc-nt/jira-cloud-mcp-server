@@ -7,7 +7,49 @@
 - Atlassian Cloud account and API token
 - Cline AI assistant (main supported client)
 
-## Prerequisite Tools Check & Installation
+## Installation Options
+
+You have two ways to install MCP Atlassian Server:
+
+1. **[Install from npm](#option-1-install-from-npm)** (recommended, easier) - Install directly from npm registry
+2. **[Clone & Build from source](#option-2-clone-and-build-from-source)** - Clone the GitHub repository and build locally
+
+## Option 1: Install from npm
+
+This is the recommended method as it's simpler and lets you easily update to new versions.
+
+### Install the package globally
+
+```bash
+npm install -g @phuc-nt/mcp-atlassian-server
+```
+
+Or install in your project:
+
+```bash
+npm install @phuc-nt/mcp-atlassian-server
+```
+
+### Find the installation path
+
+After installation, you'll need to know the path to the package for Cline configuration:
+
+```bash
+# For global installation, find the global node_modules directory
+npm root -g
+# Output will be something like: /usr/local/lib/node_modules
+
+# For local installation, the path will be in your project directory
+# e.g., /your/project/node_modules/@phuc-nt/mcp-atlassian-server
+```
+
+The full path to the executable will be: `<npm_modules_path>/@phuc-nt/mcp-atlassian-server/dist/index.js`
+
+Skip to [Configure Cline section](#configure-cline) after installing from npm.
+
+## Option 2: Clone and Build from Source
+
+### Prerequisite Tools Check & Installation
 
 ### Check Installed Tools
 
@@ -69,7 +111,7 @@ nvm install --lts
    npm --version
    ```
 
-## Step 1: Clone the Repository
+### Step 1: Clone the Repository
 ```bash
 # macOS/Linux
 git clone https://github.com/phuc-nt/mcp-atlassian-server.git
@@ -80,21 +122,34 @@ git clone https://github.com/phuc-nt/mcp-atlassian-server.git
 cd mcp-atlassian-server
 ```
 
-## Step 2: Install Dependencies
+### Step 2: Install Dependencies
 ```bash
 npm install
 ```
 
-## Step 3: Build the Project
+### Step 3: Build the Project
 ```bash
 npm run build
 ```
 
-## Step 4: Configure Cline
+## Configure Cline
 
 MCP Atlassian Server is specifically designed for seamless integration with Cline. Below is the guide to configure Cline to connect to the server:
 
 ### Determine the Full Path
+
+#### For npm installation
+If you installed the package via npm, you need the path to the installed package:
+
+```bash
+# For global npm installation
+echo "$(npm root -g)/@phuc-nt/mcp-atlassian-server/dist/index.js"
+
+# For local npm installation (run from your project directory)
+echo "$(pwd)/node_modules/@phuc-nt/mcp-atlassian-server/dist/index.js"
+```
+
+#### For source code installation
 
 First, determine the full path to your project directory:
 
@@ -119,7 +174,7 @@ Then, add the following configuration to your `cline_mcp_settings.json` file:
       "timeout": 60,
       "command": "node",
       "args": [
-        "/full/path/to/mcp-atlassian-server/dist/index.js"
+        "/path/to/mcp-atlassian-server/dist/index.js"
       ],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site.atlassian.net",
@@ -133,12 +188,17 @@ Then, add the following configuration to your `cline_mcp_settings.json` file:
 ```
 
 Replace:
-- `/full/path/to/` with the path you just obtained
+- For **npm installation**: Use the path to the npm package: 
+  - Global install: `/path/to/global/node_modules/@phuc-nt/mcp-atlassian-server/dist/index.js` 
+  - Local install: `/path/to/your/project/node_modules/@phuc-nt/mcp-atlassian-server/dist/index.js`
+- For **source installation**: Use the path you just obtained with `pwd` command
 - `your-site.atlassian.net` with your Atlassian site name
 - `your-email@example.com` with your Atlassian email
 - `your-api-token` with your Atlassian API token
 
-> **Note for Windows**: The path on Windows may look like `C:\\Users\\YourName\\mcp-atlassian-server\\dist\\index.js` (use `\\` instead of `/`).
+> **Note for global npm installs**: You can find the global node_modules path by running: `npm root -g`
+
+> **Note for Windows**: The path on Windows may look like `C:\\Users\\YourName\\AppData\\Roaming\\npm\\node_modules\\@phuc-nt\\mcp-atlassian-server\\dist\\index.js` (use `\\` instead of `/`).
 
 ## Step 5: Get Atlassian API Token
 1. Go to https://id.atlassian.com/manage-profile/security/api-tokens
@@ -174,8 +234,29 @@ Replace:
 > **Important**: If you do not ask the LLM to read the config file, your API token will only be used locally and will not be sent anywhere.
 
 ## Verify Installation
+
+### Test the MCP Server directly
+
+You can test that the MCP Server runs correctly by executing it directly:
+
+```bash
+# For npm global install
+node $(npm root -g)/@phuc-nt/mcp-atlassian-server/dist/index.js
+
+# For npm local install
+node ./node_modules/@phuc-nt/mcp-atlassian-server/dist/index.js
+
+# For source code install
+node ./dist/index.js
+```
+
+You should see output indicating that the server has started and registered resources and tools.
+
+### Test with Cline
+
 After configuration, test the connection by asking Cline a question related to Jira or Confluence, for example:
 - "List all projects in Jira"
 - "Search for Confluence pages about [topic]"
+- "Create a new issue in project DEMO"
 
 Cline is optimized to work with this MCP Atlassian Server (by phuc-nt) and will automatically use the most appropriate resources and tools for your queries.

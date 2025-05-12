@@ -1,0 +1,37 @@
+# Development directories
+node_modules/
+src/
+tests/
+dev_mcp-atlassian-test-client/
+
+# Configuration files
+.env
+.env.example
+.gitignore
+tsconfig.json
+jest.config.js
+
+# Docker files
+Dockerfile
+docker-compose.yml
+start-docker.sh
+
+# Development files
+*.log
+*.tsbuildinfo
+.vscode/
+.idea/
+
+# Test files
+coverage/
+*.test.ts
+*.spec.ts
+
+# Documentation (keep only essential docs)
+docs/dev-guide/
+docs/test-reports/
+docs/plan/
+
+# Other files
+.git/
+.github/

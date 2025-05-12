@@ -1,14 +1,24 @@
 {
-  "name": "dev_mcp-server-atlassian",
+  "name": "@phuc-nt/mcp-atlassian-server",
   "version": "2.0.0",
   "description": "MCP Server for interacting with Atlassian Jira and Confluence",
   "type": "module",
   "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "assets"
+  ],
+  "bin": {
+    "mcp-atlassian-server": "dist/index.js"
+  },
   "scripts": {
     "test": "jest",
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon --exec ts-node --esm src/index.ts"
+    "dev": "nodemon --exec ts-node --esm src/index.ts",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "mcp",
@@ -38,5 +48,19 @@
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phuc-nt/mcp-atlassian-server.git"
+  },
+  "homepage": "https://github.com/phuc-nt/mcp-atlassian-server#readme",
+  "bugs": {
+    "url": "https://github.com/phuc-nt/mcp-atlassian-server/issues"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
