@@ -29,31 +29,28 @@ function loadEnv(): Record<string, string> {
   }
 }
 
-// Print metadata and schema
+// Print only response data
 function printResourceMetaAndSchema(res: any) {
   if (res.contents && res.contents.length > 0) {
     const content = res.contents[0];
-    // Print metadata if exists
-    if (content.metadata) {
-      console.log("Metadata:", content.metadata);
-    }
-    // Print schema if exists
-    if (content.schema) {
-      console.log("Schema:", JSON.stringify(content.schema, null, 2));
-    }
+    
+    // COMMENTED OUT: Metadata and schema printing
+    // // Print metadata if exists
+    // if (content.metadata) {
+    //   console.log("Metadata:", content.metadata);
+    // }
+    // // Print schema if exists
+    // if (content.schema) {
+    //   console.log("Schema:", JSON.stringify(content.schema, null, 2));
+    // }
+    
     // Try to parse text if exists
     if (content.text) {
       try {
         const data = JSON.parse(String(content.text));
-        if (Array.isArray(data)) {
-          console.log("Data (array, first element):", data[0]);
-        } else if (typeof data === 'object') {
-          console.log("Data (object):", data);
-        } else {
-          console.log("Data:", data);
-        }
-      } catch {
-        console.log("Cannot parse text.");
+        console.log("Response Data:", JSON.stringify(data, null, 2));
+      } catch (e) {
+        console.log("Raw Response:", content.text);
       }
     }
   }
@@ -66,7 +63,7 @@ async function main() {
   });
 
   // Path to MCP server
-  const serverPath = path.resolve(process.cwd(), "dist/index.js");
+  const serverPath = "/opt/homebrew/lib/node_modules/@phuc-nt/mcp-atlassian-server/dist/index.js";
 
   // Load environment variables
   const envVars = loadEnv();
@@ -94,14 +91,19 @@ async function main() {
   console.log("\n=== Test Confluence Pages Resource ===");
 
   // Change these values to match your environment if needed
-  const pageId = "16482305"; // Example pageId, get the correct one from Confluence
-  const cql = "type=page";
-
+  const pageId = "19464453"; // Home page id mới cho space AWA1
+  
+  // Thay thế truy vấn CQL bằng truy vấn trực tiếp đến space hoặc title
+  const spaceKey = "AWA1"; // Space key mới
+  
   const resourceUris = [
     `confluence://pages/${pageId}`,
-    `confluence://pages?cql=${encodeURIComponent(cql)}`,
+    `confluence://spaces/${spaceKey}/pages`,
     `confluence://pages/${pageId}/children`,
-    `confluence://pages/${pageId}/comments`
+    `confluence://pages/${pageId}/comments`,
+    `confluence://pages/${pageId}/versions`,
+    `confluence://pages/${pageId}/ancestors`,
+    `confluence://pages/${pageId}/attachments`
   ];
 
   for (const uri of resourceUris) {
@@ -117,6 +119,15 @@ async function main() {
       } else if (uri.includes("/comments")) {
         const commentsData = JSON.parse(String(res.contents[0].text));
         console.log("Number of comments:", commentsData.comments?.length || 0);
+      } else if (uri.includes("/versions")) {
+        const versionsData = JSON.parse(String(res.contents[0].text));
+        console.log("Number of versions:", versionsData.versions?.length || 0);
+      } else if (uri.includes("/ancestors")) {
+        const ancestorsData = JSON.parse(String(res.contents[0].text));
+        console.log("Number of ancestors:", ancestorsData.ancestors?.length || 0);
+      } else if (uri.includes("/attachments")) {
+        const attachmentsData = JSON.parse(String(res.contents[0].text));
+        console.log("Number of attachments:", attachmentsData.attachments?.length || 0);
       }
       printResourceMetaAndSchema(res);
     } catch (e) {
@@ -128,4 +139,4 @@ async function main() {
   await client.close();
 }
 
-main(); 
+main();

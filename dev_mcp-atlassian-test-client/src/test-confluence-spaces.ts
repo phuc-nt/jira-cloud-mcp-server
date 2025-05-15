@@ -66,7 +66,7 @@ async function main() {
   });
 
   // Path to MCP server
-  const serverPath = path.resolve(process.cwd(), "dist/index.js");
+  const serverPath = "/opt/homebrew/lib/node_modules/@phuc-nt/mcp-atlassian-server/dist/index.js";
 
   // Load environment variables
   const envVars = loadEnv();
@@ -93,8 +93,9 @@ async function main() {
 
   console.log("\n=== Test Confluence Spaces Resource ===");
 
-  // Change spaceKey to match your environment if needed
-  const spaceKey = "TX";
+  // Nếu có biến spaceKey hoặc pageId, hãy cập nhật:
+  const spaceKey = "AWA1"; // Space key mới
+  const homePageId = "19464453"; // Home page id mới
 
   const resourceUris = [
     `confluence://spaces`,
@@ -123,4 +124,4 @@ async function main() {
   await client.close();
 }
 
-main(); 
+main();
