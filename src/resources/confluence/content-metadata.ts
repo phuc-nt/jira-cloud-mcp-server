@@ -21,59 +21,29 @@ export function registerContentMetadataResources(server: McpServer) {
   logger.info('Registering Confluence content metadata resources...');
 
   // Resource: Page labels
-  // registerResource(
-  //   server,
-  //   'confluence-page-labels',
-  //   new ResourceTemplate('confluence://pages/{pageId}/labels', { list: undefined }),
-  //   'List all labels for a Confluence page',
-  //   async (params, { config, uri }) => { ... }
-  // );
+  registerResource(
+    server,
+    'confluence-page-labels',
+    new ResourceTemplate('confluence://pages/{pageId}/labels', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'confluence://pages/{pageId}/labels',
+            name: 'Confluence Page Labels',
+            description: 'List all labels for a Confluence page. Replace {pageId} với ID trang.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
+    'List all labels for a Confluence page',
+    async (params, { config, uri }) => {
+      // ...existing code for fetching labels...
+    }
+  );
 
-  // Resource: Page attachments
-  // registerResource(
-  //   server,
-  //   'confluence-page-attachments',
-  //   new ResourceTemplate('confluence://pages/{pageId}/attachments', { list: undefined }),
-  //   'List all attachments for a Confluence page',
-  //   async (params, { config, uri }) => { ... }
-  // );
+  // ...KHÔNG đăng ký lại resource attachments/versions ở đây để tránh trùng lặp...
 
-  // Resource: Page versions
-  // registerResource(
-  //   server,
-  //   'confluence-page-versions',
-  //   new ResourceTemplate('confluence://pages/{pageId}/versions', { list: undefined }),
-  //   'List all versions of a Confluence page',
-  //   async (params, { config, uri }) => { ... }
-  // );
-
-  // Resource: Page labels (API v2, cursor-based)
-  // registerResource(
-  //   server,
-  //   'confluence-page-labels-v2',
-  //   new ResourceTemplate('confluence://pages/{pageId}/labels', { list: undefined }),
-  //   'List all labels for a Confluence page (v2)',
-  //   async (params, { config, uri }) => { ... }
-  // );
-
-  // Resource: Page attachments (API v2, cursor-based)
-  // registerResource(
-  //   server,
-  //   'confluence-page-attachments-v2',
-  //   new ResourceTemplate('confluence://pages/{pageId}/attachments', { list: undefined }),
-  //   'List all attachments for a Confluence page (v2)',
-  //   async (params, { config, uri }) => { ... }
-  // );
-
-  // Resource: Page versions (API v2, cursor-based)
-  // registerResource(
-  //   server,
-  //   'confluence-page-versions-v2',
-  //   new ResourceTemplate('confluence://pages/{pageId}/versions', { list: undefined }),
-  //   'List all versions of a Confluence page (v2)',
-  //   async (params, { config, uri }) => { ... }
-  // );
-  
   logger.info('Confluence content metadata resources registered successfully');
 }
 
@@ -96,4 +66,4 @@ async function getPageAttachmentsV2(config: AtlassianConfig, pageId: string, cur
  */
 async function getPageVersionsV2(config: AtlassianConfig, pageId: string, cursor: string | undefined = undefined, limit: number = 25): Promise<any> {
   return await getConfluencePageVersionsV2(config, pageId, cursor, limit);
-} 
+}

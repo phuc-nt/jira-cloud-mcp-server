@@ -48,7 +48,18 @@ export function registerPageResources(server: McpServer) {
   // Resource: Page details (API v2, tách call metadata và body)
   server.resource(
     'confluence-page-details-v2',
-    new ResourceTemplate('confluence://pages/{pageId}', { list: undefined }),
+    new ResourceTemplate('confluence://pages/{pageId}', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'confluence://pages/{pageId}',
+            name: 'Confluence Page Details',
+            description: 'Get details for a specific Confluence page by ID. Replace {pageId} with the page ID.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     async (uri, { pageId }, extra) => {
       let normalizedPageId = Array.isArray(pageId) ? pageId[0] : pageId;
       try {
@@ -95,7 +106,18 @@ export function registerPageResources(server: McpServer) {
   // Resource: List of children pages
   server.resource(
     'confluence-page-children',
-    new ResourceTemplate('confluence://pages/{pageId}/children', { list: undefined }),
+    new ResourceTemplate('confluence://pages/{pageId}/children', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'confluence://pages/{pageId}/children',
+            name: 'Confluence Page Children',
+            description: 'List all children for a Confluence page. Replace {pageId} với ID trang.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     async (uri, { pageId }, extra) => {
       let normalizedPageId = '';
       try {
@@ -150,7 +172,18 @@ export function registerPageResources(server: McpServer) {
   // Resource: List of comments for a page (API v2, gộp cả footer và inline)
   server.resource(
     'confluence-page-comments',
-    new ResourceTemplate('confluence://pages/{pageId}/comments', { list: undefined }),
+    new ResourceTemplate('confluence://pages/{pageId}/comments', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'confluence://pages/{pageId}/comments',
+            name: 'Confluence Page Comments',
+            description: 'List comments for a Confluence page. Replace {pageId} with the page ID.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     async (uri, { pageId, limit, cursor }, extra) => {
       let normalizedPageId = Array.isArray(pageId) ? pageId[0] : pageId;
       try {
@@ -198,7 +231,18 @@ export function registerPageResources(server: McpServer) {
   // Resource: Page ancestors (API v2)
   server.resource(
     'confluence-page-ancestors-v2',
-    new ResourceTemplate('confluence://pages/{pageId}/ancestors', { list: undefined }),
+    new ResourceTemplate('confluence://pages/{pageId}/ancestors', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'confluence://pages/{pageId}/ancestors',
+            name: 'Confluence Page Ancestors',
+            description: 'List all ancestors for a Confluence page. Replace {pageId} với ID trang.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     async (uri, { pageId }, extra) => {
       let normalizedPageId = '';
       try {
@@ -243,7 +287,18 @@ export function registerPageResources(server: McpServer) {
   // Resource: Attachments
   server.resource(
     'confluence-page-attachments',
-    new ResourceTemplate('confluence://pages/{pageId}/attachments', { list: undefined }),
+    new ResourceTemplate('confluence://pages/{pageId}/attachments', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'confluence://pages/{pageId}/attachments',
+            name: 'Confluence Page Attachments',
+            description: 'List attachments for a Confluence page. Replace {pageId} with the page ID.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     async (uri, { pageId, limit, cursor }, extra) => {
       let normalizedPageId = '';
       try {
@@ -288,7 +343,18 @@ export function registerPageResources(server: McpServer) {
   // Resource: Versions
   server.resource(
     'confluence-page-versions',
-    new ResourceTemplate('confluence://pages/{pageId}/versions', { list: undefined }),
+    new ResourceTemplate('confluence://pages/{pageId}/versions', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'confluence://pages/{pageId}/versions',
+            name: 'Confluence Page Versions',
+            description: 'List versions for a Confluence page. Replace {pageId} with the page ID.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     async (uri, { pageId, limit, cursor }, extra) => {
       let normalizedPageId = '';
       try {
@@ -333,7 +399,20 @@ export function registerPageResources(server: McpServer) {
   // Resource: Search pages (không dùng cql, chỉ filter chuẩn v2)
   server.resource(
     'confluence-pages-list-filter',
-    new ResourceTemplate('confluence://pages', { list: undefined }),
+    new ResourceTemplate('confluence://pages', {
+      list: async (_extra) => {
+        return {
+          resources: [
+            {
+              uri: 'confluence://pages',
+              name: 'Confluence Pages',
+              description: 'List and search all Confluence pages',
+              mimeType: 'application/json'
+            }
+          ]
+        };
+      }
+    }),
     async (uri, params, extra) => {
       try {
         let config: AtlassianConfig;

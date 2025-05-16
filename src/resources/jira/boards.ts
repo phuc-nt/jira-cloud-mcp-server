@@ -23,7 +23,20 @@ export function registerBoardResources(server: McpServer) {
   registerResource(
     server,
     'jira-boards',
-    new ResourceTemplate('jira://boards', { list: undefined }),
+    new ResourceTemplate('jira://boards', {
+      list: async (_extra) => {
+        return {
+          resources: [
+            {
+              uri: 'jira://boards',
+              name: 'Jira Boards',
+              description: 'List and search all Jira boards',
+              mimeType: 'application/json'
+            }
+          ]
+        };
+      }
+    }),
     'List all Jira boards',
     async (params, { config, uri }) => {
       try {
@@ -50,7 +63,18 @@ export function registerBoardResources(server: McpServer) {
   registerResource(
     server,
     'jira-board-details',
-    new ResourceTemplate('jira://boards/{boardId}', { list: undefined }),
+    new ResourceTemplate('jira://boards/{boardId}', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://boards/{boardId}',
+            name: 'Jira Board Details',
+            description: 'Get details for a specific Jira board by ID. Replace {boardId} with the board ID.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     'Get details of a specific Jira board',
     async (params, { config, uri }) => {
       try {
@@ -77,7 +101,18 @@ export function registerBoardResources(server: McpServer) {
   registerResource(
     server,
     'jira-board-issues',
-    new ResourceTemplate('jira://boards/{boardId}/issues', { list: undefined }),
+    new ResourceTemplate('jira://boards/{boardId}/issues', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://boards/{boardId}/issues',
+            name: 'Jira Board Issues',
+            description: 'List issues in a Jira board. Replace {boardId} with the board ID.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     'List issues in a Jira board',
     async (params, { config, uri }) => {
       try {
@@ -105,7 +140,18 @@ export function registerBoardResources(server: McpServer) {
   registerResource(
     server,
     'jira-board-configuration',
-    new ResourceTemplate('jira://boards/{boardId}/configuration', { list: undefined }),
+    new ResourceTemplate('jira://boards/{boardId}/configuration', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://boards/{boardId}/configuration',
+            name: 'Jira Board Configuration',
+            description: 'Get configuration of a specific Jira board. Replace {boardId} with the board ID.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     'Get configuration of a specific Jira board',
     async (params, { config, uri }) => {
       try {
@@ -154,4 +200,4 @@ export function registerBoardResources(server: McpServer) {
   );
   
   logger.info('Jira board resources registered successfully');
-} 
+}

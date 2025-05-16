@@ -2,7 +2,7 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { Logger } from '../../utils/logger.js';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import { getIssue as getIssueApi, searchIssues as searchIssuesApi } from '../../utils/jira-resource-api.js';
-import { createJsonResource, createStandardResource, extractPagingParams, registerResource } from '../../utils/mcp-resource.js';
+import { createJsonResource, createStandardResource, extractPagingParams, registerResource, getAtlassianConfigFromEnv } from '../../utils/mcp-resource.js';
 import { issueSchema, issuesListSchema, transitionsListSchema, commentsListSchema } from '../../schemas/jira.js';
 
 const logger = Logger.getLogger('JiraResource:Issues');
@@ -183,7 +183,20 @@ export function registerIssueResources(server: McpServer) {
   registerResource(
     server,
     'jira-issues-list',
-    new ResourceTemplate('jira://issues', { list: undefined }),
+    new ResourceTemplate('jira://issues', {
+      list: async (_extra) => {
+        return {
+          resources: [
+            {
+              uri: 'jira://issues',
+              name: 'Jira Issues',
+              description: 'List and search all Jira issues',
+              mimeType: 'application/json'
+            }
+          ]
+        };
+      }
+    }),
     'List of Jira issues with pagination and JQL support',
     async (params, { config, uri }) => {
       try {
@@ -235,8 +248,19 @@ export function registerIssueResources(server: McpServer) {
   registerResource(
     server,
     'jira-issue-details',
-    new ResourceTemplate('jira://issues/{issueKey}', { list: undefined }),
-    'Details of a specific Jira issue',
+    new ResourceTemplate('jira://issues/{issueKey}', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://issues/{issueKey}',
+            name: 'Jira Issue Details',
+            description: 'Get details for a specific Jira issue by key. Replace {issueKey} with the issue key.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
+    'Get details for a specific Jira issue by key. Replace {issueKey} with the issue key.',
     async (params, { config, uri }) => {
       let normalizedIssueKey = '';
       try {
@@ -270,7 +294,18 @@ export function registerIssueResources(server: McpServer) {
   registerResource(
     server,
     'jira-issue-transitions',
-    new ResourceTemplate('jira://issues/{issueKey}/transitions', { list: undefined }),
+    new ResourceTemplate('jira://issues/{issueKey}/transitions', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://issues/{issueKey}/transitions',
+            name: 'Jira Issue Transitions',
+            description: 'List available transitions for a Jira issue. Replace {issueKey} with the issue key.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     'Available transitions for a Jira issue',
     async (params, { config, uri }) => {
       let normalizedIssueKey = '';
@@ -303,7 +338,18 @@ export function registerIssueResources(server: McpServer) {
   registerResource(
     server,
     'jira-issue-comments',
-    new ResourceTemplate('jira://issues/{issueKey}/comments', { list: undefined }),
+    new ResourceTemplate('jira://issues/{issueKey}/comments', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://issues/{issueKey}/comments',
+            name: 'Jira Issue Comments',
+            description: 'List comments for a Jira issue. Replace {issueKey} with the issue key.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     'Comments on a Jira issue with pagination',
     async (params, { config, uri }) => {
       let normalizedIssueKey = '';

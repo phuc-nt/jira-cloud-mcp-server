@@ -45,7 +45,20 @@ export function registerProjectResources(server: McpServer) {
   registerResource(
     server,
     'jira-projects-list',
-    new ResourceTemplate('jira://projects', { list: undefined }),
+    new ResourceTemplate('jira://projects', {
+      list: async (_extra) => {
+        return {
+          resources: [
+            {
+              uri: 'jira://projects',
+              name: 'Jira Projects',
+              description: 'List and search all Jira projects',
+              mimeType: 'application/json'
+            }
+          ]
+        };
+      }
+    }),
     'List of all projects in Jira',
     async (params, { config, uri }) => {
       logger.info('Getting list of Jira projects');
@@ -83,7 +96,18 @@ export function registerProjectResources(server: McpServer) {
   registerResource(
     server,
     'jira-project-details',
-    new ResourceTemplate('jira://projects/{projectKey}', { list: undefined }),
+    new ResourceTemplate('jira://projects/{projectKey}', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://projects/{projectKey}',
+            name: 'Jira Project Details',
+            description: 'Get details for a specific Jira project by key. Replace {projectKey} with the project key.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     'Details of a project in Jira',
     async (params, { config, uri }) => {
       // Get projectKey from URI pattern
@@ -140,7 +164,18 @@ export function registerProjectResources(server: McpServer) {
   registerResource(
     server,
     'jira-project-roles',
-    new ResourceTemplate('jira://projects/{projectKey}/roles', { list: undefined }),
+    new ResourceTemplate('jira://projects/{projectKey}/roles', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://projects/{projectKey}/roles',
+            name: 'Jira Project Roles',
+            description: 'List roles for a Jira project. Replace {projectKey} with the project key.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     'List of roles of a project in Jira',
     async (params, { config, uri }) => {
       let projectKey = '';

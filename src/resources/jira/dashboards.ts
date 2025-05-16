@@ -15,7 +15,20 @@ export function registerDashboardResources(server: McpServer) {
   registerResource(
     server,
     'jira-dashboards',
-    new ResourceTemplate('jira://dashboards', { list: undefined }),
+    new ResourceTemplate('jira://dashboards', {
+      list: async (_extra) => {
+        return {
+          resources: [
+            {
+              uri: 'jira://dashboards',
+              name: 'Jira Dashboards',
+              description: 'List and search all Jira dashboards',
+              mimeType: 'application/json'
+            }
+          ]
+        };
+      }
+    }),
     'List all Jira dashboards',
     async (params, { config, uri }) => {
       const { limit = 50, offset = 0 } = extractPagingParams(params);
@@ -37,7 +50,18 @@ export function registerDashboardResources(server: McpServer) {
   registerResource(
     server,
     'jira-my-dashboards',
-    new ResourceTemplate('jira://dashboards/my', { list: undefined }),
+    new ResourceTemplate('jira://dashboards/my', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://dashboards/my',
+            name: 'Jira My Dashboards',
+            description: 'List dashboards owned by or shared with the current user.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     'List dashboards owned by current user',
     async (params, { config, uri }) => {
       const { limit = 50, offset = 0 } = extractPagingParams(params);
@@ -59,7 +83,18 @@ export function registerDashboardResources(server: McpServer) {
   registerResource(
     server,
     'jira-dashboard-details',
-    new ResourceTemplate('jira://dashboards/{dashboardId}', { list: undefined }),
+    new ResourceTemplate('jira://dashboards/{dashboardId}', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://dashboards/{dashboardId}',
+            name: 'Jira Dashboard Details',
+            description: 'Get details of a specific Jira dashboard.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     'Get details of a Jira dashboard',
     async (params, { config, uri }) => {
       const dashboardId = params.dashboardId || (uri.split('/').pop());
@@ -81,7 +116,18 @@ export function registerDashboardResources(server: McpServer) {
   registerResource(
     server,
     'jira-dashboard-gadgets',
-    new ResourceTemplate('jira://dashboards/{dashboardId}/gadgets', { list: undefined }),
+    new ResourceTemplate('jira://dashboards/{dashboardId}/gadgets', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://dashboards/{dashboardId}/gadgets',
+            name: 'Jira Dashboard Gadgets',
+            description: 'List gadgets of a specific Jira dashboard.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     'List gadgets of a Jira dashboard',
     async (params, { config, uri }) => {
       const dashboardId = params.dashboardId || (uri.split('/')[uri.split('/').length - 2]);
@@ -100,4 +146,4 @@ export function registerDashboardResources(server: McpServer) {
   );
 
   logger.info('Jira dashboard resources registered successfully');
-} 
+}

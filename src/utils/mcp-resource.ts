@@ -136,7 +136,7 @@ interface ResourceExtra {
 }
 
 // Atlassian config from environment variables
-const getAtlassianConfigFromEnv = (): AtlassianConfig => {
+export const getAtlassianConfigFromEnv = (): AtlassianConfig => {
   const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
   const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
   const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -172,7 +172,38 @@ export function registerResource(
 ) {
   logger.info(`Registering resource: ${resourceName} (${resourceUri instanceof Object && 'pattern' in resourceUri ? resourceUri.pattern : resourceUri})`);
   
-  // Register resource with MCP Server according to API definition
+  // Kiểm tra nếu resourceUri là ResourceTemplate có handlers.list đã được định nghĩa
+  // Thì không đăng ký resource trực tiếp để tránh trùng lặp "Unknown" resources
+  if (resourceUri instanceof Object && resourceUri.handlers && typeof resourceUri.handlers.list === 'function') {
+    // Đã có list callback, chỉ đăng ký handler để xử lý data
+    server.resource(resourceName, resourceUri.pattern, 
+      async (uri: string | URL, params: Record<string, any>, extra: ResourceExtra) => {
+        try {
+          let config: AtlassianConfig;
+          if (extra && typeof extra === 'object' && 'context' in extra && extra.context && extra.context.atlassianConfig) {
+            config = extra.context.atlassianConfig;
+          } else {
+            // fallback to env
+            const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
+            const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
+            const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
+            config = {
+              baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
+              email: ATLASSIAN_USER_EMAIL,
+              apiToken: ATLASSIAN_API_TOKEN
+            };
+          }
+          return await handler(params, { config, uri: typeof uri === 'string' ? uri : uri.href });
+        } catch (error) {
+          logger.error(`Error handling resource request for ${resourceName}:`, error);
+          throw error;
+        }
+      }
+    );
+    return;
+  }
+  
+  // Trường hợp thông thường: đăng ký resource với MCP Server
   server.resource(resourceName, resourceUri, 
     // Callback function for ReadResourceCallback
     async (uri: string | URL, params: Record<string, any>, extra: ResourceExtra) => {

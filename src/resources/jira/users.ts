@@ -2,7 +2,7 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { Logger } from '../../utils/logger.js';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import fetch from 'cross-fetch';
-import { createJsonResource, createStandardResource } from '../../utils/mcp-resource.js';
+import { createJsonResource, createStandardResource, registerResource } from '../../utils/mcp-resource.js';
 import { usersListSchema, userSchema } from '../../schemas/jira.js';
 
 const logger = Logger.getLogger('JiraResource:Users');
@@ -94,31 +94,29 @@ export function registerUserResources(server: McpServer) {
   // jira://users/assignable/{projectKey} instead.
 
   // Resource: User details
-  server.resource(
+  registerResource(
+    server,
     'jira-user-details',
-    new ResourceTemplate('jira://users/{accountId}', { list: undefined }),
-    async (uri, { accountId }, extra) => {
+    new ResourceTemplate('jira://users/{accountId}', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://users/{accountId}',
+            name: 'Jira User Details',
+            description: 'Get details for a specific Jira user by accountId. Replace {accountId} with the user accountId.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
+    'Jira user details resource',
+    async (params, { config, uri }) => {
       let normalizedAccountId = '';
       try {
-        // Get config from context or env
-        let config: AtlassianConfig;
-        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
-          config = (extra.context as any).atlassianConfig as AtlassianConfig;
-        } else {
-          // fallback to env
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
-        }
-        if (!accountId) {
+        if (!params.accountId) {
           throw new Error('Missing accountId in URI');
         }
-        normalizedAccountId = Array.isArray(accountId) ? accountId[0] : accountId;
+        normalizedAccountId = Array.isArray(params.accountId) ? params.accountId[0] : params.accountId;
         logger.info(`Getting details for Jira user: ${normalizedAccountId}`);
         const user = await getUser(config, normalizedAccountId);
         // Format returned data
@@ -133,7 +131,7 @@ export function registerUserResources(server: McpServer) {
         };
         // Chuẩn hóa metadata/schema cho resource chi tiết user
         return createStandardResource(
-          uri.href,
+          uri,
           [formattedUser],
           'user',
           userSchema,
@@ -150,24 +148,25 @@ export function registerUserResources(server: McpServer) {
   );
 
   // Resource: List of assignable users for a project
-  server.resource(
+  registerResource(
+    server,
     'jira-users-assignable',
-    new ResourceTemplate('jira://users/assignable/{projectKey}', { list: undefined }),
-    async (uri, { projectKey }, extra) => {
+    new ResourceTemplate('jira://users/assignable/{projectKey}', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://users/assignable/{projectKey}',
+            name: 'Jira Assignable Users',
+            description: 'List assignable users for a Jira project. Replace {projectKey} with the project key.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
+    'Jira assignable users resource',
+    async (params, { config, uri }) => {
       try {
-        let config: AtlassianConfig;
-        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
-          config = (extra.context as any).atlassianConfig as AtlassianConfig;
-        } else {
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
-        }
+        const projectKey = Array.isArray(params.projectKey) ? params.projectKey[0] : params.projectKey;
         if (!projectKey) throw new Error('Missing projectKey');
         const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
         const headers = {
@@ -178,9 +177,8 @@ export function registerUserResources(server: McpServer) {
         };
         let baseUrl = config.baseUrl;
         if (!baseUrl.startsWith('https://')) baseUrl = `https://${baseUrl}`;
-        const projectKeyStr = Array.isArray(projectKey) ? projectKey[0] : projectKey;
-        const url = `${baseUrl}/rest/api/3/user/assignable/search?project=${encodeURIComponent(projectKeyStr)}`;
-        logger.info(`Getting assignable users for project ${projectKeyStr}: ${url}`);
+        const url = `${baseUrl}/rest/api/3/user/assignable/search?project=${encodeURIComponent(projectKey)}`;
+        logger.info(`Getting assignable users for project ${projectKey}: ${url}`);
         const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
         if (!response.ok) {
           const statusCode = response.status;
@@ -198,7 +196,7 @@ export function registerUserResources(server: McpServer) {
         }));
         // Chuẩn hóa metadata/schema
         return createStandardResource(
-          uri.href,
+          uri,
           formattedUsers,
           'users',
           usersListSchema,
@@ -215,24 +213,26 @@ export function registerUserResources(server: McpServer) {
   );
 
   // Resource: List of users by role in a project
-  server.resource(
+  registerResource(
+    server,
     'jira-users-role',
-    new ResourceTemplate('jira://users/role/{projectKey}/{roleId}', { list: undefined }),
-    async (uri, { projectKey, roleId }, extra) => {
+    new ResourceTemplate('jira://users/role/{projectKey}/{roleId}', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://users/role/{projectKey}/{roleId}',
+            name: 'Jira Users by Role',
+            description: 'List users by role in a Jira project. Replace {projectKey} and {roleId} with the project key and role ID.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
+    'Jira users by role resource',
+    async (params, { config, uri }) => {
       try {
-        let config: AtlassianConfig;
-        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
-          config = (extra.context as any).atlassianConfig as AtlassianConfig;
-        } else {
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
-        }
+        const projectKey = Array.isArray(params.projectKey) ? params.projectKey[0] : params.projectKey;
+        const roleId = Array.isArray(params.roleId) ? params.roleId[0] : params.roleId;
         if (!projectKey || !roleId) throw new Error('Missing projectKey or roleId');
         const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
         const headers = {
@@ -243,10 +243,8 @@ export function registerUserResources(server: McpServer) {
         };
         let baseUrl = config.baseUrl;
         if (!baseUrl.startsWith('https://')) baseUrl = `https://${baseUrl}`;
-        const projectKeyStr = Array.isArray(projectKey) ? projectKey[0] : projectKey;
-        const roleIdStr = Array.isArray(roleId) ? roleId[0] : roleId;
-        const url = `${baseUrl}/rest/api/3/project/${encodeURIComponent(projectKeyStr)}/role/${encodeURIComponent(roleIdStr)}`;
-        logger.info(`Getting users in role ${roleIdStr} for project ${projectKeyStr}: ${url}`);
+        const url = `${baseUrl}/rest/api/3/project/${encodeURIComponent(projectKey)}/role/${encodeURIComponent(roleId)}`;
+        logger.info(`Getting users in role for project ${projectKey}, role ${roleId}: ${url}`);
         const response = await fetch(url, { method: 'GET', headers, credentials: 'omit' });
         if (!response.ok) {
           const statusCode = response.status;
@@ -254,13 +252,13 @@ export function registerUserResources(server: McpServer) {
           logger.error(`Jira API error (${statusCode}):`, responseText);
           throw new Error(`Jira API error: ${responseText}`);
         }
-        const data = await response.json();
-        // Get users from actors
-        const users = (data.actors || []).filter((a: any) => a.type === 'atlassian-user');
-        const formattedUsers = users.map((user: any) => ({
-          accountId: user.actorUser?.accountId || user.accountId,
+        const roleData = await response.json();
+        const actors = roleData.actors || [];
+        const formattedUsers = actors.filter((actor: any) => actor.type === 'atlassian-user-role-actor').map((user: any) => ({
+          accountId: user.actorUser?.accountId || '',
           displayName: user.displayName,
-          active: user.active,
+          emailAddress: user.actorUser?.email || '',
+          active: user.actorUser?.active ?? true,
           avatarUrl: user.avatarUrl || user.avatarUrls?.['48x48'] || '',
         }));
         // Chuẩn hóa metadata/schema (dùng array of user object, schema là userSchema[])
@@ -269,7 +267,7 @@ export function registerUserResources(server: McpServer) {
           items: userSchema
         };
         return createStandardResource(
-          uri.href,
+          uri,
           formattedUsers,
           'users',
           usersRoleSchema,

@@ -10,7 +10,18 @@ export const registerGetJiraGadgetsResource = (server: McpServer) => {
   registerResource(
     server,
     'jira-gadgets-list',
-    new ResourceTemplate('jira://gadgets', { list: undefined }),
+    new ResourceTemplate('jira://gadgets', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://gadgets',
+            name: 'Jira Gadgets',
+            description: 'List all available Jira gadgets for dashboard.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     'Lấy danh sách tất cả gadget có sẵn để thêm vào dashboard',
     async (_params, { config, uri }) => {
       try {
@@ -31,4 +42,4 @@ export const registerGetJiraGadgetsResource = (server: McpServer) => {
       }
     }
   );
-}; 
+};

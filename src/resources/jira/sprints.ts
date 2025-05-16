@@ -51,7 +51,18 @@ export function registerSprintResources(server: McpServer) {
   registerResource(
     server,
     'jira-sprint-details',
-    new ResourceTemplate('jira://sprints/{sprintId}', { list: undefined }),
+    new ResourceTemplate('jira://sprints/{sprintId}', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://sprints/{sprintId}',
+            name: 'Jira Sprint Details',
+            description: 'Get details for a specific Jira sprint by ID. Replace {sprintId} with the sprint ID.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     'Get details of a specific Jira sprint',
     async (params, { config, uri }) => {
       try {
@@ -78,7 +89,18 @@ export function registerSprintResources(server: McpServer) {
   registerResource(
     server,
     'jira-sprint-issues',
-    new ResourceTemplate('jira://sprints/{sprintId}/issues', { list: undefined }),
+    new ResourceTemplate('jira://sprints/{sprintId}/issues', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://sprints/{sprintId}/issues',
+            name: 'Jira Sprint Issues',
+            description: 'List issues in a Jira sprint. Replace {sprintId} with the sprint ID.',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
     'List issues in a Jira sprint',
     async (params, { config, uri }) => {
       try {
@@ -101,6 +123,6 @@ export function registerSprintResources(server: McpServer) {
       }
     }
   );
-  
+
   logger.info('Jira sprint resources registered successfully');
-} 
+}
