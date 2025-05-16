@@ -135,8 +135,11 @@ interface ResourceExtra {
   [key: string]: any;
 }
 
-// Atlassian config from environment variables
-export const getAtlassianConfigFromEnv = (): AtlassianConfig => {
+/**
+ * Get Atlassian config from environment variables
+ * @deprecated Use getAtlassianConfigFromEnv in each resource file instead
+ */
+export function getAtlassianConfigFromEnv(): AtlassianConfig {
   const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
   const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
   const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
@@ -153,7 +156,7 @@ export const getAtlassianConfigFromEnv = (): AtlassianConfig => {
     email: ATLASSIAN_USER_EMAIL,
     apiToken: ATLASSIAN_API_TOKEN
   };
-};
+}
 
 /**
  * Register a resource with MCP Server

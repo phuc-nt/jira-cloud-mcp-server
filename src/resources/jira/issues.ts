@@ -2,10 +2,31 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { Logger } from '../../utils/logger.js';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import { getIssue as getIssueApi, searchIssues as searchIssuesApi } from '../../utils/jira-resource-api.js';
-import { createJsonResource, createStandardResource, extractPagingParams, registerResource, getAtlassianConfigFromEnv } from '../../utils/mcp-resource.js';
+import { createStandardResource, extractPagingParams } from '../../utils/mcp-resource.js';
 import { issueSchema, issuesListSchema, transitionsListSchema, commentsListSchema } from '../../schemas/jira.js';
 
 const logger = Logger.getLogger('JiraResource:Issues');
+
+/**
+ * Get Atlassian config from environment variables
+ */
+function getAtlassianConfigFromEnv(): AtlassianConfig {
+  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
+  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
+  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
+
+  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
+    throw new Error('Missing Atlassian credentials in environment variables');
+  }
+
+  return {
+    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
+      ? `https://${ATLASSIAN_SITE_NAME}` 
+      : ATLASSIAN_SITE_NAME,
+    email: ATLASSIAN_USER_EMAIL,
+    apiToken: ATLASSIAN_API_TOKEN
+  };
+}
 
 /**
  * Helper function to get issue details from Jira
@@ -180,8 +201,7 @@ export function registerIssueResources(server: McpServer) {
   logger.info('Registering Jira issue resources...');
 
   // Resource: Issues list (with pagination and JQL support)
-  registerResource(
-    server,
+  server.resource(
     'jira-issues-list',
     new ResourceTemplate('jira://issues', {
       list: async (_extra) => {
@@ -197,45 +217,39 @@ export function registerIssueResources(server: McpServer) {
         };
       }
     }),
-    'List of Jira issues with pagination and JQL support',
-    async (params, { config, uri }) => {
+    async (uri, params, _extra) => {
       try {
-        // Extract pagination parameters
+        const config = getAtlassianConfigFromEnv();
         const { limit, offset } = extractPagingParams(params);
+        const jql = params.jql ? Array.isArray(params.jql) ? params.jql[0] : params.jql : '';
+        const project = params.project ? Array.isArray(params.project) ? params.project[0] : params.project : '';
+        const status = params.status ? Array.isArray(params.status) ? params.status[0] : params.status : '';
         
-        // Extract JQL if provided
-        const jql = params && params.jql 
-          ? (Array.isArray(params.jql) ? params.jql[0] : params.jql)
-          : '';
-          
-        logger.info(`Getting list of Jira issues with limit=${limit}, offset=${offset}, jql=${jql || 'none'}`);
+        // Build JQL query based on parameters
+        let jqlQuery = jql;
+        if (project && !jqlQuery.includes('project=')) {
+          jqlQuery = jqlQuery ? `${jqlQuery} AND project = ${project}` : `project = ${project}`;
+        }
+        if (status && !jqlQuery.includes('status=')) {
+          jqlQuery = jqlQuery ? `${jqlQuery} AND status = "${status}"` : `status = "${status}"`;
+        }
         
-        // Get issues with pagination from Jira API
-        const issuesData = await getIssues(config, offset, limit, jql);
+        logger.info(`Searching Jira issues with JQL: ${jqlQuery || 'All issues'}`);
+        const response = await searchIssuesByJql(config, jqlQuery, offset, limit);
         
-        // Format each issue to standardized format
-        const formattedIssues = (issuesData.issues || []).map((issue: any) => 
-          formatIssueData(issue, config.baseUrl)
-        );
+        // Format issues data
+        const formattedIssues = response.issues.map((issue: any) => formatIssueData(issue, config.baseUrl));
         
-        // Calculate total count
-        const totalCount = issuesData.total || 0;
-        
-        // UI URL for Jira issues (filter view if JQL provided)
-        const uiUrl = jql 
-          ? `${config.baseUrl}/issues/?jql=${encodeURIComponent(jql)}`
-          : `${config.baseUrl}/issues/`;
-          
-        // Return standardized resource with metadata and schema
+        const uriString = typeof uri === 'string' ? uri : uri.href;
         return createStandardResource(
-          uri,
+          uriString,
           formattedIssues,
           'issues',
           issuesListSchema,
-          totalCount,
+          response.total,
           limit,
           offset,
-          uiUrl
+          `${config.baseUrl}/issues/?jql=${encodeURIComponent(jqlQuery)}`
         );
       } catch (error) {
         logger.error('Error getting Jira issues:', error);
@@ -245,36 +259,38 @@ export function registerIssueResources(server: McpServer) {
   );
 
   // Resource: Issue details
-  registerResource(
-    server,
+  server.resource(
     'jira-issue-details',
     new ResourceTemplate('jira://issues/{issueKey}', {
-      list: async (_extra) => ({
-        resources: [
-          {
-            uri: 'jira://issues/{issueKey}',
-            name: 'Jira Issue Details',
-            description: 'Get details for a specific Jira issue by key. Replace {issueKey} with the issue key.',
-            mimeType: 'application/json'
-          }
-        ]
-      })
+      list: async (_extra) => {
+        return {
+          resources: [
+            {
+              uri: 'jira://issues/{issueKey}',
+              name: 'Jira Issue Details',
+              description: 'Get details for a specific Jira issue by key. Replace {issueKey} with the issue key.',
+              mimeType: 'application/json'
+            }
+          ]
+        };
+      }
     }),
-    'Get details for a specific Jira issue by key. Replace {issueKey} with the issue key.',
-    async (params, { config, uri }) => {
-      let normalizedIssueKey = '';
+    async (uri, params, _extra) => {
       try {
-        if (!params || !params.issueKey) {
+        const config = getAtlassianConfigFromEnv();
+        let normalizedIssueKey = Array.isArray(params.issueKey) ? params.issueKey[0] : params.issueKey;
+        
+        if (!normalizedIssueKey) {
           throw new Error('Missing issueKey in URI');
         }
-        normalizedIssueKey = Array.isArray(params.issueKey) ? params.issueKey[0] : params.issueKey;
+        
         logger.info(`Getting details for Jira issue: ${normalizedIssueKey}`);
         const issue = await getIssue(config, normalizedIssueKey);
-        // Format issue data
         const formattedIssue = formatIssueData(issue, config.baseUrl);
-        // Chuẩn hóa metadata/schema
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
         return createStandardResource(
-          uri,
+          uriString,
           [formattedIssue],
           'issue',
           issueSchema,
@@ -284,105 +300,119 @@ export function registerIssueResources(server: McpServer) {
           `${config.baseUrl}/browse/${normalizedIssueKey}`
         );
       } catch (error) {
-        logger.error(`Error getting Jira issue ${normalizedIssueKey}:`, error);
+        logger.error(`Error getting Jira issue details:`, error);
         throw error;
       }
     }
   );
 
-  // Resource: Issue transitions
-  registerResource(
-    server,
+  // Resource: Issue transitions (available actions/status changes)
+  server.resource(
     'jira-issue-transitions',
     new ResourceTemplate('jira://issues/{issueKey}/transitions', {
-      list: async (_extra) => ({
-        resources: [
-          {
-            uri: 'jira://issues/{issueKey}/transitions',
-            name: 'Jira Issue Transitions',
-            description: 'List available transitions for a Jira issue. Replace {issueKey} with the issue key.',
-            mimeType: 'application/json'
-          }
-        ]
-      })
+      list: async (_extra) => {
+        return {
+          resources: [
+            {
+              uri: 'jira://issues/{issueKey}/transitions',
+              name: 'Jira Issue Transitions',
+              description: 'List available transitions for a Jira issue. Replace {issueKey} with the issue key.',
+              mimeType: 'application/json'
+            }
+          ]
+        };
+      }
     }),
-    'Available transitions for a Jira issue',
-    async (params, { config, uri }) => {
-      let normalizedIssueKey = '';
+    async (uri, params, _extra) => {
       try {
-        if (!params || !params.issueKey) {
+        const config = getAtlassianConfigFromEnv();
+        let normalizedIssueKey = Array.isArray(params.issueKey) ? params.issueKey[0] : params.issueKey;
+        
+        if (!normalizedIssueKey) {
           throw new Error('Missing issueKey in URI');
         }
-        normalizedIssueKey = Array.isArray(params.issueKey) ? params.issueKey[0] : params.issueKey;
+        
         logger.info(`Getting transitions for Jira issue: ${normalizedIssueKey}`);
         const transitions = await getIssueTransitions(config, normalizedIssueKey);
-        // Chuẩn hóa metadata/schema
+        
+        // Format transitions data
+        const formattedTransitions = transitions.map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          to: {
+            id: t.to.id,
+            name: t.to.name
+          }
+        }));
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
         return createStandardResource(
-          uri,
-          transitions,
+          uriString,
+          formattedTransitions,
           'transitions',
           transitionsListSchema,
-          transitions.length,
-          transitions.length,
+          formattedTransitions.length,
+          formattedTransitions.length,
           0,
           `${config.baseUrl}/browse/${normalizedIssueKey}`
         );
       } catch (error) {
-        logger.error(`Error getting Jira issue transitions ${normalizedIssueKey}:`, error);
+        logger.error(`Error getting Jira issue transitions:`, error);
         throw error;
       }
     }
   );
 
   // Resource: Issue comments
-  registerResource(
-    server,
+  server.resource(
     'jira-issue-comments',
     new ResourceTemplate('jira://issues/{issueKey}/comments', {
-      list: async (_extra) => ({
-        resources: [
-          {
-            uri: 'jira://issues/{issueKey}/comments',
-            name: 'Jira Issue Comments',
-            description: 'List comments for a Jira issue. Replace {issueKey} with the issue key.',
-            mimeType: 'application/json'
-          }
-        ]
-      })
+      list: async (_extra) => {
+        return {
+          resources: [
+            {
+              uri: 'jira://issues/{issueKey}/comments',
+              name: 'Jira Issue Comments',
+              description: 'List comments for a Jira issue. Replace {issueKey} with the issue key.',
+              mimeType: 'application/json'
+            }
+          ]
+        };
+      }
     }),
-    'Comments on a Jira issue with pagination',
-    async (params, { config, uri }) => {
-      let normalizedIssueKey = '';
+    async (uri, params, _extra) => {
       try {
-        if (!params || !params.issueKey) {
+        const config = getAtlassianConfigFromEnv();
+        let normalizedIssueKey = Array.isArray(params.issueKey) ? params.issueKey[0] : params.issueKey;
+        
+        if (!normalizedIssueKey) {
           throw new Error('Missing issueKey in URI');
         }
-        // Extract pagination parameters
+        
         const { limit, offset } = extractPagingParams(params);
-        normalizedIssueKey = Array.isArray(params.issueKey) ? params.issueKey[0] : params.issueKey;
-        logger.info(`Getting comments for Jira issue ${normalizedIssueKey} with limit=${limit}, offset=${offset}`);
-        const commentsData = await getIssueComments(config, normalizedIssueKey, offset, limit);
-        // Format comments to standardized format
-        const formattedComments = (commentsData.comments || []).map(formatCommentData);
-        // Calculate total count
-        const totalCount = commentsData.total || 0;
-        // UI URL for issue comments
-        const uiUrl = `${config.baseUrl}/browse/${normalizedIssueKey}?focusedCommentId=`;
-        // Chuẩn hóa metadata/schema
+        logger.info(`Getting comments for Jira issue: ${normalizedIssueKey}`);
+        const commentData = await getIssueComments(config, normalizedIssueKey, offset, limit);
+        
+        // Format comments data
+        const formattedComments = (commentData.comments || []).map((c: any) => formatCommentData(c));
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
         return createStandardResource(
-          uri,
+          uriString,
           formattedComments,
           'comments',
           commentsListSchema,
-          totalCount,
+          commentData.total || formattedComments.length,
           limit,
           offset,
-          uiUrl
+          `${config.baseUrl}/browse/${normalizedIssueKey}`
         );
       } catch (error) {
-        logger.error(`Error getting Jira issue comments ${normalizedIssueKey}:`, error);
+        logger.error(`Error getting Jira issue comments:`, error);
         throw error;
       }
     }
   );
+
+  logger.info('Jira issue resources registered successfully');
 }

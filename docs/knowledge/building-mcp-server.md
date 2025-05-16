@@ -1,3 +1,17 @@
+# Building MCP Server for Atlassian Integration
+
+> **Note**: This document has been replaced by a more comprehensive series of guides:
+> 
+> 1. [MCP Overview, Concepts and Architecture](01-mcp-overview-architecture.md)
+> 2. [MCP Tools and Resources Development Guide](02-mcp-tools-resources.md)
+> 3. [MCP Prompting and Sampling Techniques](03-mcp-prompts-sampling.md)
+>
+> Please refer to these updated documents for the most current information.
+
+---
+
+*Content below is maintained for historical reference only*
+
 # Xây dựng MCP Server: Từ Kiến Trúc đến Triển Khai
 
 Tài liệu này hướng dẫn chi tiết việc xây dựng Model Context Protocol (MCP) Server cho Atlassian, từ khái niệm cơ bản đến triển khai thực tế. Bạn sẽ tìm hiểu về kiến trúc, các thành phần chính, và best practice khi xây dựng MCP server để tích hợp AI với hệ sinh thái Atlassian.

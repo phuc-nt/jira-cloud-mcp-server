@@ -2,7 +2,7 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { Logger } from '../../utils/logger.js';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import fetch from 'cross-fetch';
-import { createJsonResource, createStandardResource, registerResource } from '../../utils/mcp-resource.js';
+import { createStandardResource } from '../../utils/mcp-resource.js';
 import { usersListSchema, userSchema } from '../../schemas/jira.js';
 
 const logger = Logger.getLogger('JiraResource:Users');
@@ -81,21 +81,69 @@ async function getUser(config: AtlassianConfig, accountId: string): Promise<any>
 }
 
 /**
+ * Get Atlassian config from environment variables
+ */
+function getAtlassianConfigFromEnv(): AtlassianConfig {
+  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
+  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
+  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
+
+  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
+    throw new Error('Missing Atlassian credentials in environment variables');
+  }
+
+  return {
+    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
+      ? `https://${ATLASSIAN_SITE_NAME}` 
+      : ATLASSIAN_SITE_NAME,
+    email: ATLASSIAN_USER_EMAIL,
+    apiToken: ATLASSIAN_API_TOKEN
+  };
+}
+
+/**
  * Register Jira user-related resources
  * @param server MCP Server instance
  */
 export function registerUserResources(server: McpServer) {
   logger.info('Registering Jira user resources...');
 
-  // NOTE: Resource jira://users has been removed because it requires query parameters 
-  // (username or accountId) to function properly. The Jira API doesn't support
-  // getting all users without at least one filter parameter.
-  // Users should use more specific resources like jira://users/{accountId} or 
-  // jira://users/assignable/{projectKey} instead.
+  // Resource: Root users resource
+  server.resource(
+    'jira-users-root',
+    new ResourceTemplate('jira://users', {
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'jira://users',
+            name: 'Jira Users',
+            description: 'List and search all Jira users (use filters)',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
+    async (uri, _params, _extra) => {
+      const uriString = typeof uri === 'string' ? uri : uri.href;
+      return {
+        contents: [{
+          uri: uriString,
+          mimeType: 'application/json',
+          text: JSON.stringify({
+            message: "Please use a more specific user resource. The Jira API requires parameters to search users.",
+            suggestedResources: [
+              "jira://users/{accountId} - Get details for a specific user",
+              "jira://users/assignable/{projectKey} - Get users who can be assigned in a project",
+              "jira://users/role/{projectKey}/{roleId} - Get users with specific role in a project"
+            ]
+          })
+        }]
+      };
+    }
+  );
 
   // Resource: User details
-  registerResource(
-    server,
+  server.resource(
     'jira-user-details',
     new ResourceTemplate('jira://users/{accountId}', {
       list: async (_extra) => ({
@@ -109,10 +157,10 @@ export function registerUserResources(server: McpServer) {
         ]
       })
     }),
-    'Jira user details resource',
-    async (params, { config, uri }) => {
+    async (uri, params, _extra) => {
       let normalizedAccountId = '';
       try {
+        const config = getAtlassianConfigFromEnv();
         if (!params.accountId) {
           throw new Error('Missing accountId in URI');
         }
@@ -129,9 +177,11 @@ export function registerUserResources(server: McpServer) {
           timeZone: user.timeZone,
           locale: user.locale
         };
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
         // Chuẩn hóa metadata/schema cho resource chi tiết user
         return createStandardResource(
-          uri,
+          uriString,
           [formattedUser],
           'user',
           userSchema,
@@ -148,8 +198,7 @@ export function registerUserResources(server: McpServer) {
   );
 
   // Resource: List of assignable users for a project
-  registerResource(
-    server,
+  server.resource(
     'jira-users-assignable',
     new ResourceTemplate('jira://users/assignable/{projectKey}', {
       list: async (_extra) => ({
@@ -163,9 +212,9 @@ export function registerUserResources(server: McpServer) {
         ]
       })
     }),
-    'Jira assignable users resource',
-    async (params, { config, uri }) => {
+    async (uri, params, _extra) => {
       try {
+        const config = getAtlassianConfigFromEnv();
         const projectKey = Array.isArray(params.projectKey) ? params.projectKey[0] : params.projectKey;
         if (!projectKey) throw new Error('Missing projectKey');
         const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
@@ -194,9 +243,11 @@ export function registerUserResources(server: McpServer) {
           active: user.active,
           avatarUrl: user.avatarUrls?.['48x48'] || '',
         }));
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
         // Chuẩn hóa metadata/schema
         return createStandardResource(
-          uri,
+          uriString,
           formattedUsers,
           'users',
           usersListSchema,
@@ -213,8 +264,7 @@ export function registerUserResources(server: McpServer) {
   );
 
   // Resource: List of users by role in a project
-  registerResource(
-    server,
+  server.resource(
     'jira-users-role',
     new ResourceTemplate('jira://users/role/{projectKey}/{roleId}', {
       list: async (_extra) => ({
@@ -228,9 +278,9 @@ export function registerUserResources(server: McpServer) {
         ]
       })
     }),
-    'Jira users by role resource',
-    async (params, { config, uri }) => {
+    async (uri, params, _extra) => {
       try {
+        const config = getAtlassianConfigFromEnv();
         const projectKey = Array.isArray(params.projectKey) ? params.projectKey[0] : params.projectKey;
         const roleId = Array.isArray(params.roleId) ? params.roleId[0] : params.roleId;
         if (!projectKey || !roleId) throw new Error('Missing projectKey or roleId');
@@ -253,33 +303,32 @@ export function registerUserResources(server: McpServer) {
           throw new Error(`Jira API error: ${responseText}`);
         }
         const roleData = await response.json();
-        const actors = roleData.actors || [];
-        const formattedUsers = actors.filter((actor: any) => actor.type === 'atlassian-user-role-actor').map((user: any) => ({
-          accountId: user.actorUser?.accountId || '',
-          displayName: user.displayName,
-          emailAddress: user.actorUser?.email || '',
-          active: user.actorUser?.active ?? true,
-          avatarUrl: user.avatarUrl || user.avatarUrls?.['48x48'] || '',
-        }));
-        // Chuẩn hóa metadata/schema (dùng array of user object, schema là userSchema[])
-        const usersRoleSchema = {
-          type: "array",
-          items: userSchema
-        };
+        const formattedUsers = (roleData.actors || [])
+          .filter((actor: any) => actor.actorUser && actor.actorUser.accountId)
+          .map((actor: any) => ({
+            accountId: actor.actorUser.accountId,
+            displayName: actor.displayName,
+            type: 'atlassian-user-role-actor',
+            roleId: roleId
+          }));
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
         return createStandardResource(
-          uri,
+          uriString,
           formattedUsers,
           'users',
-          usersRoleSchema,
+          usersListSchema,
           formattedUsers.length,
           formattedUsers.length,
           0,
-          `${config.baseUrl}/jira/people`
+          `${config.baseUrl}/jira/projects/${projectKey}/people`
         );
       } catch (error) {
-        logger.error(`Error getting users in role for project:`, error);
+        logger.error(`Error getting users by role:`, error);
         throw error;
       }
     }
   );
+
+  logger.info('Jira user resources registered successfully');
 }

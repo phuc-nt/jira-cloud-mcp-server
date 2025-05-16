@@ -9,10 +9,31 @@ import { filterListSchema, filterSchema } from '../../schemas/jira.js';
 import { createStandardMetadata } from '../../schemas/common.js';
 import { getFilters, getFilterById, getMyFilters } from '../../utils/jira-resource-api.js';
 import { Logger } from '../../utils/logger.js';
-import { createStandardResource, extractPagingParams, getAtlassianConfigFromEnv } from '../../utils/mcp-resource.js';
+import { createStandardResource, extractPagingParams } from '../../utils/mcp-resource.js';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 
 const logger = Logger.getLogger('JiraFilterResources');
+
+/**
+ * Get Atlassian config from environment variables
+ */
+function getAtlassianConfigFromEnv(): AtlassianConfig {
+  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
+  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
+  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
+
+  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
+    throw new Error('Missing Atlassian credentials in environment variables');
+  }
+
+  return {
+    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
+      ? `https://${ATLASSIAN_SITE_NAME}` 
+      : ATLASSIAN_SITE_NAME,
+    email: ATLASSIAN_USER_EMAIL,
+    apiToken: ATLASSIAN_API_TOKEN
+  };
+}
 
 /**
  * Register all Jira filter resources with MCP Server
@@ -67,15 +88,10 @@ export function registerFilterResources(server: McpServer) {
   
   // Đăng ký template kèm handler thực thi - chỉ đăng ký một lần mỗi URI
   server.resource('jira-filters-list', filtersTemplate, 
-    async (uri: string | URL, params: Record<string, any>, extra: any) => {
+    async (uri: string | URL, params: Record<string, any>, _extra: any) => {
       try {
-        // Get config from context or env
-        let config: AtlassianConfig;
-        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && extra.context.atlassianConfig) {
-          config = extra.context.atlassianConfig;
-        } else {
-          config = getAtlassianConfigFromEnv();
-        }
+        // Get config from environment
+        const config = getAtlassianConfigFromEnv();
         
         const { limit, offset } = extractPagingParams(params);
         const response = await getFilters(config, offset, limit);
@@ -97,15 +113,10 @@ export function registerFilterResources(server: McpServer) {
   );
 
   server.resource('jira-filter-details', filterDetailsTemplate, 
-    async (uri: string | URL, params: Record<string, any>, extra: any) => {
+    async (uri: string | URL, params: Record<string, any>, _extra: any) => {
       try {
-        // Get config from context or env
-        let config: AtlassianConfig;
-        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && extra.context.atlassianConfig) {
-          config = extra.context.atlassianConfig;
-        } else {
-          config = getAtlassianConfigFromEnv();
-        }
+        // Get config from environment
+        const config = getAtlassianConfigFromEnv();
         
         const filterId = Array.isArray(params.filterId) ? params.filterId[0] : params.filterId;
         const filter = await getFilterById(config, filterId);
@@ -127,15 +138,10 @@ export function registerFilterResources(server: McpServer) {
   );
 
   server.resource('jira-my-filters', myFiltersTemplate, 
-    async (uri: string | URL, _params: Record<string, any>, extra: any) => {
+    async (uri: string | URL, _params: Record<string, any>, _extra: any) => {
       try {
-        // Get config from context or env
-        let config: AtlassianConfig;
-        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && extra.context.atlassianConfig) {
-          config = extra.context.atlassianConfig;
-        } else {
-          config = getAtlassianConfigFromEnv();
-        }
+        // Get config from environment
+        const config = getAtlassianConfigFromEnv();
         
         const filters = await getMyFilters(config);
         return createStandardResource(

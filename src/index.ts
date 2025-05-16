@@ -33,7 +33,7 @@ const atlassianConfig: AtlassianConfig = {
 
 logger.info('Initializing MCP Atlassian Server...');
 
-// Keep track of all registered resources with name and pattern
+// Track registered resources for logging
 const registeredResources: Array<{ name: string; pattern: string }> = [];
 
 // Initialize MCP server with capabilities
@@ -46,17 +46,14 @@ const server = new McpServer({
   }
 });
 
-// Create a proxy to track registered resources
+// Create a context-aware server proxy for resources
 const serverProxy = new Proxy(server, {
   get(target, prop) {
     if (prop === 'resource') {
-      // Override the resource method to track registrations
+      // Override the resource method to inject context
       return (name: string, pattern: any, handler: any) => {
-        // Debug log to see exactly what we're receiving
-        logger.debug(`Registering resource with pattern type: ${typeof pattern}, value: ${JSON.stringify(pattern)}`);
-        
         try {
-          // Extract pattern based on type
+          // Extract pattern for logging
           let patternStr = 'unknown-pattern';
           
           if (typeof pattern === 'string') {
@@ -64,21 +61,35 @@ const serverProxy = new Proxy(server, {
           } else if (pattern && typeof pattern === 'object') {
             if ('pattern' in pattern) {
               patternStr = pattern.pattern;
-              logger.debug(`Found pattern in object: ${patternStr}`);
-            } else {
-              // Log all properties to help identify the structure
-              logger.debug(`Object properties: ${Object.keys(pattern).join(', ')}`);
             }
           }
           
-          // Store both name and pattern
+          // Track registered resources for logging purposes only
           registeredResources.push({ name, pattern: patternStr });
           
-          // Call the original method
-          return target.resource(name, pattern, handler);
+          // Create a context-aware handler wrapper
+          const contextAwareHandler = async (uri: any, params: any, extra: any) => {
+            try {
+              // Ensure extra has context
+              if (!extra) extra = {};
+              if (!extra.context) extra.context = {};
+              
+              // Add Atlassian config to context
+              extra.context.atlassianConfig = atlassianConfig;
+              
+              // Call the original handler with the enriched context
+              return await handler(uri, params, extra);
+            } catch (error) {
+              logger.error(`Error in resource handler for ${name}:`, error);
+              throw error;
+            }
+          };
+          
+          // Register the resource with the context-aware handler
+          return target.resource(name, pattern, contextAwareHandler);
         } catch (error) {
           logger.error(`Error registering resource: ${error}`);
-          return target.resource(name, pattern, handler);
+          throw error;
         }
       };
     }
@@ -89,12 +100,12 @@ const serverProxy = new Proxy(server, {
 // Log config info for debugging
 logger.info(`Atlassian config available: ${JSON.stringify(atlassianConfig, null, 2)}`);
 
-// Tạo server proxy cho việc đăng ký tool
+// Tool server proxy for consistent handling
 const toolServerProxy: any = {
   tool: (name: string, description: string, schema: any, handler: any) => {
-    // Đăng ký tool với handler được wrap để xử lý context
+    // Register tool with a context-aware handler wrapper
     server.tool(name, description, schema, async (params: any, context: any) => {
-      // Thêm config vào context
+      // Add Atlassian config to context
       context.atlassianConfig = atlassianConfig;
       
       logger.debug(`Tool ${name} called with context keys: [${Object.keys(context)}]`);
@@ -112,7 +123,7 @@ const toolServerProxy: any = {
   }
 };
 
-// Đăng ký tất cả tools thay vì đăng ký từng tool riêng lẻ
+// Register all tools
 logger.info('Registering all MCP Tools...');
 registerAllTools(toolServerProxy);
 
@@ -127,6 +138,7 @@ async function startServer() {
     const stdioTransport = new StdioServerTransport();
     await server.connect(stdioTransport);
     logger.info('MCP Atlassian Server started with STDIO transport');
+    
     // Print startup info
     logger.info(`MCP Server Name: ${process.env.MCP_SERVER_NAME || 'phuc-nt/mcp-atlassian-server'}`);
     logger.info(`MCP Server Version: ${process.env.MCP_SERVER_VERSION || '1.0.0'}`);
@@ -148,15 +160,22 @@ async function startServer() {
     if (registeredResources.length === 0) {
       logger.info('No resources registered');
     } else {
-      // Group by name to improve readability
-      const uniquePatterns = new Set<string>();
+      // Group by pattern and name to improve readability
+      const resourcesByPattern = new Map<string, string[]>();
+      
       registeredResources.forEach(res => {
-        uniquePatterns.add(res.pattern);
+        if (!resourcesByPattern.has(res.pattern)) {
+          resourcesByPattern.set(res.pattern, []);
+        }
+        resourcesByPattern.get(res.pattern)!.push(res.name);
       });
       
-      Array.from(uniquePatterns).sort().forEach(pattern => {
-        logger.info(`- ${pattern}`);
-      });
+      // Log each pattern with its resource names
+      Array.from(resourcesByPattern.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .forEach(([pattern, names]) => {
+          logger.info(`- ${pattern} (${names.join(', ')})`);
+        });
     }
   } catch (error) {
     logger.error('Failed to start MCP Server:', error);

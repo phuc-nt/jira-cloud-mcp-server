@@ -2,13 +2,34 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { Logger } from '../../utils/logger.js';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import fetch from 'cross-fetch';
-import { createJsonResource, createStandardResource } from '../../utils/mcp-resource.js';
+import { createStandardResource } from '../../utils/mcp-resource.js';
 import { pagesListSchema, pageSchema, commentsListSchema } from '../../schemas/confluence.js';
 import { getConfluencePagesV2, getConfluencePageV2, getConfluencePageBodyV2, getConfluencePageAncestorsV2, getConfluencePageChildrenV2, getConfluencePageLabelsV2, getConfluencePageAttachmentsV2, getConfluencePageVersionsV2, getConfluencePagesWithFilters } from '../../utils/confluence-resource-api.js';
 import { getConfluencePageFooterCommentsV2, getConfluencePageInlineCommentsV2 } from '../../utils/confluence-resource-api.js';
 import { callConfluenceApi } from '../../utils/atlassian-api-base.js';
 
 const logger = Logger.getLogger('ConfluenceResource:Pages');
+
+/**
+ * Get Atlassian config from environment variables
+ */
+function getAtlassianConfigFromEnv(): AtlassianConfig {
+  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
+  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
+  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
+
+  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
+    throw new Error('Missing Atlassian credentials in environment variables');
+  }
+
+  return {
+    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
+      ? `https://${ATLASSIAN_SITE_NAME}` 
+      : ATLASSIAN_SITE_NAME,
+    email: ATLASSIAN_USER_EMAIL,
+    apiToken: ATLASSIAN_API_TOKEN
+  };
+}
 
 /**
  * Helper function to get the list of pages from Confluence API v2 (cursor-based)
@@ -67,14 +88,7 @@ export function registerPageResources(server: McpServer) {
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
+          config = getAtlassianConfigFromEnv();
         }
         if (!normalizedPageId) {
           throw new Error('Missing pageId in URI');
@@ -92,10 +106,18 @@ export function registerPageResources(server: McpServer) {
           body: (body && typeof body === 'object' && 'value' in body) ? body.value : '',
           bodyType: (body && typeof body === 'object' && 'representation' in body) ? body.representation : 'storage',
         };
-        return createJsonResource(uri.href, {
-          page: formattedPage,
-          metadata: { self: uri.href }
-        });
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
+        return {
+          contents: [{
+            uri: uriString,
+            mimeType: 'application/json',
+            text: JSON.stringify({
+              page: formattedPage,
+              metadata: { self: uriString }
+            })
+          }]
+        };
       } catch (error) {
         logger.error(`Error getting Confluence page details (v2) for ${normalizedPageId}:`, error);
         throw error;
@@ -191,28 +213,55 @@ export function registerPageResources(server: McpServer) {
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
+          config = getAtlassianConfigFromEnv();
         }
+        
         if (!normalizedPageId) {
           throw new Error('Missing pageId in URI');
         }
-        const safeCursor = Array.isArray(cursor) ? cursor[0] : cursor;
-        const safeLimit = Array.isArray(limit) ? parseInt(limit[0], 10) : (limit ? parseInt(limit, 10) : undefined);
-        const params: { limit?: number, cursor?: string } = { limit: safeLimit || 25 };
-        if (safeCursor) params.cursor = safeCursor;
-        // Gọi cả hai endpoint
-        const footerComments = await getConfluencePageFooterCommentsV2(config, normalizedPageId, params);
-        const inlineComments = await getConfluencePageInlineCommentsV2(config, normalizedPageId, params);
-        const allComments = [...(footerComments.results || []), ...(inlineComments.results || [])];
+        logger.info(`Getting comments for Confluence page (v2): ${normalizedPageId}`);
+
+        // Get both footer and inline comments
+        const footerComments = await getConfluencePageFooterCommentsV2(config, normalizedPageId);
+        const inlineComments = await getConfluencePageInlineCommentsV2(config, normalizedPageId);
+
+        // Format the comments to a simpler structure
+        const formattedFooterComments = (footerComments.results || []).map((comment: any) => ({
+          id: comment.id,
+          parentId: comment.parentCommentId,
+          content: comment.body && comment.body.rendered ? comment.body.rendered : '',
+          contentRaw: comment.body && comment.body.storage ? comment.body.storage.value : '',
+          type: 'footer',
+          author: comment.authorId ? {
+            accountId: comment.authorId,
+            displayName: comment.authorName || 'Unknown'
+          } : null,
+          created: comment.created,
+          updated: comment.lastModified,
+          url: `${config.baseUrl}/wiki/pages/${normalizedPageId}?focusedCommentId=${comment.id}`
+        }));
+
+        const formattedInlineComments = (inlineComments.results || []).map((comment: any) => ({
+          id: comment.id,
+          parentId: comment.parentCommentId,
+          content: comment.body && comment.body.rendered ? comment.body.rendered : '',
+          contentRaw: comment.body && comment.body.storage ? comment.body.storage.value : '',
+          type: 'inline',
+          author: comment.authorId ? {
+            accountId: comment.authorId,
+            displayName: comment.authorName || 'Unknown'
+          } : null,
+          created: comment.created,
+          updated: comment.lastModified,
+          url: `${config.baseUrl}/wiki/pages/${normalizedPageId}?focusedCommentId=${comment.id}`
+        }));
+
+        // Combine both types of comments
+        const allComments = [...formattedFooterComments, ...formattedInlineComments];
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
         return createStandardResource(
-          uri.href,
+          uriString,
           allComments,
           'comments',
           commentsListSchema,
@@ -228,57 +277,62 @@ export function registerPageResources(server: McpServer) {
     }
   );
 
-  // Resource: Page ancestors (API v2)
+  // Resource: Page ancestors (API v2, path hierarchy)
   server.resource(
-    'confluence-page-ancestors-v2',
+    'confluence-page-ancestors',
     new ResourceTemplate('confluence://pages/{pageId}/ancestors', {
       list: async (_extra) => ({
         resources: [
           {
             uri: 'confluence://pages/{pageId}/ancestors',
             name: 'Confluence Page Ancestors',
-            description: 'List all ancestors for a Confluence page. Replace {pageId} với ID trang.',
+            description: 'List all ancestors for a Confluence page. Replace {pageId} with the page ID.',
             mimeType: 'application/json'
           }
         ]
       })
     }),
     async (uri, { pageId }, extra) => {
-      let normalizedPageId = '';
+      let normalizedPageId = Array.isArray(pageId) ? pageId[0] : pageId;
       try {
         let config: AtlassianConfig;
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
+          config = getAtlassianConfigFromEnv();
         }
-        if (!pageId) {
+        
+        if (!normalizedPageId) {
           throw new Error('Missing pageId in URI');
         }
-        normalizedPageId = Array.isArray(pageId) ? pageId[0] : pageId;
+        
         logger.info(`Getting ancestors for Confluence page (v2): ${normalizedPageId}`);
         const data = await getPageAncestorsV2(config, normalizedPageId);
-        // Mapping schema mới
-        const ancestors = data.results || [];
-        const metadata = {
-          total: ancestors.length,
-          limit: ancestors.length,
-          hasMore: false,
-          links: { self: uri.href }
+        
+        // Format the ancestors
+        const formattedAncestors = data.map((ancestor: any) => ({
+          id: ancestor.id,
+          title: ancestor.title,
+          url: `${config.baseUrl}/wiki/pages/${ancestor.id}`
+        }));
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
+        return {
+          contents: [{
+            uri: uriString,
+            mimeType: 'application/json',
+            text: JSON.stringify({
+              ancestors: formattedAncestors,
+              metadata: {
+                total: formattedAncestors.length,
+                self: uriString,
+                pageId: normalizedPageId
+              }
+            })
+          }]
         };
-        return createJsonResource(uri.href, {
-          ancestors,
-          metadata
-        });
       } catch (error) {
-        logger.error(`Error getting Confluence page ancestors (v2) for ${normalizedPageId}:`, error);
+        logger.error(`Error getting Confluence page ancestors for ${normalizedPageId}:`, error);
         throw error;
       }
     }
@@ -306,14 +360,7 @@ export function registerPageResources(server: McpServer) {
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
+          config = getAtlassianConfigFromEnv();
         }
         if (!pageId) {
           throw new Error('Missing pageId in URI');
@@ -323,8 +370,10 @@ export function registerPageResources(server: McpServer) {
         const safeLimit = Array.isArray(limit) ? parseInt(limit[0], 10) : (limit ? parseInt(limit, 10) : undefined);
         logger.info(`Getting attachments for Confluence page (v2): ${normalizedPageId}`);
         const data = await getConfluencePageAttachmentsV2(config, normalizedPageId, safeCursor, safeLimit || 25);
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
         return createStandardResource(
-          uri.href,
+          uriString,
           data.results || [],
           'attachments',
           undefined,
@@ -362,14 +411,7 @@ export function registerPageResources(server: McpServer) {
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
+          config = getAtlassianConfigFromEnv();
         }
         if (!pageId) {
           throw new Error('Missing pageId in URI');
@@ -379,8 +421,10 @@ export function registerPageResources(server: McpServer) {
         const safeLimit = Array.isArray(limit) ? parseInt(limit[0], 10) : (limit ? parseInt(limit, 10) : undefined);
         logger.info(`Getting versions for Confluence page (v2): ${normalizedPageId}`);
         const data = await getConfluencePageVersionsV2(config, normalizedPageId, safeCursor, safeLimit || 25);
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
         return createStandardResource(
-          uri.href,
+          uriString,
           data.results || [],
           'versions',
           undefined,
@@ -419,14 +463,7 @@ export function registerPageResources(server: McpServer) {
         if (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig) {
           config = (extra.context as any).atlassianConfig as AtlassianConfig;
         } else {
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
+          config = getAtlassianConfigFromEnv();
         }
         logger.info('Raw params from client:', params);
         // Mapping filter đúng chuẩn v2, hỗ trợ các biến thể tên phổ biến
@@ -464,14 +501,24 @@ export function registerPageResources(server: McpServer) {
             next: data._links && data._links.next ? `${uri.href}?cursor=${encodeURIComponent(new URL(data._links.next, 'http://dummy').searchParams.get('cursor') || '')}&limit=${filterParams['limit'] || 25}` : undefined
           }
         };
-        return createJsonResource(uri.href, {
-          pages: data.results,
-          metadata
-        });
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
+        return {
+          contents: [{
+            uri: uriString,
+            mimeType: 'application/json',
+            text: JSON.stringify({
+              pages: data.results,
+              metadata
+            })
+          }]
+        };
       } catch (error) {
         logger.error(`Error getting Confluence pages list (v2, filter):`, error);
         throw error;
       }
     }
   );
+  
+  logger.info('Confluence page resources registered successfully');
 }

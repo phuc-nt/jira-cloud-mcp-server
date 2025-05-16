@@ -9,9 +9,29 @@ import { labelListSchema, attachmentListSchema, versionListSchema } from '../../
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import { getConfluencePageLabelsV2, getConfluencePageAttachmentsV2, getConfluencePageVersionsV2 } from '../../utils/confluence-resource-api.js';
 import { Logger } from '../../utils/logger.js';
-import { createStandardResource, extractPagingParams, registerResource } from '../../utils/mcp-resource.js';
 
 const logger = Logger.getLogger('ConfluenceContentMetadataResources');
+
+/**
+ * Get Atlassian config from environment variables
+ */
+function getAtlassianConfigFromEnv(): AtlassianConfig {
+  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
+  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
+  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
+
+  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
+    throw new Error('Missing Atlassian credentials in environment variables');
+  }
+
+  return {
+    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
+      ? `https://${ATLASSIAN_SITE_NAME}` 
+      : ATLASSIAN_SITE_NAME,
+    email: ATLASSIAN_USER_EMAIL,
+    apiToken: ATLASSIAN_API_TOKEN
+  };
+}
 
 /**
  * Register all Confluence content metadata resources with MCP Server
@@ -21,8 +41,7 @@ export function registerContentMetadataResources(server: McpServer) {
   logger.info('Registering Confluence content metadata resources...');
 
   // Resource: Page labels
-  registerResource(
-    server,
+  server.resource(
     'confluence-page-labels',
     new ResourceTemplate('confluence://pages/{pageId}/labels', {
       list: async (_extra) => ({
@@ -30,19 +49,43 @@ export function registerContentMetadataResources(server: McpServer) {
           {
             uri: 'confluence://pages/{pageId}/labels',
             name: 'Confluence Page Labels',
-            description: 'List all labels for a Confluence page. Replace {pageId} với ID trang.',
+            description: 'List all labels for a Confluence page. Replace {pageId} with the page ID.',
             mimeType: 'application/json'
           }
         ]
       })
     }),
-    'List all labels for a Confluence page',
-    async (params, { config, uri }) => {
-      // ...existing code for fetching labels...
+    async (uri, params, _extra) => {
+      // Get config from environment
+      const config = getAtlassianConfigFromEnv();
+      let normalizedPageId = Array.isArray(params.pageId) ? params.pageId[0] : params.pageId;
+      
+      if (!normalizedPageId) throw new Error('Missing pageId in URI');
+      
+      logger.info(`Getting labels for Confluence page (v2): ${normalizedPageId}`);
+      
+      const data = await getPageLabelsV2(config, normalizedPageId);
+      const formattedLabels = (data.results || []).map((label: any) => ({
+        id: label.id,
+        name: label.name,
+        prefix: label.prefix
+      }));
+      
+      const uriString = typeof uri === 'string' ? uri : uri.href;
+      
+      return {
+        contents: [{
+          uri: uriString,
+          mimeType: 'application/json',
+          text: JSON.stringify({
+            labels: formattedLabels,
+            total: data.size || formattedLabels.length,
+            message: `Found ${formattedLabels.length} label(s) for page ${normalizedPageId}`
+          })
+        }]
+      };
     }
   );
-
-  // ...KHÔNG đăng ký lại resource attachments/versions ở đây để tránh trùng lặp...
 
   logger.info('Confluence content metadata resources registered successfully');
 }

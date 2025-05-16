@@ -30,9 +30,9 @@ Tài liệu này cung cấp thông tin chi tiết về implementation, API endpo
 | updateIssue | Cập nhật issue | issueKey, summary, ... | `/rest/api/3/issue/{issueIdOrKey}` | Status của update |
 | transitionIssue | Chuyển trạng thái issue | issueKey, transitionId | `/rest/api/3/issue/{issueIdOrKey}/transitions` | Status của transition |
 | assignIssue | Gán issue cho user | issueKey, accountId | `/rest/api/3/issue/{issueIdOrKey}/assignee` | Status của assignment |
-| addIssuesToBacklog | Đưa issue vào backlog | boardId, issueKeys | `/rest/agile/1.0/board/{boardId}/issue` | Status của thêm |
+| addIssuesToBacklog | Đưa issue vào backlog | boardId, issueKeys | `/rest/agile/1.0/backlog/issue` hoặc `/rest/agile/1.0/backlog/{boardId}/issue` | Status của thêm |
 | addIssueToSprint | Đưa issue vào sprint | sprintId, issueKeys | `/rest/agile/1.0/sprint/{sprintId}/issue` | Status của thêm |
-| rankBacklogIssues | Sắp xếp thứ tự issue trong backlog | boardId, issueKeys, rankBeforeIssue, rankAfterIssue | `/rest/agile/1.0/board/{boardId}/issue/{issueKey}/rank` | Status của sắp xếp |
+| rankBacklogIssues | Sắp xếp thứ tự issue trong backlog | boardId, issueKeys, rankBeforeIssue, rankAfterIssue | `/rest/agile/1.0/backlog/rank` | Status của sắp xếp |
 
 ### 2. Project
 
@@ -54,17 +54,12 @@ Tài liệu này cung cấp thông tin chi tiết về implementation, API endpo
 | Board Configuration | `jira://boards/{boardId}/configuration` | Cấu hình board | `/rest/agile/1.0/board/{boardId}/configuration` | Board config object |
 | Board Sprints | `jira://boards/{boardId}/sprints` | Danh sách sprint trên board | `/rest/agile/1.0/board/{boardId}/sprint` | Array của Sprint objects |
 
-#### Tool
-| Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
-|------|-------|---------------|-----------------------|----------------|
-| createSprint | Tạo sprint mới trên board | boardId, name, ... | `/rest/agile/1.0/sprint` | Sprint ID mới |
-| rankBacklogIssues | Sắp xếp issue trên board | boardId, issueKeys, ... | `/rest/agile/1.0/board/{boardId}/issue/{issueKey}/rank` | Status của sắp xếp |
-
 ### 4. Sprint
 
 #### Resource
 | Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
 |----------|-----|-------|-----------------------|----------------|
+| Sprints | `jira://sprints` | Danh sách tất cả sprints | `/rest/agile/1.0/sprint` | Array của Sprint objects |
 | Sprint Details | `jira://sprints/{sprintId}` | Chi tiết sprint | `/rest/agile/1.0/sprint/{sprintId}` | Single Sprint object |
 | Sprint Issues | `jira://sprints/{sprintId}/issues` | Danh sách issue trong sprint | `/rest/agile/1.0/sprint/{sprintId}/issue` | Array của Issue objects |
 
@@ -116,6 +111,7 @@ Tài liệu này cung cấp thông tin chi tiết về implementation, API endpo
 #### Resource
 | Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
 |----------|-----|-------|-----------------------|----------------|
+| Users | `jira://users` | Danh sách tất cả user | `/rest/api/3/users/search` | Array của User objects |
 | User Details | `jira://users/{accountId}` | Thông tin user | `/rest/api/3/user?accountId=...` | Single User object |
 | Assignable Users | `jira://users/assignable/{projectKey}` | User có thể gán cho project | `/rest/api/3/user/assignable/search?project=...` | Array của User objects |
 | Users by Role | `jira://users/role/{projectKey}/{roleId}` | User theo role trong project | `/rest/api/3/project/{projectKey}/role/{roleId}` | Array của User objects |
@@ -138,12 +134,13 @@ Tài liệu này cung cấp thông tin chi tiết về implementation, API endpo
 #### Resource
 | Resource | URI | Mô tả | Atlassian API Endpoint | Dữ liệu trả về |
 |----------|-----|-------|-----------------------|----------------|
+| Pages | `confluence://pages` | Tìm kiếm page theo filter | `/wiki/api/v2/pages` | Array của Page objects (v2) |
 | Page Details | `confluence://pages/{pageId}` | Chi tiết page (v2) | `/wiki/api/v2/pages/{pageId}` + `/wiki/api/v2/pages/{pageId}/body` | Single Page object (v2) |
 | Page Children | `confluence://pages/{pageId}/children` | Danh sách page con | `/wiki/api/v2/pages/{pageId}/children` | Array của Page objects (v2) |
 | Page Ancestors | `confluence://pages/{pageId}/ancestors` | Danh sách ancestor của page | `/wiki/api/v2/pages/{pageId}/ancestors` | Array của Page objects (v2) |
 | Page Attachments | `confluence://pages/{pageId}/attachments` | Danh sách file đính kèm | `/wiki/api/v2/pages/{pageId}/attachments` | Array của Attachment objects (v2) |
 | Page Versions | `confluence://pages/{pageId}/versions` | Lịch sử version của page | `/wiki/api/v2/pages/{pageId}/versions` | Array của Version objects (v2) |
-| Pages | `confluence://pages` | Tìm kiếm page theo filter | `/wiki/api/v2/pages` | Array của Page objects (v2) |
+| Page Labels | `confluence://pages/{pageId}/labels` | Danh sách nhãn của page | `/wiki/api/v2/pages/{pageId}/labels` | Array của Label objects (v2) |
 
 #### Tool
 | Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
@@ -189,56 +186,234 @@ Khi muốn thêm mới **Resource** (truy vấn dữ liệu) hoặc **Tool** (th
     - `src/tools/confluence/` (cho Confluence)
   - Đăng ký tool mới trong `src/tools/index.ts`.
 
-### 3. Sử dụng các helper API đúng chuẩn
+### 3. Tạo và đăng ký resource
+
+#### Cách mới nhất để đăng ký resource
+Trong phiên bản cập nhật, thay vì sử dụng wrapper `registerResource()`, hãy sử dụng trực tiếp `server.resource()`:
+
+```typescript
+// Trong file resource (vd: src/resources/jira/your-resource.ts)
+
+// 1. Tạo một hàm để lấy Atlassian config từ environment
+function getAtlassianConfigFromEnv(): AtlassianConfig {
+  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
+  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
+  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
+
+  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
+    throw new Error('Missing Atlassian credentials in environment variables');
+  }
+
+  return {
+    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
+      ? `https://${ATLASSIAN_SITE_NAME}` 
+      : ATLASSIAN_SITE_NAME,
+    email: ATLASSIAN_USER_EMAIL,
+    apiToken: ATLASSIAN_API_TOKEN
+  };
+}
+
+// 2. Tạo và đăng ký resource trực tiếp
+export function registerYourResource(server: McpServer) {
+  server.resource(
+    'resource-name',  // Tên resource, dùng để đăng ký và debug
+    new ResourceTemplate('resource://pattern/{param}', {  // Template với URI pattern và list callback
+      list: async (_extra) => ({
+        resources: [
+          {
+            uri: 'resource://pattern/{param}',
+            name: 'Resource Name',
+            description: 'Resource description',
+            mimeType: 'application/json'
+          }
+        ]
+      })
+    }),
+    async (uri, params, _extra) => {
+      try {
+        // Lấy config từ environment để đảm bảo có credentials mới nhất
+        const config = getAtlassianConfigFromEnv();
+        
+        // Xử lý params từ URI pattern
+        const param = Array.isArray(params.param) ? params.param[0] : params.param;
+        
+        // Gọi API hoặc xử lý dữ liệu
+        const data = await yourApiFunction(config, param);
+        
+        // Format URI string
+        const uriString = typeof uri === 'string' ? uri : uri.href;
+        
+        // Trả về dữ liệu theo format MCP
+        return {
+          contents: [{
+            uri: uriString,
+            mimeType: 'application/json',
+            text: JSON.stringify({
+              resource: data,
+              metadata: { self: uriString } 
+            })
+          }]
+        };
+      } catch (error) {
+        // Xử lý lỗi
+        logger.error(`Error in resource handler:`, error);
+        throw error;
+      }
+    }
+  );
+}
+```
+
+#### Tránh trùng lặp resource
+Để tránh trùng lặp resource khi đăng ký (dẫn đến chỉ hiển thị resource cuối cùng được đăng ký), hãy đảm bảo:
+
+1. **Mỗi resource cần có tên (name) duy nhất** khi đăng ký:
+```typescript
+server.resource('unique-resource-name', ...)
+```
+
+2. **Chỉ đăng ký mỗi URI pattern một lần** và không mở rộng cùng một pattern trong nhiều file khác nhau.
+
+3. **Đảm bảo `list` callback luôn trả về đúng URI pattern** và thông tin mô tả resource.
+
+### 4. Sử dụng các helper API đúng chuẩn
 - Không tự gọi trực tiếp fetch() hoặc axios trong resource/tool.
 - Luôn sử dụng các hàm helper đã có trong:
   - `src/utils/jira-resource-api.ts`, `src/utils/confluence-resource-api.ts` (cho resource)
   - `src/utils/jira-tool-api-v3.ts`, `src/utils/jira-tool-api-agile.ts`, `src/utils/confluence-tool-api.ts` (cho tool)
 - Nếu cần gọi API mới, hãy bổ sung helper function vào các file trên.
 
-### 4. Định nghĩa schema dữ liệu
+### 5. Xử lý config và context
+- **Cách ưu tiên**: Đối với mỗi file resource, tạo hàm `getAtlassianConfigFromEnv()` riêng để đảm bảo luôn lấy thông tin mới nhất:
+```typescript
+function getAtlassianConfigFromEnv(): AtlassianConfig {
+  // Đọc từ env và trả về AtlassianConfig
+}
+```
+
+- **Sử dụng context nếu có**: Context được truyền tự động qua `_extra.context` trong handler:
+```typescript
+async (uri, params, _extra) => {
+  let config: AtlassianConfig;
+  if (_extra?.context?.atlassianConfig) {
+    config = _extra.context.atlassianConfig;
+  } else {
+    config = getAtlassianConfigFromEnv();
+  }
+  // Xử lý tiếp...
+}
+```
+
+### 6. Định nghĩa schema dữ liệu
 - Mỗi resource/tool mới **bắt buộc phải có schema** validate input/output.
 - Thêm hoặc cập nhật schema trong:
   - `src/schemas/jira.ts` (cho Jira)
   - `src/schemas/confluence.ts` (cho Confluence)
 - Đảm bảo schema phản ánh đúng dữ liệu thực tế trả về/tạo ra từ Atlassian API.
 
-### 5. Đăng ký resource/tool vào MCP server
-- **Resource**: Đăng ký qua hàm `registerResource` hoặc `server.resource` trong file resource tương ứng.
-- **Tool**: Đăng ký qua hàm `server.tool` trong file tool, sau đó gọi đăng ký trong `registerAllTools` ở `src/tools/index.ts`.
+### 7. Tạo và đăng ký tool
+Với tools, cách đăng ký vẫn thống nhất:
 
-### 6. Cập nhật tài liệu
+```typescript
+// Trong file tool (vd: src/tools/jira/your-tool.ts)
+export function registerYourTool(server: any) {
+  server.tool(
+    'tool-name',  // Tên tool
+    'Tool description', // Mô tả tool
+    {
+      // Schema input cho tool
+      type: 'object',
+      properties: {
+        param1: { type: 'string', description: 'Parameter 1' },
+        // ... các tham số khác
+      },
+      required: ['param1']
+    },
+    async (params: any, context: any) => {
+      try {
+        // Sử dụng context.atlassianConfig có sẵn
+        const { atlassianConfig } = context;
+        
+        // Xử lý và gọi API
+        const result = await yourToolFunction(atlassianConfig, params);
+        
+        // Trả về kết quả
+        return {
+          content: [
+            { type: 'text', text: `Operation completed successfully: ${result}` }
+          ]
+        };
+      } catch (error) {
+        // Xử lý lỗi
+        logger.error(`Error in tool handler:`, error);
+        return {
+          content: [{ type: 'text', text: `Error: ${error.message}` }],
+          isError: true
+        };
+      }
+    }
+  );
+}
+```
+
+Sau đó, đăng ký tool trong `src/tools/index.ts`:
+```typescript
+// Trong src/tools/index.ts
+import { registerYourTool } from './jira/your-tool.js';
+
+export function registerAllTools(server: any) {
+  // Đăng ký các tool khác...
+  registerYourTool(server);
+}
+```
+
+### 8. Testing và debugging
+
+#### Kiểm tra resource với test client
+Sử dụng MCP test client từ đường dẫn `dev_mcp-atlassian-test-client`:
+
+```bash
+# Kiểm tra danh sách tất cả resource đã đăng ký
+cd dev_mcp-atlassian-test-client
+npx ts-node --esm src/list-mcp-inventory.ts
+
+# Kiểm tra resource cụ thể
+npx ts-node --esm src/test-your-resource.ts
+```
+
+#### Theo dõi logs
+Khi debug, sử dụng các lệnh logging:
+```typescript
+import { Logger } from '../../utils/logger.js';
+const logger = Logger.getLogger('YourResourceName');
+
+// Trong code
+logger.debug('Debug info', data);
+logger.info('Operation completed');
+logger.error('Error occurred', error);
+```
+
+### 9. Cập nhật tài liệu
 - Sau khi thêm resource/tool mới, cập nhật lại tài liệu:
   - Bảng liệt kê resource/tool trong `docs/introduction/resources-and-tools.md`
   - Schema mô tả input/output nếu có thay đổi
 
-### 7. Lưu ý quan trọng
-- Luôn kiểm tra và test thực tế với Cline hoặc client MCP để đảm bảo hoạt động đúng.
-- Log và xử lý lỗi nhất quán: Sử dụng logger và error handler chung.
-- Đặt tên hàm, biến, schema rõ ràng, nhất quán theo tiếng Anh.
-- Không thay đổi signature các hàm cũ nếu không thực sự cần thiết (giữ backward compatibility).
-- Tách biệt rõ resource (read-only) và tool (mutation), không gộp chung logic.
+### 10. Lưu ý quan trọng
+- **Tên resource**: Đảm bảo mỗi resource có tên duy nhất khi đăng ký.
+- **URI pattern**: Thiết kế URI pattern rõ ràng, nhất quán với các pattern khác.
+- **List callback**: Đảm bảo list callback trả về chính xác URI pattern và mô tả.
+- **Config**: Tự tạo hàm `getAtlassianConfigFromEnv()` trong mỗi file resource.
+- **Error handling**: Bắt và xử lý lỗi phù hợp, trả về thông báo rõ ràng.
+- **Schema**: Luôn định nghĩa và sử dụng schema để validate dữ liệu.
+- **Testing**: Kiểm tra resource đã đăng ký đúng chưa bằng client test.
 
 **Tóm tắt trình tự khi thêm mới:**
 1. Xác định loại (resource/tool) và vị trí file.
-2. Thêm/cập nhật file resource/tool.
-3. Bổ sung helper API nếu cần.
-4. Định nghĩa/cập nhật schema.
-5. Đăng ký vào MCP server.
-6. Cập nhật tài liệu.
-7. Test thực tế và kiểm tra log/error.
+2. Tạo file resource/tool mới với đúng cấu trúc.
+3. Tạo hàm `getAtlassianConfigFromEnv()` trong mỗi file resource.
+4. Đăng ký resource trực tiếp qua `server.resource()` hoặc tool qua `server.tool()`.
+5. Định nghĩa/cập nhật schema.
+6. Kiểm tra với client test để đảm bảo resource đã đăng ký thành công.
+7. Cập nhật tài liệu.
 
 Nếu tuân thủ đúng các bước trên, việc mở rộng MCP Atlassian Server sẽ luôn nhất quán, dễ bảo trì và dễ mở rộng về sau!
-
-## Best Practices
-
-1. **Start Simple**: Bắt đầu với truy vấn và tham số cơ bản.
-2. **Check Permissions**: Đảm bảo tài khoản Atlassian có quyền truy cập phù hợp.
-3. **Handle Errors**: Luôn kiểm tra và xử lý lỗi trả về từ API.
-4. **Chain Resources and Tools**: Lấy dữ liệu từ resource trước khi thao tác với tool.
-5. **Use Clear Examples**: Khi hướng dẫn AI assistant, luôn đưa ví dụ rõ ràng.
-
-## Notes & Versioning
-
-- Từ 6/2025, toàn bộ resource Jira đã migrate sang API v3 (`/rest/api/3/...`). Các trường rich text (description/comment) trả về dạng ADF, đã tự động convert sang text nếu client không hỗ trợ ADF.
-- Tất cả resource và tool Confluence hiện tại chỉ sử dụng API v2 (`/wiki/api/v2/` và `/rest/agile/1.0`). Các endpoint v1 đã bị loại bỏ hoàn toàn.

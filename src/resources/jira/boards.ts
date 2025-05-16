@@ -8,9 +8,31 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { boardListSchema, boardSchema, issuesListSchema } from '../../schemas/jira.js';
 import { getBoards, getBoardById, getBoardIssues } from '../../utils/jira-resource-api.js';
 import { Logger } from '../../utils/logger.js';
-import { createStandardResource, extractPagingParams, registerResource } from '../../utils/mcp-resource.js';
+import { createStandardResource, extractPagingParams } from '../../utils/mcp-resource.js';
+import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 
 const logger = Logger.getLogger('JiraBoardResources');
+
+/**
+ * Get Atlassian config from environment variables
+ */
+function getAtlassianConfigFromEnv(): AtlassianConfig {
+  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
+  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
+  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
+
+  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
+    throw new Error('Missing Atlassian credentials in environment variables');
+  }
+
+  return {
+    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
+      ? `https://${ATLASSIAN_SITE_NAME}` 
+      : ATLASSIAN_SITE_NAME,
+    email: ATLASSIAN_USER_EMAIL,
+    apiToken: ATLASSIAN_API_TOKEN
+  };
+}
 
 /**
  * Register all Jira board resources with MCP Server
@@ -20,8 +42,7 @@ export function registerBoardResources(server: McpServer) {
   logger.info('Registering Jira board resources...');
   
   // Resource: Board list
-  registerResource(
-    server,
+  server.resource(
     'jira-boards',
     new ResourceTemplate('jira://boards', {
       list: async (_extra) => {
@@ -37,13 +58,15 @@ export function registerBoardResources(server: McpServer) {
         };
       }
     }),
-    'List all Jira boards',
-    async (params, { config, uri }) => {
+    async (uri, params, _extra) => {
       try {
+        const config = getAtlassianConfigFromEnv();
         const { limit, offset } = extractPagingParams(params);
         const response = await getBoards(config, offset, limit);
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
         return createStandardResource(
-          uri,
+          uriString,
           response.values,
           'boards',
           boardListSchema,
@@ -60,8 +83,7 @@ export function registerBoardResources(server: McpServer) {
   );
 
   // Resource: Board details
-  registerResource(
-    server,
+  server.resource(
     'jira-board-details',
     new ResourceTemplate('jira://boards/{boardId}', {
       list: async (_extra) => ({
@@ -75,13 +97,15 @@ export function registerBoardResources(server: McpServer) {
         ]
       })
     }),
-    'Get details of a specific Jira board',
-    async (params, { config, uri }) => {
+    async (uri, params, _extra) => {
       try {
+        const config = getAtlassianConfigFromEnv();
         const boardId = Array.isArray(params.boardId) ? params.boardId[0] : params.boardId;
         const board = await getBoardById(config, boardId);
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
         return createStandardResource(
-          uri,
+          uriString,
           [board],
           'board',
           boardSchema,
@@ -98,8 +122,7 @@ export function registerBoardResources(server: McpServer) {
   );
 
   // Resource: Issues in board
-  registerResource(
-    server,
+  server.resource(
     'jira-board-issues',
     new ResourceTemplate('jira://boards/{boardId}/issues', {
       list: async (_extra) => ({
@@ -113,14 +136,16 @@ export function registerBoardResources(server: McpServer) {
         ]
       })
     }),
-    'List issues in a Jira board',
-    async (params, { config, uri }) => {
+    async (uri, params, _extra) => {
       try {
+        const config = getAtlassianConfigFromEnv();
         const boardId = Array.isArray(params.boardId) ? params.boardId[0] : params.boardId;
         const { limit, offset } = extractPagingParams(params);
         const response = await getBoardIssues(config, boardId, offset, limit);
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
         return createStandardResource(
-          uri,
+          uriString,
           response.issues,
           'issues',
           issuesListSchema,
@@ -137,8 +162,7 @@ export function registerBoardResources(server: McpServer) {
   );
 
   // Resource: Board configuration
-  registerResource(
-    server,
+  server.resource(
     'jira-board-configuration',
     new ResourceTemplate('jira://boards/{boardId}/configuration', {
       list: async (_extra) => ({
@@ -152,9 +176,9 @@ export function registerBoardResources(server: McpServer) {
         ]
       })
     }),
-    'Get configuration of a specific Jira board',
-    async (params, { config, uri }) => {
+    async (uri, params, _extra) => {
       try {
+        const config = getAtlassianConfigFromEnv();
         const boardId = Array.isArray(params.boardId) ? params.boardId[0] : params.boardId;
         // Gọi API lấy cấu hình board
         const response = await fetch(`${config.baseUrl}/rest/agile/1.0/board/${boardId}/configuration`, {
@@ -167,6 +191,8 @@ export function registerBoardResources(server: McpServer) {
         });
         if (!response.ok) throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
         const configData = await response.json();
+        
+        const uriString = typeof uri === 'string' ? uri : uri.href;
         // Inline schema (mô tả cơ bản, không validate sâu)
         const boardConfigurationSchema = {
           type: 'object',
@@ -186,7 +212,7 @@ export function registerBoardResources(server: McpServer) {
         };
         return {
           contents: [{
-            uri: uri,
+            uri: uriString,
             mimeType: 'application/json',
             text: JSON.stringify(configData),
             schema: boardConfigurationSchema

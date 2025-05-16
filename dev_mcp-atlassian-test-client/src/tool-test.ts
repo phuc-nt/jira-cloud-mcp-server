@@ -36,7 +36,7 @@ async function main() {
 
     const envVars = loadEnv();
     const client = new Client({ name: "mcp-atlassian-test-client", version: "1.0.0" });
-    const serverPath = "/opt/homebrew/lib/node_modules/@phuc-nt/mcp-atlassian-server/dist/index.js";
+    const serverPath = "/Users/phucnt/Workspace/mcp-atlassian-server/dist/index.js";
     const processEnv: Record<string, string> = {};
     Object.keys(process.env).forEach(key => {
       if (process.env[key] !== undefined) {
