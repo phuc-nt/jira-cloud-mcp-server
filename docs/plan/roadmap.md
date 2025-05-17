@@ -136,6 +136,57 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 > - Đã hợp nhất tool backlog/sprint cho đồng nhất: **addIssueToSprint** thay thế removeIssuesFromBacklog và moveIssuesBetweenSprints; **addIssuesToBacklog** hỗ trợ cả backlog chung và backlog cụ thể của board.
 > - Đã kiểm thử đầy đủ các thao tác dashboard/gadget: thêm, xóa gadget, đồng thời sửa lỗi resource jira://dashboards/{dashboardId}/gadgets trả về rỗng.
 
+### 3.4. Kế hoạch tái cấu trúc MCP Utils (2025-07)
+
+Tái cấu trúc lại các module utility trong MCP Atlassian Server nhằm tối ưu codebase và giảm thiểu code dư thừa.
+
+#### Tiến độ hiện tại
+- [x] **Đã hoàn thành**:
+  - Tách file `atlassian-api.ts` thành các module nhỏ: base helper, resource API, tool API
+  - Cải thiện error handling và xóa code không sử dụng
+  - Loại bỏ helper `registerResource` và chuyển sang `server.resource()`
+  - Chuẩn hóa schema descriptions sang tiếng Anh
+  - Tách biệt rõ ràng giữa resource (GET) và tool (mutation)
+
+#### Thiết kế mới
+
+Thay vì 3 file hiện tại (`mcp-resource.ts`, `mcp-response.ts`, `tool-helpers.ts`), tái cấu trúc thành 2 module chính:
+
+1. **`mcp-core.ts`**: Định nghĩa interfaces, types, và các hàm cơ bản để tạo responses
+2. **`mcp-helpers.ts`**: Chứa các helper functions cho cả resources và tools, được tổ chức theo namespace
+
+#### Giai đoạn triển khai
+
+- [ ] **Giai đoạn 1**: Tạo cấu trúc mới
+  - [ ] Tạo file `mcp-core.ts` với các interfaces và hàm cơ bản
+  - [ ] Tạo file `mcp-helpers.ts` với các namespaces: Config, Resources, Tools
+
+- [ ] **Giai đoạn 2**: Chuyển đổi các file hiện có
+  - [ ] Tạo file tạm để đảm bảo tương thích ngược
+  - [ ] Re-export các hàm từ module mới trong file cũ
+  - [ ] Thêm cảnh báo deprecated trong file cũ
+
+- [ ] **Giai đoạn 3**: Cập nhật các file sử dụng module cũ
+  - [ ] Cập nhật import trong các file chính
+  - [ ] Thay thế các lệnh gọi trực tiếp bằng namespace
+
+- [ ] **Giai đoạn 4**: Kiểm thử và đảm bảo tương thích
+  - [ ] Kiểm thử từng phần
+  - [ ] Cập nhật tài liệu
+  - [ ] Đảm bảo type safety
+
+- [ ] **Giai đoạn 5**: Cập nhật dần trong toàn bộ codebase
+  - [ ] Chuyển đổi theo lộ trình dần dần
+  - [ ] Xóa bỏ hoàn toàn các file tạm sau khi đã chuyển đổi xong
+
+#### Lợi ích
+
+1. **Cấu trúc rõ ràng**: Phân chia rõ ràng theo chức năng, không theo đối tượng sử dụng
+2. **Giảm trùng lặp**: Không có định nghĩa và logic trùng lặp
+3. **Dễ mở rộng**: Thêm chức năng mới dễ dàng hơn trong cấu trúc namespace
+4. **Type-safe**: Tất cả đều được định nghĩa type đầy đủ
+5. **Dễ dàng học và sử dụng**: Developers chỉ cần biết 2 file thay vì 3+ file
+
 ### 4. Cải thiện developer experience cho local dev
 - [ ] Viết script tự động build và tạo symlink cho Cline nhận diện nhanh (không cần docker nếu chưa cần)
 - [ ] Thêm hướng dẫn debug MCP server khi chạy cùng Cline (log ra stderr, hướng dẫn mở devtools của VS Code)
@@ -145,11 +196,14 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 
 - [x] **Done** - Đã hoàn thành test toàn bộ resource/tool Jira gồm: Issue, Filter, Sprint, Board, Backlog, Dashboard, Gadget
 - [x] **Done** - Đã fix tất cả lỗi phát hiện được, đặc biệt là lỗi resource jira://dashboards/{dashboardId}/gadgets trả về rỗng
+- [x] **Done** - Đã cập nhật test client cho v2.0.0 và cải thiện logic xử lý page/comment
+- [x] **Done** - Đã chuẩn hóa response format và error handling
 
 ### 1. Tối ưu hóa phản hồi cho Cline
-- [ ] Chuẩn hóa markdown và metadata trong phản hồi để Cline hiển thị đẹp, dễ đọc
-- [ ] Thêm ví dụ về MCP Rule/Prompt cho Cline, giúp AI tự động sử dụng resource/tool đúng ngữ cảnh
-- [ ] Viết hướng dẫn cấu hình MCP server cho Cline (cấu hình file, biến môi trường, cách restart server)
+- [x] Chuẩn hóa schema descriptions và metadata sang tiếng Anh
+- [x] Đảm bảo response format nhất quán cho tất cả resource/tool
+- [ ] Thêm ví dụ về MCP Rule/Prompt cho Cline
+- [x] Cập nhật hướng dẫn cài đặt và cấu hình trong README và llms-install.md
 
 ### 2. Hỗ trợ cá nhân hóa và tuỳ biến cho user local
 - [ ] Cho phép user lưu cấu hình project, filter, space yêu thích vào local file
@@ -157,26 +211,29 @@ Roadmap này mô tả các giai đoạn phát triển trong tương lai của MC
 - [ ] Hỗ trợ export/import cấu hình cá nhân dễ dàng chia sẻ
 
 ### 3. Đóng gói và phân phối cho developer cá nhân
-- [ ] Chuẩn bị script cài đặt nhanh cho Mac/Linux/Windows (không cần cloud)
-- [ ] Viết tài liệu "Getting Started with MCP Atlassian for Cline" dành cho developer tự học
-- [ ] Chuẩn bị bộ ví dụ (sample project, sample .env, sample MCP client test script)
+- [x] Chuẩn bị npm package với hướng dẫn cài đặt chi tiết
+- [x] Cập nhật .gitignore để bỏ qua các file build
+- [ ] Viết tài liệu "Getting Started with MCP Atlassian for Cline"
+- [ ] Chuẩn bị bộ ví dụ (sample project, sample .env)
 
-## Phase 13: Chia sẻ kiến thức, chuẩn bị seminar, xây dựng cộng đồng
+## Phase 13: Chia sẻ kiến thức và xây dựng cộng đồng
 
-### 1. Chuẩn bị nội dung chia sẻ, seminar, workshop
-- [ ] Viết bài blog/bài hướng dẫn về MCP, phân biệt Tool vs Resource, best practice cho local dev
-- [ ] Xây dựng slide, demo script cho seminar "MCP hoá Atlassian nội bộ với Cline"
-- [ ] Tạo video demo thao tác thực tế với Cline, MCP Inspector, test script
+### 1. Chuẩn bị nội dung chia sẻ
+- [x] Cập nhật README với tổng quan non-technical và phân nhóm rõ ràng
+- [x] Tái cấu trúc tài liệu resources-and-tools.md để dễ hiểu hơn
+- [ ] Xây dựng slide và demo script cho seminar
+- [ ] Tạo video demo thao tác thực tế
 
 ### 2. Đóng góp và xây dựng cộng đồng MCP
-- [ ] Đăng source code lên GitHub với README chi tiết, hướng dẫn chạy local-first
-- [ ] Tham gia thảo luận, trả lời câu hỏi trên các diễn đàn MCP (GitHub Discussions, Discord, v.v.)
-- [ ] Mở issues, PR hoặc đóng góp tài liệu cho MCP SDK nếu phát hiện bug hoặc có đề xuất cải tiến
+- [x] Đã công khai repository trên GitHub
+- [x] Cập nhật README với hướng dẫn chi tiết
+- [ ] Tham gia thảo luận trên các diễn đàn MCP
+- [ ] Mở issues và PR cho MCP SDK nếu phát hiện bug
 
 ### 3. Tích hợp phản hồi và mở rộng dần
-- [ ] Thu thập phản hồi từ đồng nghiệp, cộng đồng về trải nghiệm local-first
-- [ ] Ưu tiên cải tiến dựa trên feedback thực tế của user cá nhân/Cline
-- [ ] Nếu có nhu cầu, chuẩn bị tài liệu chuyển đổi lên cloud hoặc multi-user (phase sau, không ưu tiên hiện tại)
+- [x] Đã cập nhật dựa trên feedback về cài đặt và cấu hình
+- [ ] Thu thập thêm phản hồi từ cộng đồng
+- [ ] Ưu tiên cải tiến dựa trên feedback thực tế
 
 ## Phase 14: (Tuỳ chọn, khi đã vững local) - Chuẩn bị cho Cloud/Multi-user
 
