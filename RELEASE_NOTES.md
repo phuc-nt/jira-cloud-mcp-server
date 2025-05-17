@@ -1,15 +1,27 @@
-# MCP Atlassian Server 2.0.0
+# MCP Atlassian Server 2.0.1
 
-🎉 **Major release of MCP Atlassian Server with expanded capabilities!**
+🎉 **Maintenance release with important fixes and documentation updates!**
 
-Download, extract, and run instantly with Cline or any MCP-compatible client – no build or npm install required.
+Available on npm (@phuc-nt/mcp-atlassian-server) or download directly. Use with Cline or any MCP-compatible client.
 
 ---
 
-### Features
+### Updates in 2.0.1
 
-**Expanded from 21 to 48 features, with complete API updates!**
+**Bug Fixes**
+- Fixed duplicate resource registration issues for a more stable experience
+- Improved resource management and registration process
+- Resolved issues with conflicting resource patterns
 
+**Documentation Series**
+- Added comprehensive documentation series:
+  1. MCP Overview & Architecture: Core concepts and design principles
+  2. MCP Tools & Resources Development: How to develop and extend resources/tools
+  3. MCP Prompts & Sampling: Guide for prompt engineering with MCP
+- Updated installation guide and client development documentation
+- Enhanced resource and tool descriptions
+
+**Core Features**
 **Jira Information Access**
 - View issues, projects, users, comments, transitions, assignable users
 - Access boards, sprints, filters, dashboards and gadgets
@@ -35,20 +47,25 @@ Download, extract, and run instantly with Cline or any MCP-compatible client –
 ---
 
 **How to use:**  
-1. Download and extract the zip.  
-2. Point Cline config to `dist/index.js` inside the extracted folder.  
-3. Set your Atlassian API credentials.  
+1. Install from npm: `npm install -g @phuc-nt/mcp-atlassian-server`
+2. Point Cline config to the installed package.
+3. Set your Atlassian API credentials.
 4. Start using natural language to work with Jira & Confluence!
 
-See [README.md](https://github.com/phuc-nt/mcp-atlassian-server) for full instructions.  
+See [README.md](https://github.com/phuc-nt/mcp-atlassian-server) and the new documentation series for full instructions.  
 Feedback and contributions are welcome! 🚀
 
 ## What's Changed
+* Fixed resource registration to prevent duplicates
+* Improved server stability and resource management
+* Added comprehensive documentation series in `docs/knowledge/`
+* Enhanced development guide for client integrations
+* Updated resource structure for better organization
+
+**Previous Changelog (2.0.0)**: 
 * Updated to latest Atlassian APIs (Jira API v3, Confluence API v2)
 * Redesigned resource and tool structure for better organization
 * Expanded Jira capabilities with board, sprint, dashboard, and filter management
 * Enhanced Confluence features with advanced page operations and comment management
-* Improved error handling and documentation
-* Fixed compatibility issues with various API versions
 
 **Full Changelog**: https://github.com/phuc-nt/mcp-atlassian-server/blob/main/CHANGELOG.md 
