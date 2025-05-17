@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [2.1.1] - 2025-05-17
+
+### 📝 Patch Release
+- Documentation and metadata updates only. No code changes.
+
 ## [2.1.0] - 2025-05-17
 
 ### ✨ Refactor & Standardization

@@ -7,7 +7,7 @@
 [![MCP Atlassian Server (by phuc-nt)](https://img.shields.io/badge/MCP%20Marketplace--Pending%20Review-orange)](https://github.com/phuc-nt/mcp-atlassian-server)
 [![smithery badge](https://smithery.ai/badge/@phuc-nt/mcp-atlassian-server)](https://smithery.ai/server/@phuc-nt/mcp-atlassian-server)
 
-## What's New in Version 2.1.0 🚀
+## What's New in Version 2.1.1 🚀
 
 - Refactored the entire codebase to standardize resource/tool structure, completely removed the content-metadata resource, and merged metadata into the page resource.
 - New developer guide: anyone can now easily extend and maintain the codebase.

@@ -1,4 +1,4 @@
-# MCP Atlassian Server 2.1.0
+# MCP Atlassian Server 2.1.1
 
 🚀 **Major refactor: Standardized resource/tool structure, removed content-metadata resource, updated developer documentation!**
 
@@ -6,7 +6,7 @@ Available on npm (@phuc-nt/mcp-atlassian-server) or download directly. Use with 
 
 ---
 
-### Updates in 2.1.0
+### Updates in 2.1.1
 
 **Refactor & Standardization**
 - Refactored the entire codebase to standardize resource/tool structure, completely removed the content-metadata resource, and merged metadata into the page resource.
