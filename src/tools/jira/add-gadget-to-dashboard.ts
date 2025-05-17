@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { addGadgetToDashboard } from '../../utils/jira-tool-api-v3.js';
 import { Logger } from '../../utils/logger.js';
-import { createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
+import { Tools, Config } from '../../utils/mcp-helpers.js';
 
 const logger = Logger.getLogger('JiraTools:addGadgetToDashboard');
 
@@ -25,35 +25,68 @@ export const addGadgetToDashboardSchema = addGadgetToDashboardBaseSchema.refine(
   { message: 'You must provide either moduleKey or uri, but not both.' }
 );
 
+type AddGadgetToDashboardParams = z.infer<typeof addGadgetToDashboardBaseSchema>;
+
+async function addGadgetToDashboardToolImpl(params: AddGadgetToDashboardParams, context: any) {
+  if (!!params.moduleKey === !!params.uri) {
+    return {
+      success: false,
+      error: 'You must provide either moduleKey or uri, but not both.'
+    };
+  }
+  const config = Config.getConfigFromContextOrEnv(context);
+  const { dashboardId, moduleKey, uri, ...rest } = params;
+  let gadgetUri = uri;
+  if (!gadgetUri && moduleKey) {
+    return {
+      success: false,
+      error: 'Jira Cloud API chỉ hỗ trợ thêm gadget qua uri. Vui lòng cung cấp uri hợp lệ.'
+    };
+  }
+  if (!gadgetUri) {
+    return {
+      success: false,
+      error: 'Thiếu uri gadget.'
+    };
+  }
+  const data = { uri: gadgetUri, ...rest };
+  const result = await addGadgetToDashboard(config, dashboardId, data);
+  return {
+    success: true,
+    dashboardId,
+    uri: gadgetUri,
+    ...rest,
+    result
+  };
+}
+
 export const registerAddGadgetToDashboardTool = (server: McpServer) => {
   server.tool(
     'addGadgetToDashboard',
     'Add gadget to Jira dashboard (POST /rest/api/3/dashboard/{dashboardId}/gadget)',
     addGadgetToDashboardBaseSchema.shape,
-    async (params: z.infer<typeof addGadgetToDashboardBaseSchema>, context: Record<string, any>) => {
-      // Validate refine rule thủ công
-      if (!!params.moduleKey === !!params.uri) {
-        return createErrorResponse('You must provide either moduleKey or uri, but not both.');
-      }
+    async (params: AddGadgetToDashboardParams, context: Record<string, any>) => {
       try {
-        const config = context.atlassianConfig;
-        if (!config) return createErrorResponse('Missing Atlassian config');
-        const { dashboardId, moduleKey, uri, ...rest } = params;
-        let gadgetUri = uri;
-        if (!gadgetUri && moduleKey) {
-          // Nếu chỉ có moduleKey, chuyển thành uri legacy (nếu có quy tắc chuyển đổi)
-          // Nếu không có quy tắc, trả lỗi rõ ràng
-          return createErrorResponse('Jira Cloud API chỉ hỗ trợ thêm gadget qua uri. Vui lòng cung cấp uri hợp lệ.');
-        }
-        if (!gadgetUri) {
-          return createErrorResponse('Thiếu uri gadget.');
-        }
-        const data = { uri: gadgetUri, ...rest };
-        const result = await addGadgetToDashboard(config, dashboardId, data);
-        return createTextResponse('Gadget added to dashboard successfully', { result });
+        const result = await addGadgetToDashboardToolImpl(params, context);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result)
+            }
+          ]
+        };
       } catch (error) {
         logger.error('Error in addGadgetToDashboard:', error);
-        return createErrorResponse(error instanceof Error ? error.message : String(error));
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: false, error: error instanceof Error ? error.message : String(error) })
+            }
+          ],
+          isError: true
+        };
       }
     }
   );

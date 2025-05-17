@@ -64,16 +64,16 @@ export function registerSpaceResources(server: McpServer) {
     }
   );
 
-  // Resource: Space details (API v2, mapping key -> id)
+  // Resource: Space details (API v2, mapping id)
   server.resource(
     'confluence-space-details',
-    new ResourceTemplate('confluence://spaces/{spaceKey}', {
+    new ResourceTemplate('confluence://spaces/{spaceId}', {
       list: async (_extra) => ({
         resources: [
           {
-            uri: 'confluence://spaces/{spaceKey}',
+            uri: 'confluence://spaces/{spaceId}',
             name: 'Confluence Space Details',
-            description: 'Get details for a specific Confluence space by key. Replace {spaceKey} with the space key.',
+            description: 'Get details for a specific Confluence space by id. Replace {spaceId} với id số của space (ví dụ: 19464200).',
             mimeType: 'application/json'
           }
         ]
@@ -81,11 +81,12 @@ export function registerSpaceResources(server: McpServer) {
     }),
     async (uri, params, _extra) => {
       const config = Config.getAtlassianConfigFromEnv();
-      let normalizedSpaceKey = Array.isArray(params.spaceKey) ? params.spaceKey[0] : params.spaceKey;
-      if (!normalizedSpaceKey) throw new Error('Missing spaceKey in URI');
-      logger.info(`Getting details for Confluence space (v2) by key: ${normalizedSpaceKey}`);
-      // Lấy thông tin space qua API helper
-      const space = await getConfluenceSpaceV2(config, normalizedSpaceKey);
+      let normalizedSpaceId = Array.isArray(params.spaceId) ? params.spaceId[0] : params.spaceId;
+      if (!normalizedSpaceId) throw new Error('Missing spaceId in URI');
+      if (!/^\d+$/.test(normalizedSpaceId)) throw new Error('spaceId must be a number');
+      logger.info(`Getting details for Confluence space (v2) by id: ${normalizedSpaceId}`);
+      // Lấy thông tin space qua API helper (giả sử getConfluenceSpaceV2 hỗ trợ lookup theo id)
+      const space = await getConfluenceSpaceV2(config, normalizedSpaceId);
       const uriString = typeof uri === 'string' ? uri : uri.href;
       return Resources.createStandardResource(
         uriString,
@@ -103,13 +104,13 @@ export function registerSpaceResources(server: McpServer) {
   // Resource: List of pages in a space
   server.resource(
     'confluence-space-pages',
-    new ResourceTemplate('confluence://spaces/{spaceKey}/pages', {
+    new ResourceTemplate('confluence://spaces/{spaceId}/pages', {
       list: async (_extra) => ({
         resources: [
           {
-            uri: 'confluence://spaces/{spaceKey}/pages',
+            uri: 'confluence://spaces/{spaceId}/pages',
             name: 'Confluence Space Pages',
-            description: 'List all pages in a specific Confluence space. Replace {spaceKey} with the space key.',
+            description: 'List all pages in a specific Confluence space. Replace {spaceId} với id số của space.',
             mimeType: 'application/json'
           }
         ]
@@ -117,15 +118,12 @@ export function registerSpaceResources(server: McpServer) {
     }),
     async (uri, params, _extra) => {
       const config = Config.getAtlassianConfigFromEnv();
-      let normalizedSpaceKey = Array.isArray(params.spaceKey) ? params.spaceKey[0] : params.spaceKey;
-      if (!normalizedSpaceKey) throw new Error('Missing spaceKey in URI');
-      // Lấy spaceId từ key
-      const spaces = await getConfluenceSpacesV2(config, undefined, 250);
-      const found = (spaces.results || []).find((s: any) => s.key === normalizedSpaceKey);
-      if (!found) throw new Error(`Space with key ${normalizedSpaceKey} not found`);
-      const spaceId = found.id;
+      let normalizedSpaceId = Array.isArray(params.spaceId) ? params.spaceId[0] : params.spaceId;
+      if (!normalizedSpaceId) throw new Error('Missing spaceId in URI');
+      if (!/^\d+$/.test(normalizedSpaceId)) throw new Error('spaceId must be a number');
+      // Không lookup theo key nữa, dùng trực tiếp id
       const filterParams = {
-        'space-id': spaceId,
+        'space-id': normalizedSpaceId,
         limit: params.limit ? parseInt(Array.isArray(params.limit) ? params.limit[0] : params.limit, 10) : 25
       };
       const data = await getConfluencePagesWithFilters(config, filterParams);

@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { deleteFilter as deleteJiraFilter } from '../../utils/jira-tool-api.js';
+import { deleteFilter } from '../../utils/jira-tool-api-v3.js';
 import { Logger } from '../../utils/logger.js';
-import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
+import { Tools, Config } from '../../utils/mcp-helpers.js';
 
 // Initialize logger
 const logger = Logger.getLogger('JiraTools:deleteFilter');
@@ -14,25 +14,14 @@ export const deleteFilterSchema = z.object({
 
 type DeleteFilterParams = z.infer<typeof deleteFilterSchema>;
 
-interface DeleteFilterResult {
-  success: boolean;
-}
-
-// Main handler to delete a filter
-export async function deleteFilterHandler(
-  params: DeleteFilterParams,
-  config: any
-): Promise<DeleteFilterResult> {
-  try {
-    logger.info(`Deleting filter with ID: ${params.filterId}`);
-    await deleteJiraFilter(config, params.filterId);
-    return {
-      success: true
-    };
-  } catch (error) {
-    logger.error(`Error deleting filter ${params.filterId}:`, error);
-    throw error;
-  }
+async function deleteFilterToolImpl(params: DeleteFilterParams, context: any) {
+  const config = Config.getConfigFromContextOrEnv(context);
+  logger.info(`Deleting filter with ID: ${params.filterId}`);
+  await deleteFilter(config, params.filterId);
+  return {
+    success: true,
+    filterId: params.filterId
+  };
 }
 
 // Register the tool with MCP Server
@@ -41,40 +30,28 @@ export const registerDeleteFilterTool = (server: McpServer) => {
     'deleteFilter',
     'Delete a filter in Jira',
     deleteFilterSchema.shape,
-    async (params: DeleteFilterParams, context: Record<string, any>): Promise<McpResponse> => {
+    async (params: DeleteFilterParams, context: Record<string, any>) => {
       try {
-        // Kiểm tra atlassianConfig và email, fallback sang biến môi trường nếu cần
-        if (!context.atlassianConfig) {
-          logger.error('[deleteFilter] Missing Atlassian config in context:', JSON.stringify(context));
-          return createErrorResponse('Missing Atlassian config in context');
-        }
-        if (!context.atlassianConfig.email) {
-          logger.warn('[deleteFilter] context.atlassianConfig.email is missing. Trying to get from env...');
-          const envEmail = process.env.JIRA_EMAIL || process.env.ATLASSIAN_EMAIL || process.env.ATLASSIAN_USER_EMAIL;
-          logger.warn('[deleteFilter] Env JIRA_EMAIL:', process.env.JIRA_EMAIL);
-          logger.warn('[deleteFilter] Env ATLASSIAN_EMAIL:', process.env.ATLASSIAN_EMAIL);
-          logger.warn('[deleteFilter] Env ATLASSIAN_USER_EMAIL:', process.env.ATLASSIAN_USER_EMAIL);
-          if (envEmail) {
-            logger.info('[deleteFilter] Using email from env:', envEmail);
-            context.atlassianConfig.email = envEmail;
-          } else {
-            logger.error('[deleteFilter] Missing Atlassian user email in context and environment. Context:', JSON.stringify(context));
-            return createErrorResponse('Missing Atlassian user email in context and environment');
-          }
-        }
-        // Delete filter
-        const result = await deleteFilterHandler(params, context.atlassianConfig);
-        // Return MCP-compliant response
-        return createTextResponse(
-          `Filter ${params.filterId} deleted successfully`,
-          {
-            success: result.success
-          }
-        );
+        const result = await deleteFilterToolImpl(params, context);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result)
+            }
+          ]
+        };
       } catch (error) {
-        return createErrorResponse(
-          `Error while deleting filter: ${error instanceof Error ? error.message : String(error)}`
-        );
+        logger.error('Error in deleteFilter:', error);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: false, error: error instanceof Error ? error.message : String(error) })
+            }
+          ],
+          isError: true
+        };
       }
     }
   );

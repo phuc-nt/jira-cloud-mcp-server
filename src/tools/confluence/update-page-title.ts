@@ -3,7 +3,7 @@ import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
+import { McpResponse, createSuccessResponse, createErrorResponse } from '../../utils/mcp-core.js';
 import { updateConfluencePageTitleV2 } from '../../utils/confluence-tool-api.js';
 import { Config } from '../../utils/mcp-helpers.js';
 

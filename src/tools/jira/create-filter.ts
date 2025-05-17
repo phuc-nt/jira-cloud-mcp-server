@@ -6,9 +6,9 @@
 
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { createFilter as createJiraFilter } from '../../utils/jira-tool-api.js';
+import { createFilter } from '../../utils/jira-tool-api-v3.js';
 import { Logger } from '../../utils/logger.js';
-import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
+import { Tools, Config } from '../../utils/mcp-helpers.js';
 
 // Initialize logger
 const logger = Logger.getLogger('JiraTools:createFilter');
@@ -23,31 +23,16 @@ export const createFilterSchema = z.object({
 
 type CreateFilterParams = z.infer<typeof createFilterSchema>;
 
-interface CreateFilterResult {
-  id: string;
-  name: string;
-  self: string;
-  success: boolean;
-}
-
-// Main handler to create a new filter
-export async function createFilterHandler(
-  params: CreateFilterParams,
-  config: any
-): Promise<CreateFilterResult> {
-  try {
-    logger.info(`Creating filter: ${params.name}`);
-    const response = await createJiraFilter(config, params.name, params.jql, params.description, params.favourite);
-    return {
-      id: response.id,
-      name: response.name,
-      self: response.self,
-      success: true
-    };
-  } catch (error) {
-    logger.error('Error creating filter:', error);
-    throw error;
-  }
+async function createFilterToolImpl(params: CreateFilterParams, context: any) {
+  const config = Config.getConfigFromContextOrEnv(context);
+  logger.info(`Creating filter: ${params.name}`);
+  const response = await createFilter(config, params.name, params.jql, params.description, params.favourite);
+  return {
+    id: response.id,
+    name: response.name,
+    self: response.self,
+    success: true
+  };
 }
 
 // Register the tool with MCP Server
@@ -56,44 +41,28 @@ export const registerCreateFilterTool = (server: McpServer) => {
     'createFilter',
     'Create a new filter in Jira',
     createFilterSchema.shape,
-    async (params: CreateFilterParams, context: Record<string, any>): Promise<McpResponse> => {
+    async (params: CreateFilterParams, context: Record<string, any>) => {
       try {
-        // Kiểm tra atlassianConfig và email, fallback sang biến môi trường nếu cần
-        if (!context.atlassianConfig) {
-          logger.error('[createFilter] Missing Atlassian config in context:', JSON.stringify(context));
-          return createErrorResponse('Missing Atlassian config in context');
-        }
-        if (!context.atlassianConfig.email) {
-          // Fallback: lấy từ biến môi trường
-          logger.warn('[createFilter] context.atlassianConfig.email is missing. Trying to get from env...');
-          const envEmail = process.env.JIRA_EMAIL || process.env.ATLASSIAN_EMAIL || process.env.ATLASSIAN_USER_EMAIL;
-          logger.warn('[createFilter] Env JIRA_EMAIL:', process.env.JIRA_EMAIL);
-          logger.warn('[createFilter] Env ATLASSIAN_EMAIL:', process.env.ATLASSIAN_EMAIL);
-          logger.warn('[createFilter] Env ATLASSIAN_USER_EMAIL:', process.env.ATLASSIAN_USER_EMAIL);
-          if (envEmail) {
-            logger.info('[createFilter] Using email from env:', envEmail);
-            context.atlassianConfig.email = envEmail;
-          } else {
-            logger.error('[createFilter] Missing Atlassian user email in context and environment. Context:', JSON.stringify(context));
-            return createErrorResponse('Missing Atlassian user email in context and environment');
-          }
-        }
-        // Create new filter
-        const result = await createFilterHandler(params, context.atlassianConfig);
-        // Return MCP-compliant response
-        return createTextResponse(
-          `Filter created successfully with ID: ${result.id}`,
-          {
-            id: result.id,
-            name: result.name,
-            self: result.self,
-            success: result.success
-          }
-        );
+        const result = await createFilterToolImpl(params, context);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result)
+            }
+          ]
+        };
       } catch (error) {
-        return createErrorResponse(
-          `Error while creating filter: ${error instanceof Error ? error.message : String(error)}`
-        );
+        logger.error('Error in createFilter:', error);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: false, error: error instanceof Error ? error.message : String(error) })
+            }
+          ],
+          isError: true
+        };
       }
     }
   );

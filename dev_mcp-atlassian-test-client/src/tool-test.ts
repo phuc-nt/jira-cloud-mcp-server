@@ -31,9 +31,7 @@ function loadEnv(): Record<string, string> {
 
 async function main() {
   try {
-    console.log("=== MCP Atlassian Tool Test ===");
-    console.log("Testing all tools in dev_mcp-server-atlassian\n");
-
+    console.log("=== MCP Atlassian Tool Test (Refactored) ===");
     const envVars = loadEnv();
     const client = new Client({ name: "mcp-atlassian-test-client", version: "1.0.0" });
     const serverPath = "/Users/phucnt/Workspace/mcp-atlassian-server/dist/index.js";
@@ -51,28 +49,36 @@ async function main() {
         ...envVars
       }
     });
-    console.log("Connecting to MCP server...");
     await client.connect(transport);
-    // List available tools
-    console.log("\n=== Available Tools ===");
-    const toolsResult = await client.listTools();
-    const tools = toolsResult.tools.map(tool => tool.name);
-    console.log("Tools:", tools.join(", "));
-    // Test each tool (callTool)
-    console.log("\n=== Testing Tools ===");
+    console.log("Connected to MCP server\n");
+
+    // === Jira Tools ===
+    console.log("--- Jira Tool Tests ---");
+    const jiraProjectKey = "XDEMO2";
     // 1. createIssue
     const newIssueSummary = `Test Issue ${new Date().toLocaleString()}`;
     const createIssueResult = await client.callTool({
       name: "createIssue",
       arguments: {
-        projectKey: "XDEMO2",
+        projectKey: jiraProjectKey,
         summary: newIssueSummary,
         description: "Test issue created by MCP tool-test",
         issueType: "Task"
       }
     });
-    console.log("createIssue - Success:", createIssueResult.key ? "✅" : "❌", "Key:", createIssueResult.key || "Unknown");
-    const newIssueKey = createIssueResult.key;
+    console.log("createIssueResult (raw):", createIssueResult);
+    let createIssueObj = createIssueResult;
+    if (
+      createIssueObj.content &&
+      Array.isArray(createIssueObj.content) &&
+      typeof createIssueObj.content[0]?.text === 'string'
+    ) {
+      createIssueObj = JSON.parse(createIssueObj.content[0].text);
+      console.log("createIssueResult (parsed):", createIssueObj);
+    }
+    console.log("createIssue:", createIssueObj.key ? "✅" : "❌", createIssueObj.key || "Unknown");
+    const newIssueKey = createIssueObj.key;
+
     // 2. updateIssue
     if (newIssueKey) {
       const updateIssueResult = await client.callTool({
@@ -82,8 +88,19 @@ async function main() {
           summary: `${newIssueSummary} (Updated)`
         }
       });
-      console.log("updateIssue - Success:", updateIssueResult.success ? "✅" : "❌");
+      console.log("updateIssueResult (raw):", updateIssueResult);
+      let updateIssueObj = updateIssueResult;
+      if (
+        updateIssueObj.content &&
+        Array.isArray(updateIssueObj.content) &&
+        typeof updateIssueObj.content[0]?.text === 'string'
+      ) {
+        updateIssueObj = JSON.parse(updateIssueObj.content[0].text);
+        console.log("updateIssueResult (parsed):", updateIssueObj);
+      }
+      console.log("updateIssue:", updateIssueObj.success ? "✅" : "❌");
     }
+
     // 3. assignIssue
     if (newIssueKey) {
       const assignIssueResult = await client.callTool({
@@ -93,8 +110,19 @@ async function main() {
           accountId: ""
         }
       });
-      console.log("assignIssue - Success:", assignIssueResult.success ? "✅" : "❌");
+      console.log("assignIssueResult (raw):", assignIssueResult);
+      let assignIssueObj = assignIssueResult;
+      if (
+        assignIssueObj.content &&
+        Array.isArray(assignIssueObj.content) &&
+        typeof assignIssueObj.content[0]?.text === 'string'
+      ) {
+        assignIssueObj = JSON.parse(assignIssueObj.content[0].text);
+        console.log("assignIssueResult (parsed):", assignIssueObj);
+      }
+      console.log("assignIssue:", assignIssueObj.success ? "✅" : "❌");
     }
+
     // 4. transitionIssue
     if (newIssueKey) {
       const transitionIssueResult = await client.callTool({
@@ -105,77 +133,171 @@ async function main() {
           comment: "Test transition"
         }
       });
-      console.log("transitionIssue - Success:", transitionIssueResult.success ? "✅" : "❌");
+      console.log("transitionIssueResult (raw):", transitionIssueResult);
+      let transitionIssueObj = transitionIssueResult;
+      if (
+        transitionIssueObj.content &&
+        Array.isArray(transitionIssueObj.content) &&
+        typeof transitionIssueObj.content[0]?.text === 'string'
+      ) {
+        transitionIssueObj = JSON.parse(transitionIssueObj.content[0].text);
+        console.log("transitionIssueResult (parsed):", transitionIssueObj);
+      }
+      console.log("transitionIssue:", transitionIssueObj.success ? "✅" : "❌");
     }
-    // 5. createPage
+
+    // 5. createSprint (nếu có boardId)
+    let boardId = null;
+    try {
+      const boardsResult = await client.readResource({ uri: `jira://boards` });
+      if (boardsResult.contents && boardsResult.contents[0].text) {
+        const boardsData = JSON.parse(String(boardsResult.contents[0].text));
+        if (boardsData && boardsData.boards && boardsData.boards.length > 0) {
+          for (const board of boardsData.boards) {
+            if (board.type === "scrum") {
+              boardId = board.id;
+              break;
+            }
+          }
+        }
+      }
+    } catch {}
+    let newSprintId = null;
+    if (boardId) {
+      try {
+        const createSprintResult = await client.callTool({
+          name: "createSprint",
+          arguments: {
+            boardId: String(boardId),
+            name: `Sprint-${Date.now()}`.substring(0, 25),
+            goal: "Test sprint created by MCP tool-test"
+          }
+        });
+        console.log("createSprintResult (raw):", createSprintResult);
+        let createSprintObj = createSprintResult;
+        if (
+          createSprintObj.content &&
+          Array.isArray(createSprintObj.content) &&
+          typeof createSprintObj.content[0]?.text === 'string'
+        ) {
+          createSprintObj = JSON.parse(createSprintObj.content[0].text);
+          console.log("createSprintResult (parsed):", createSprintObj);
+        }
+        console.log("createSprint:", createSprintObj.id ? "✅" : "❌", createSprintObj.id || "Unknown");
+        newSprintId = createSprintObj.id;
+      } catch (e) {
+        console.log("createSprint: ❌", e instanceof Error ? e.message : String(e));
+      }
+    }
+
+    // 6. createFilter
+    const createFilterResult = await client.callTool({
+      name: "createFilter",
+      arguments: {
+        name: `Test Filter ${Date.now()}`,
+        jql: "project = XDEMO2 ORDER BY created DESC",
+        description: "Test filter created by MCP tool-test",
+        favourite: false
+      }
+    });
+    console.log("createFilterResult (raw):", createFilterResult);
+    let createFilterObj = createFilterResult;
+    if (
+      createFilterObj.content &&
+      Array.isArray(createFilterObj.content) &&
+      typeof createFilterObj.content[0]?.text === 'string'
+    ) {
+      createFilterObj = JSON.parse(createFilterObj.content[0].text);
+      console.log("createFilterResult (parsed):", createFilterObj);
+    }
+    console.log("createFilter:", createFilterObj.id ? "✅" : "❌", createFilterObj.id || "Unknown");
+
+    // 7. createDashboard
+    const createDashboardResult = await client.callTool({
+      name: "createDashboard",
+      arguments: {
+        name: `Dashboard-${Date.now()}`,
+        description: "Test dashboard created by MCP tool-test"
+      }
+    });
+    console.log("createDashboardResult (raw):", createDashboardResult);
+    let createDashboardObj = createDashboardResult;
+    if (
+      createDashboardObj.content &&
+      Array.isArray(createDashboardObj.content) &&
+      typeof createDashboardObj.content[0]?.text === 'string'
+    ) {
+      createDashboardObj = JSON.parse(createDashboardObj.content[0].text);
+      console.log("createDashboardResult (parsed):", createDashboardObj);
+    }
+    console.log("createDashboard:", createDashboardObj.id ? "✅" : "❌", createDashboardObj.id || "Unknown");
+
+    // === Confluence Tools ===
+    console.log("\n--- Confluence Tool Tests ---");
+    // const confluenceSpaceKey = "AWA1";
+    // let spaceId: string | null = null;
+    // let parentId: string | null = null;
+    // Lấy đúng spaceId (số) từ resource confluence://spaces/AWA1
+    // try {
+    //   const spaceResult = await client.readResource({ uri: `confluence://spaces/${confluenceSpaceKey}` });
+    //   if (spaceResult.contents && spaceResult.contents[0].text) {
+    //     const data = JSON.parse(String(spaceResult.contents[0].text));
+    //     console.log("spaceResult data:", data);
+    //     spaceId = data.id || data.spaceId || (data.space && data.space.id) || null;
+    //     console.log(`Using spaceId for createPage: ${spaceId}`);
+    //   }
+    // } catch (e) {
+    //   console.log("Error fetching spaceId:", e instanceof Error ? e.message : String(e));
+    // }
+    // Sử dụng trực tiếp spaceId số
+    const confluenceSpaceId = "19464200";
+    let spaceId: string | null = confluenceSpaceId;
+    let parentId: string | null = null;
+    // Lấy parentId là page đầu tiên trong resource confluence://spaces/19464200/pages
+    try {
+      const pagesResult = await client.readResource({ uri: `confluence://spaces/${confluenceSpaceId}/pages` });
+      if (pagesResult.contents && pagesResult.contents[0].text) {
+        const data = JSON.parse(String(pagesResult.contents[0].text));
+        if (data.pages && data.pages.length > 0) {
+          parentId = data.pages[0].id;
+          console.log(`Using parentId for createPage: ${parentId}`);
+        }
+      }
+    } catch (e) {
+      console.log("Error fetching parentId:", e instanceof Error ? e.message : String(e));
+    }
     const newPageTitle = `Test Page ${new Date().toLocaleString()}`;
     let newPageId: string | null = null;
-
-    // Thông tin Confluence mới
-    const confluenceSpaceKey = "AWA1";
-    const confluenceHomePageId = "19464453";
-
-    // Thử lấy thông tin space trước để có spaceId đúng
-    try {
-      // Lấy thông tin space bằng spaceKey
-      const spaceResult = await client.readResource({
-        uri: `confluence://spaces/${confluenceSpaceKey}`
-      });
-      
-      if (spaceResult.contents && spaceResult.contents[0].text) {
-        const spaceData = JSON.parse(String(spaceResult.contents[0].text));
-        
-        // Lấy spaceId từ kết quả (ưu tiên spaceId hoặc id, fallback về '19464200')
-        console.log(`DEBUG: spaceData =`, spaceData);
-        const spaceId = spaceData && (spaceData.spaceId || spaceData.id) ? (spaceData.spaceId || spaceData.id) : "19464200";
-        
-        console.log(`Got spaceId: ${spaceId} for spaceKey: ${confluenceSpaceKey}`);
-        
-        try {
-          // Tìm ID của trang gốc của space để sử dụng làm parentId
-          let rootPageId = "";
-          try {
-            const spaceRootResult = await client.readResource({
-              uri: `confluence://spaces/${spaceData.key}/rootpage`
-            });
-            
-            if (spaceRootResult.contents && spaceRootResult.contents[0].text) {
-              const rootPageData = JSON.parse(String(spaceRootResult.contents[0].text));
-              rootPageId = rootPageData?.id;
-              console.log(`Found root page ID: ${rootPageId} for space ${spaceData.key}`);
-            }
-          } catch (rootPageError) {
-            console.log("Failed to find root page, will use a hardcoded ID");
-            // Nếu không tìm thấy, sử dụng một ID cha cụ thể từ không gian của bạn
-            rootPageId = confluenceHomePageId;  // Sử dụng ID trang thực từ không gian của bạn
+    if (spaceId && parentId) {
+      try {
+        const createPageResult = await client.callTool({
+          name: "createPage",
+          arguments: {
+            spaceId: spaceId,
+            parentId: parentId,
+            title: newPageTitle,
+            content: "<p>This is a test page created by MCP tool-test</p>"
           }
-          
-          const createPageResult = await client.callTool({
-            name: "createPage",
-            arguments: {
-              spaceId: spaceId,       // Sử dụng spaceId (dạng số)
-              parentId: rootPageId,   // Sử dụng ID trang cha thực tế
-              title: newPageTitle,
-              content: "<p>This is a test page created by MCP tool-test</p>"
-            }
-          });
-          
-          console.log("createPage - Success:", createPageResult.id ? "✅" : "❌", "ID:", createPageResult.id || "Unknown");
-          
-          if (createPageResult && createPageResult.id) {
-            newPageId = String(createPageResult.id); // Chuyển đổi sang string để đảm bảo tương thích kiểu dữ liệu
-          }
-        } catch (pageError: any) {
-          console.log("createPage - Failed: ❌", pageError instanceof Error ? pageError.message : String(pageError));
+        });
+        console.log("createPageResult (raw):", createPageResult);
+        let createPageObj = createPageResult;
+        if (
+          createPageObj.content &&
+          Array.isArray(createPageObj.content) &&
+          typeof createPageObj.content[0]?.text === 'string'
+        ) {
+          createPageObj = JSON.parse(createPageObj.content[0].text);
+          console.log("createPageResult (parsed):", createPageObj);
         }
-      } else {
-        console.log("Failed to get space data");
+        console.log("createPage:", createPageObj.id ? "✅" : "❌", createPageObj.id || "Unknown");
+        if (createPageObj && createPageObj.id) newPageId = String(createPageObj.id);
+      } catch (e) {
+        console.log("createPage: ❌", e instanceof Error ? e.message : String(e));
       }
-    } catch (spaceError: any) {
-      console.log("Space lookup failed: ❌", spaceError instanceof Error ? spaceError.message : String(spaceError));
+    } else {
+      console.log("Skip createPage: No spaceId or parentId available");
     }
-    
-    // 6. updatePage
+    // 2. updatePage
     if (newPageId) {
       try {
         const updatePageResult = await client.callTool({
@@ -184,17 +306,25 @@ async function main() {
             pageId: newPageId,
             title: `${newPageTitle} (Updated)`,
             content: "<p>This page has been updated by MCP tool-test</p>",
-            version: 1,
-            addLabels: ["test", "mcp-client"]
+            version: 1
           }
         });
-        console.log("updatePage - Success:", updatePageResult.success ? "✅" : "❌");
-      } catch (error) {
-        console.log("updatePage - Failed: ❌", error instanceof Error ? error.message : String(error));
+        console.log("updatePageResult (raw):", updatePageResult);
+        let updatePageObj = updatePageResult;
+        if (
+          updatePageObj.content &&
+          Array.isArray(updatePageObj.content) &&
+          typeof updatePageObj.content[0]?.text === 'string'
+        ) {
+          updatePageObj = JSON.parse(updatePageObj.content[0].text);
+          console.log("updatePageResult (parsed):", updatePageObj);
+        }
+        console.log("updatePage:", updatePageObj.success ? "✅" : "❌");
+      } catch (e) {
+        console.log("updatePage: ❌", e instanceof Error ? e.message : String(e));
       }
     }
-    
-    // 7. addComment
+    // 3. addComment
     if (newPageId) {
       try {
         const addCommentResult = await client.callTool({
@@ -204,121 +334,22 @@ async function main() {
             content: "<p>This is a test comment added by MCP tool-test</p>"
           }
         });
-        console.log("addComment - Success:", addCommentResult.id ? "✅" : "❌");
-        console.log("addComment - Raw result:", JSON.stringify(addCommentResult, null, 2));
-      } catch (error) {
-        console.log("addComment - Failed: ❌", error instanceof Error ? error.message : String(error));
-        if (error && typeof error === 'object') {
-          console.log("addComment - Error object:", JSON.stringify(error, null, 2));
+        console.log("addCommentResult (raw):", addCommentResult);
+        let addCommentObj = addCommentResult;
+        if (
+          addCommentObj.content &&
+          Array.isArray(addCommentObj.content) &&
+          typeof addCommentObj.content[0]?.text === 'string'
+        ) {
+          addCommentObj = JSON.parse(addCommentObj.content[0].text);
+          console.log("addCommentResult (parsed):", addCommentObj);
         }
+        console.log("addComment:", addCommentObj.id ? "✅" : "❌");
+      } catch (e) {
+        console.log("addComment: ❌", e instanceof Error ? e.message : String(e));
       }
     }
-
-    // 8. Test new features from version 2.0.0
-    console.log("\n=== Testing New Features (v2.0.0) ===");
-
-    // 8.1 Create Sprint
-    console.log("Testing Sprint Management...");
-    // Đầu tiên, tìm một board hỗ trợ sprints
-    let boardId = null;
-    let sprintEnabled = false;
-    try {
-      // Lấy danh sách boards
-      console.log("Finding a board that supports sprints...");
-      const boardsResult = await client.readResource({
-        uri: `jira://boards`
-      });
-      if (boardsResult.contents && boardsResult.contents[0].text) {
-        const boardsData = JSON.parse(String(boardsResult.contents[0].text));
-        if (boardsData && boardsData.boards && boardsData.boards.length > 0) {
-          for (const board of boardsData.boards) {
-            console.log(`Checking board: ${board.name} (ID: ${board.id}, Type: ${board.type})`);
-            if (board.type === "scrum") {
-              boardId = board.id;
-              sprintEnabled = true;
-              console.log(`Found Scrum board: ${board.name} (ID: ${boardId})`);
-              break;
-            }
-          }
-          if (!boardId && boardsData.boards.length > 0) {
-            boardId = boardsData.boards[0].id;
-            console.log(`No Scrum board found, using first available board: ID ${boardId}`);
-          }
-        }
-      }
-    } catch (boardError: any) {
-      console.log("Failed to find boards:", boardError.message || String(boardError));
-    }
-    // BỎ QUA: Không test createSprint/startSprint
-    // let newSprintId = "";
-    // if (boardId) {
-    //   try {
-    //     const createSprintResult = await client.callTool({
-    //       name: "createSprint", 
-    //       arguments: {
-    //         boardId: String(boardId),
-    //         name: `Sprint-${Date.now()}`.substring(0, 25),
-    //         goal: "Test sprint created by MCP tool-test"
-    //       }
-    //     });
-    //     console.log("createSprint - Success:", createSprintResult.id ? "✅" : "❌", "ID:", createSprintResult.id || "Unknown");
-    //     newSprintId = createSprintResult.id ? String(createSprintResult.id) : "";
-    //   } catch (sprintError: any) {
-    //     console.log("createSprint - Failed: ❌", sprintError.message || String(sprintError));
-    //     console.log("Note: This board may not support sprints. Try with a Scrum board instead.");
-    //   }
-    // } else {
-    //   console.log("createSprint - Skipped: No suitable board found");
-    // }
-    // if (newSprintId) {
-    //   try {
-    //     const startSprintResult = await client.callTool({
-    //       name: "startSprint",
-    //       arguments: {
-    //         sprintId: newSprintId,
-    //         startDate: new Date().toISOString(),
-    //         endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
-    //       }
-    //     });
-    //     console.log("startSprint - Success:", startSprintResult.success ? "✅" : "❌");
-    //   } catch (error) {
-    //     console.log("startSprint - Failed: ❌", error instanceof Error ? error.message : String(error));
-    //   }
-    // }
-    // 8.3 Test Dashboard management
-    // BỎ QUA: Không test createDashboard và addGadgetToDashboard
-    // try {
-    //   const createDashboardResult = await client.callTool({
-    //     name: "createDashboard",
-    //     arguments: {
-    //       name: `Dashboard-${Date.now()}`,
-    //       description: "Test dashboard created by MCP tool-test"
-    //     }
-    //   });
-    //   console.log("createDashboard - Success:", createDashboardResult.id ? "✅" : "❌", "ID:", createDashboardResult.id || "Unknown");
-    //   const dashboardId = createDashboardResult.id ? String(createDashboardResult.id) : "";
-    //   if (dashboardId) {
-    //     try {
-    //       const addGadgetResult = await client.callTool({
-    //         name: "addGadgetToDashboard",
-    //         arguments: {
-    //           dashboardId: dashboardId,
-    //           gadgetUri: "rest/gadgets/1.0/g/com.atlassian.jira.gadgets:assigned-to-me-gadget/gadgets/assigned-to-me-gadget.xml",
-    //           color: "blue",
-    //           position: { row: 0, column: 0 }
-    //         }
-    //       });
-    //       const gadgetId = addGadgetResult.id ? String(addGadgetResult.id) : "";
-    //       console.log("addGadgetToDashboard - Success:", gadgetId ? "✅" : "❌", "ID:", gadgetId || "Unknown");
-    //     } catch (error) {
-    //       console.log("addGadgetToDashboard - Failed: ❌", error instanceof Error ? error.message : String(error));
-    //     }
-    //   }
-    // } catch (error) {
-    //   console.log("createDashboard - Failed: ❌", error instanceof Error ? error.message : String(error));
-    // }
-
-    // 8.5 Test Confluence page title update
+    // 4. updatePageTitle
     if (newPageId) {
       try {
         const updatePageTitleResult = await client.callTool({
@@ -329,19 +360,76 @@ async function main() {
             version: 2
           }
         });
-        console.log("updatePageTitle - Success:", updatePageTitleResult.success ? "✅" : "❌");
-      } catch (error) {
-        console.log("updatePageTitle - Failed: ❌", error instanceof Error ? error.message : String(error));
+        console.log("updatePageTitleResult (raw):", updatePageTitleResult);
+        let updatePageTitleObj = updatePageTitleResult;
+        if (
+          updatePageTitleObj.content &&
+          Array.isArray(updatePageTitleObj.content) &&
+          typeof updatePageTitleObj.content[0]?.text === 'string'
+        ) {
+          updatePageTitleObj = JSON.parse(updatePageTitleObj.content[0].text);
+          console.log("updatePageTitleResult (parsed):", updatePageTitleObj);
+        }
+        console.log("updatePageTitle:", updatePageTitleObj.success ? "✅" : "❌");
+      } catch (e) {
+        console.log("updatePageTitle: ❌", e instanceof Error ? e.message : String(e));
       }
-    } else {
-      console.log("updatePageTitle - Skipped (no page ID available)");
+    }
+    // 5. deletePage
+    if (newPageId) {
+      try {
+        const deletePageResult = await client.callTool({
+          name: "deletePage",
+          arguments: {
+            pageId: newPageId
+          }
+        });
+        console.log("deletePageResult (raw):", deletePageResult);
+        let deletePageObj = deletePageResult;
+        if (
+          deletePageObj.content &&
+          Array.isArray(deletePageObj.content) &&
+          typeof deletePageObj.content[0]?.text === 'string'
+        ) {
+          deletePageObj = JSON.parse(deletePageObj.content[0].text);
+          console.log("deletePageResult (parsed):", deletePageObj);
+        }
+        console.log("deletePage:", deletePageObj.success ? "✅" : "❌");
+      } catch (e) {
+        console.log("deletePage: ❌", e instanceof Error ? e.message : String(e));
+      }
+    }
+
+    // === Resource Test ===
+    console.log("\n--- Resource Test ---");
+    // Jira resource
+    try {
+      const issuesResult = await client.readResource({ uri: "jira://issues" });
+      if (issuesResult.contents && issuesResult.contents[0].text) {
+        const data = JSON.parse(String(issuesResult.contents[0].text));
+        console.log("jira://issues response: total issues:", data.metadata?.total ?? data.issues?.length ?? "?");
+      } else {
+        console.log("No content returned for jira://issues");
+      }
+    } catch (e) {
+      console.log("Error reading jira://issues:", e instanceof Error ? e.message : String(e));
+    }
+    // Confluence resource
+    try {
+      const pagesResult = await client.readResource({ uri: `confluence://spaces/${confluenceSpaceId}/pages` });
+      if (pagesResult.contents && pagesResult.contents[0].text) {
+        const data = JSON.parse(String(pagesResult.contents[0].text));
+        console.log("confluence://spaces/19464200/pages response: total pages:", data.metadata?.total ?? data.pages?.length ?? "?");
+      } else {
+        console.log("No content returned for confluence://spaces/19464200/pages");
+      }
+    } catch (e) {
+      console.log("Error reading confluence://spaces/19464200/pages:", e instanceof Error ? e.message : String(e));
     }
 
     // Summary
     console.log("\n=== Tool Test Summary ===");
-    console.log("All tools have been tested!");
-    // Close connection
-    console.log("\nClosing connection...");
+    console.log("All important tools and resources have been tested!");
     await client.close();
     console.log("Connection closed successfully");
   } catch (error) {

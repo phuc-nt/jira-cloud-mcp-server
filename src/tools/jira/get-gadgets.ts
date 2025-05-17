@@ -1,9 +1,8 @@
-import { createStandardResource, getAtlassianConfigFromEnv } from '../../utils/mcp-resource.js';
-import { ResourceTemplate, McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { gadgetListSchema } from '../../schemas/jira.js';
 import { getJiraAvailableGadgets } from '../../utils/jira-tool-api-v3.js';
 import { Logger } from '../../utils/logger.js';
-import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
+import { Config, Resources } from '../../utils/mcp-helpers.js';
 
 const logger = Logger.getLogger('JiraTools:getGadgets');
 
@@ -11,7 +10,7 @@ export const registerGetJiraGadgetsResource = (server: McpServer) => {
   server.resource(
     'jira-gadgets-list',
     new ResourceTemplate('jira://gadgets', {
-      list: async (_extra) => ({
+      list: async (_extra: any) => ({
         resources: [
           {
             uri: 'jira://gadgets',
@@ -25,11 +24,10 @@ export const registerGetJiraGadgetsResource = (server: McpServer) => {
     async (uri: string | URL, params: Record<string, any>, extra: any) => {
       try {
         // Get config from context or environment
-        const config: AtlassianConfig = extra?.context?.atlassianConfig || getAtlassianConfigFromEnv();
+        const config = Config.getConfigFromContextOrEnv(extra?.context);
         const uriStr = typeof uri === 'string' ? uri : uri.href;
-        
         const gadgets = await getJiraAvailableGadgets(config);
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriStr,
           gadgets,
           'gadgets',
