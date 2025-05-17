@@ -168,252 +168,134 @@ Tài liệu này cung cấp thông tin chi tiết về implementation, API endpo
 
 ## Implementation Details: Hướng dẫn mở rộng Resource & Tool cho Developer
 
-Khi muốn thêm mới **Resource** (truy vấn dữ liệu) hoặc **Tool** (thao tác/mutation) cho Jira hoặc Confluence, hãy làm theo các bước sau:
+Khi muốn thêm mới **Resource** (truy vấn dữ liệu) hoặc **Tool** (thao tác/mutation) cho Jira hoặc Confluence, hãy làm theo các bước sau để đảm bảo codebase đồng nhất, dễ bảo trì, mở rộng và tương thích chuẩn MCP SDK:
 
-### 1. Xác định loại bạn muốn thêm
+### 1. Phân biệt Resource và Tool
 - **Resource**: Trả về dữ liệu, chỉ đọc (GET), ví dụ: danh sách issue, chi tiết project, các comment, v.v.
 - **Tool**: Thực hiện hành động/thao tác (POST/PUT/DELETE), ví dụ: tạo issue, cập nhật filter, thêm comment, v.v.
 
-### 2. Chọn đúng thư mục và file
-- **Resource**
-  - Thêm file mới hoặc cập nhật file trong:
-    - `src/resources/jira/` (cho Jira)
-    - `src/resources/confluence/` (cho Confluence)
-  - Đăng ký resource mới trong file `index.ts` tương ứng (nếu cần).
-- **Tool**
-  - Thêm file mới hoặc cập nhật file trong:
-    - `src/tools/jira/` (cho Jira)
-    - `src/tools/confluence/` (cho Confluence)
+### 2. Vị trí file
+- **Resource**: Thêm/cập nhật file trong:
+  - `src/resources/jira/` (cho Jira)
+  - `src/resources/confluence/` (cho Confluence)
+  - Đăng ký resource mới trong file `index.ts` tương ứng nếu cần.
+- **Tool**: Thêm/cập nhật file trong:
+  - `src/tools/jira/` (cho Jira)
+  - `src/tools/confluence/` (cho Confluence)
   - Đăng ký tool mới trong `src/tools/index.ts`.
 
-### 3. Tạo và đăng ký resource
+### 3. Sử dụng helpers chuẩn hóa
+- **Luôn sử dụng helpers mới:**
+  - Import `Config` và `Resources` từ `../../utils/mcp-helpers.js`.
+  - Không tự gọi fetch/axios trực tiếp trong resource/tool, mà phải dùng các hàm helper trong `src/utils/jira-resource-api.ts`, `src/utils/confluence-resource-api.ts` (resource) hoặc các file tool-api tương ứng.
+- **Ví dụ import chuẩn:**
+  ```typescript
+  import { Config, Resources } from '../../utils/mcp-helpers.js';
+  ```
 
-#### Cách mới nhất để đăng ký resource
-Trong phiên bản cập nhật, thay vì sử dụng wrapper `registerResource()`, hãy sử dụng trực tiếp `server.resource()`:
-
-```typescript
-// Trong file resource (vd: src/resources/jira/your-resource.ts)
-
-// 1. Tạo một hàm để lấy Atlassian config từ environment
-function getAtlassianConfigFromEnv(): AtlassianConfig {
-  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-
-  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
-    throw new Error('Missing Atlassian credentials in environment variables');
-  }
-
-  return {
-    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
-      ? `https://${ATLASSIAN_SITE_NAME}` 
-      : ATLASSIAN_SITE_NAME,
-    email: ATLASSIAN_USER_EMAIL,
-    apiToken: ATLASSIAN_API_TOKEN
-  };
-}
-
-// 2. Tạo và đăng ký resource trực tiếp
-export function registerYourResource(server: McpServer) {
-  server.resource(
-    'resource-name',  // Tên resource, dùng để đăng ký và debug
-    new ResourceTemplate('resource://pattern/{param}', {  // Template với URI pattern và list callback
-      list: async (_extra) => ({
-        resources: [
-          {
-            uri: 'resource://pattern/{param}',
-            name: 'Resource Name',
-            description: 'Resource description',
-            mimeType: 'application/json'
-          }
-        ]
-      })
-    }),
-    async (uri, params, _extra) => {
-      try {
-        // Lấy config từ environment để đảm bảo có credentials mới nhất
-        const config = getAtlassianConfigFromEnv();
-        
-        // Xử lý params từ URI pattern
+### 4. Đăng ký resource theo chuẩn MCP
+- Đăng ký resource qua `server.resource()` với `ResourceTemplate` và callback chuẩn hóa:
+  ```typescript
+  export function registerYourResource(server: McpServer) {
+    server.resource(
+      'unique-resource-name',
+      new ResourceTemplate('resource://pattern/{param}', {
+        list: async (_extra) => ({
+          resources: [
+            {
+              uri: 'resource://pattern/{param}',
+              name: 'Resource Name',
+              description: 'Resource description',
+              mimeType: 'application/json'
+            }
+          ]
+        })
+      }),
+      async (uri, params, extra) => {
+        // Ưu tiên lấy config từ context nếu có, fallback về env
+        const config = (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig)
+          ? (extra.context as any).atlassianConfig
+          : Config.getAtlassianConfigFromEnv();
+        // Xử lý params
         const param = Array.isArray(params.param) ? params.param[0] : params.param;
-        
-        // Gọi API hoặc xử lý dữ liệu
+        // Gọi API helper
         const data = await yourApiFunction(config, param);
-        
-        // Format URI string
-        const uriString = typeof uri === 'string' ? uri : uri.href;
-        
-        // Trả về dữ liệu theo format MCP
-        return {
-          contents: [{
-            uri: uriString,
-            mimeType: 'application/json',
-            text: JSON.stringify({
-              resource: data,
-              metadata: { self: uriString } 
-            })
-          }]
-        };
-      } catch (error) {
-        // Xử lý lỗi
-        logger.error(`Error in resource handler:`, error);
-        throw error;
+        // Chuẩn hóa response
+        return Resources.createStandardResource(
+          typeof uri === 'string' ? uri : uri.href,
+          data.results || [], // hoặc data tuỳ API
+          'resourceKey',      // ví dụ: 'issues', 'pages', ...
+          yourSchema,
+          data.size || (data.results || []).length,
+          data.limit || (data.results || []).length,
+          0,
+          'uiUrl nếu có'
+        );
       }
-    }
-  );
-}
-```
-
-#### Tránh trùng lặp resource
-Để tránh trùng lặp resource khi đăng ký (dẫn đến chỉ hiển thị resource cuối cùng được đăng ký), hãy đảm bảo:
-
-1. **Mỗi resource cần có tên (name) duy nhất** khi đăng ký:
-```typescript
-server.resource('unique-resource-name', ...)
-```
-
-2. **Chỉ đăng ký mỗi URI pattern một lần** và không mở rộng cùng một pattern trong nhiều file khác nhau.
-
-3. **Đảm bảo `list` callback luôn trả về đúng URI pattern** và thông tin mô tả resource.
-
-### 4. Sử dụng các helper API đúng chuẩn
-- Không tự gọi trực tiếp fetch() hoặc axios trong resource/tool.
-- Luôn sử dụng các hàm helper đã có trong:
-  - `src/utils/jira-resource-api.ts`, `src/utils/confluence-resource-api.ts` (cho resource)
-  - `src/utils/jira-tool-api-v3.ts`, `src/utils/jira-tool-api-agile.ts`, `src/utils/confluence-tool-api.ts` (cho tool)
-- Nếu cần gọi API mới, hãy bổ sung helper function vào các file trên.
-
-### 5. Xử lý config và context
-- **Cách ưu tiên**: Đối với mỗi file resource, tạo hàm `getAtlassianConfigFromEnv()` riêng để đảm bảo luôn lấy thông tin mới nhất:
-```typescript
-function getAtlassianConfigFromEnv(): AtlassianConfig {
-  // Đọc từ env và trả về AtlassianConfig
-}
-```
-
-- **Sử dụng context nếu có**: Context được truyền tự động qua `_extra.context` trong handler:
-```typescript
-async (uri, params, _extra) => {
-  let config: AtlassianConfig;
-  if (_extra?.context?.atlassianConfig) {
-    config = _extra.context.atlassianConfig;
-  } else {
-    config = getAtlassianConfigFromEnv();
+    );
   }
-  // Xử lý tiếp...
-}
-```
+  ```
+- **Lưu ý:**
+  - Không trả về object tự do, luôn dùng `Resources.createStandardResource` để chuẩn hóa metadata, schema, paging, links.
+  - Đảm bảo resource name (tên đầu tiên khi đăng ký) là duy nhất.
+  - Không đăng ký trùng URI pattern ở nhiều file.
 
-### 6. Định nghĩa schema dữ liệu
-- Mỗi resource/tool mới **bắt buộc phải có schema** validate input/output.
-- Thêm hoặc cập nhật schema trong:
+### 5. Chuẩn hóa schema dữ liệu
+- Mỗi resource/tool **bắt buộc phải có schema** validate input/output.
+- Thêm/cập nhật schema trong:
   - `src/schemas/jira.ts` (cho Jira)
   - `src/schemas/confluence.ts` (cho Confluence)
 - Đảm bảo schema phản ánh đúng dữ liệu thực tế trả về/tạo ra từ Atlassian API.
 
-### 7. Tạo và đăng ký tool
-Với tools, cách đăng ký vẫn thống nhất:
+### 6. Xử lý config và context an toàn
+- Luôn ưu tiên lấy config từ context nếu có (khi gọi từ tool hoặc resource lồng nhau), fallback về env:
+  ```typescript
+  const config = (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig)
+    ? (extra.context as any).atlassianConfig
+    : Config.getAtlassianConfigFromEnv();
+  ```
+- Không hardcode credentials, không truyền config qua params.
 
-```typescript
-// Trong file tool (vd: src/tools/jira/your-tool.ts)
-export function registerYourTool(server: any) {
-  server.tool(
-    'tool-name',  // Tên tool
-    'Tool description', // Mô tả tool
-    {
-      // Schema input cho tool
-      type: 'object',
-      properties: {
-        param1: { type: 'string', description: 'Parameter 1' },
-        // ... các tham số khác
+### 7. Đăng ký tool theo chuẩn MCP
+- Đăng ký tool qua `server.tool()` với schema input rõ ràng, callback chuẩn hóa:
+  ```typescript
+  export function registerYourTool(server: any) {
+    server.tool(
+      'tool-name',
+      'Tool description',
+      {
+        type: 'object',
+        properties: { param1: { type: 'string' } },
+        required: ['param1']
       },
-      required: ['param1']
-    },
-    async (params: any, context: any) => {
-      try {
-        // Sử dụng context.atlassianConfig có sẵn
+      async (params, context) => {
         const { atlassianConfig } = context;
-        
-        // Xử lý và gọi API
         const result = await yourToolFunction(atlassianConfig, params);
-        
-        // Trả về kết quả
         return {
-          content: [
-            { type: 'text', text: `Operation completed successfully: ${result}` }
-          ]
-        };
-      } catch (error) {
-        // Xử lý lỗi
-        logger.error(`Error in tool handler:`, error);
-        return {
-          content: [{ type: 'text', text: `Error: ${error.message}` }],
-          isError: true
+          content: [ { type: 'text', text: `Operation completed: ${result}` } ]
         };
       }
-    }
-  );
-}
-```
+    );
+  }
+  ```
+- Đăng ký tool trong `src/tools/index.ts` như resource.
 
-Sau đó, đăng ký tool trong `src/tools/index.ts`:
-```typescript
-// Trong src/tools/index.ts
-import { registerYourTool } from './jira/your-tool.js';
+### 8. Testing, debugging và backward compatibility
+- Luôn test resource/tool mới bằng test client (`dev_mcp-atlassian-test-client`).
+- Theo dõi log qua `Logger` để debug dễ dàng.
+- Khi refactor, giữ backward compatibility cho client cũ (nếu cần), không đổi format response đột ngột.
 
-export function registerAllTools(server: any) {
-  // Đăng ký các tool khác...
-  registerYourTool(server);
-}
-```
+### 9. Lưu ý bảo mật
+- Không log credentials/API token ra log file.
+- Không trả về thông tin nhạy cảm trong response.
+- Chỉ expose các endpoint/resource thực sự cần thiết.
 
-### 8. Testing và debugging
+### 10. Cập nhật tài liệu
+- Sau khi thêm resource/tool mới, cập nhật lại bảng liệt kê resource/tool và schema trong tài liệu này.
+- Ghi chú rõ các thay đổi breaking change (nếu có).
 
-#### Kiểm tra resource với test client
-Sử dụng MCP test client từ đường dẫn `dev_mcp-atlassian-test-client`:
-
-```bash
-# Kiểm tra danh sách tất cả resource đã đăng ký
-cd dev_mcp-atlassian-test-client
-npx ts-node --esm src/list-mcp-inventory.ts
-
-# Kiểm tra resource cụ thể
-npx ts-node --esm src/test-your-resource.ts
-```
-
-#### Theo dõi logs
-Khi debug, sử dụng các lệnh logging:
-```typescript
-import { Logger } from '../../utils/logger.js';
-const logger = Logger.getLogger('YourResourceName');
-
-// Trong code
-logger.debug('Debug info', data);
-logger.info('Operation completed');
-logger.error('Error occurred', error);
-```
-
-### 9. Cập nhật tài liệu
-- Sau khi thêm resource/tool mới, cập nhật lại tài liệu:
-  - Bảng liệt kê resource/tool trong `docs/introduction/resources-and-tools.md`
-  - Schema mô tả input/output nếu có thay đổi
-
-### 10. Lưu ý quan trọng
-- **Tên resource**: Đảm bảo mỗi resource có tên duy nhất khi đăng ký.
-- **URI pattern**: Thiết kế URI pattern rõ ràng, nhất quán với các pattern khác.
-- **List callback**: Đảm bảo list callback trả về chính xác URI pattern và mô tả.
-- **Config**: Tự tạo hàm `getAtlassianConfigFromEnv()` trong mỗi file resource.
-- **Error handling**: Bắt và xử lý lỗi phù hợp, trả về thông báo rõ ràng.
-- **Schema**: Luôn định nghĩa và sử dụng schema để validate dữ liệu.
-- **Testing**: Kiểm tra resource đã đăng ký đúng chưa bằng client test.
-
-**Tóm tắt trình tự khi thêm mới:**
-1. Xác định loại (resource/tool) và vị trí file.
-2. Tạo file resource/tool mới với đúng cấu trúc.
-3. Tạo hàm `getAtlassianConfigFromEnv()` trong mỗi file resource.
-4. Đăng ký resource trực tiếp qua `server.resource()` hoặc tool qua `server.tool()`.
-5. Định nghĩa/cập nhật schema.
-6. Kiểm tra với client test để đảm bảo resource đã đăng ký thành công.
-7. Cập nhật tài liệu.
-
-Nếu tuân thủ đúng các bước trên, việc mở rộng MCP Atlassian Server sẽ luôn nhất quán, dễ bảo trì và dễ mở rộng về sau!
+---
+**Tóm lại:**
+- Luôn dùng helpers mới (`Config`, `Resources`), chuẩn hóa response, schema, context.
+- Không lặp lại lỗi cũ (trùng resource, trả về object tự do, thiếu schema, hardcode config).
+- Ưu tiên bảo mật, dễ mở rộng, dễ bảo trì, tương thích MCP SDK.

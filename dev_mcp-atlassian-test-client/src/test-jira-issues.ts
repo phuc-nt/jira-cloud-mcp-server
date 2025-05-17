@@ -66,7 +66,7 @@ async function main() {
   });
 
   // Path to MCP server
-  const serverPath = "/opt/homebrew/lib/node_modules/@phuc-nt/mcp-atlassian-server/dist/index.js";
+  const serverPath = "/Users/phucnt/Workspace/mcp-atlassian-server/dist/index.js";
 
   // Load environment variables
   const envVars = loadEnv();

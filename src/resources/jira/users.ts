@@ -2,8 +2,8 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { Logger } from '../../utils/logger.js';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import fetch from 'cross-fetch';
-import { createStandardResource } from '../../utils/mcp-resource.js';
 import { usersListSchema, userSchema } from '../../schemas/jira.js';
+import { Config, Resources } from '../../utils/mcp-helpers.js';
 
 const logger = Logger.getLogger('JiraResource:Users');
 
@@ -81,27 +81,6 @@ async function getUser(config: AtlassianConfig, accountId: string): Promise<any>
 }
 
 /**
- * Get Atlassian config from environment variables
- */
-function getAtlassianConfigFromEnv(): AtlassianConfig {
-  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-
-  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
-    throw new Error('Missing Atlassian credentials in environment variables');
-  }
-
-  return {
-    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
-      ? `https://${ATLASSIAN_SITE_NAME}` 
-      : ATLASSIAN_SITE_NAME,
-    email: ATLASSIAN_USER_EMAIL,
-    apiToken: ATLASSIAN_API_TOKEN
-  };
-}
-
-/**
  * Register Jira user-related resources
  * @param server MCP Server instance
  */
@@ -160,7 +139,7 @@ export function registerUserResources(server: McpServer) {
     async (uri, params, _extra) => {
       let normalizedAccountId = '';
       try {
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         if (!params.accountId) {
           throw new Error('Missing accountId in URI');
         }
@@ -180,7 +159,7 @@ export function registerUserResources(server: McpServer) {
         
         const uriString = typeof uri === 'string' ? uri : uri.href;
         // Chuẩn hóa metadata/schema cho resource chi tiết user
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriString,
           [formattedUser],
           'user',
@@ -214,7 +193,7 @@ export function registerUserResources(server: McpServer) {
     }),
     async (uri, params, _extra) => {
       try {
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         const projectKey = Array.isArray(params.projectKey) ? params.projectKey[0] : params.projectKey;
         if (!projectKey) throw new Error('Missing projectKey');
         const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
@@ -246,7 +225,7 @@ export function registerUserResources(server: McpServer) {
         
         const uriString = typeof uri === 'string' ? uri : uri.href;
         // Chuẩn hóa metadata/schema
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriString,
           formattedUsers,
           'users',
@@ -280,7 +259,7 @@ export function registerUserResources(server: McpServer) {
     }),
     async (uri, params, _extra) => {
       try {
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         const projectKey = Array.isArray(params.projectKey) ? params.projectKey[0] : params.projectKey;
         const roleId = Array.isArray(params.roleId) ? params.roleId[0] : params.roleId;
         if (!projectKey || !roleId) throw new Error('Missing projectKey or roleId');
@@ -313,7 +292,7 @@ export function registerUserResources(server: McpServer) {
           }));
         
         const uriString = typeof uri === 'string' ? uri : uri.href;
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriString,
           formattedUsers,
           'users',

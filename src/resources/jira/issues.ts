@@ -1,44 +1,22 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../../utils/logger.js';
-import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import { getIssue as getIssueApi, searchIssues as searchIssuesApi } from '../../utils/jira-resource-api.js';
-import { createStandardResource, extractPagingParams } from '../../utils/mcp-resource.js';
 import { issueSchema, issuesListSchema, transitionsListSchema, commentsListSchema } from '../../schemas/jira.js';
+import { Config, Resources } from '../../utils/mcp-helpers.js';
 
 const logger = Logger.getLogger('JiraResource:Issues');
 
 /**
- * Get Atlassian config from environment variables
- */
-function getAtlassianConfigFromEnv(): AtlassianConfig {
-  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-
-  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
-    throw new Error('Missing Atlassian credentials in environment variables');
-  }
-
-  return {
-    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
-      ? `https://${ATLASSIAN_SITE_NAME}` 
-      : ATLASSIAN_SITE_NAME,
-    email: ATLASSIAN_USER_EMAIL,
-    apiToken: ATLASSIAN_API_TOKEN
-  };
-}
-
-/**
  * Helper function to get issue details from Jira
  */
-async function getIssue(config: AtlassianConfig, issueKey: string): Promise<any> {
+async function getIssue(config: any, issueKey: string): Promise<any> {
   return await getIssueApi(config, issueKey);
 }
 
 /**
  * Helper function to get a list of issues from Jira (supports pagination)
  */
-async function getIssues(config: AtlassianConfig, startAt = 0, maxResults = 20, jql = ''): Promise<any> {
+async function getIssues(config: any, startAt = 0, maxResults = 20, jql = ''): Promise<any> {
   const jqlQuery = jql && jql.trim() ? jql.trim() : '';
   return await searchIssuesApi(config, jqlQuery, maxResults);
 }
@@ -46,14 +24,14 @@ async function getIssues(config: AtlassianConfig, startAt = 0, maxResults = 20, 
 /**
  * Helper function to search issues by JQL from Jira (supports pagination)
  */
-async function searchIssuesByJql(config: AtlassianConfig, jql: string, startAt = 0, maxResults = 20): Promise<any> {
+async function searchIssuesByJql(config: any, jql: string, startAt = 0, maxResults = 20): Promise<any> {
   return await searchIssuesApi(config, jql, maxResults);
 }
 
 /**
  * Helper function to get a list of transitions for an issue from Jira
  */
-async function getIssueTransitions(config: AtlassianConfig, issueKey: string): Promise<any> {
+async function getIssueTransitions(config: any, issueKey: string): Promise<any> {
   try {
     const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
     const headers = {
@@ -86,7 +64,7 @@ async function getIssueTransitions(config: AtlassianConfig, issueKey: string): P
 /**
  * Helper function to get a list of comments for an issue from Jira
  */
-async function getIssueComments(config: AtlassianConfig, issueKey: string, startAt = 0, maxResults = 20): Promise<any> {
+async function getIssueComments(config: any, issueKey: string, startAt = 0, maxResults = 20): Promise<any> {
   try {
     const auth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64');
     const headers = {
@@ -219,8 +197,8 @@ export function registerIssueResources(server: McpServer) {
     }),
     async (uri, params, _extra) => {
       try {
-        const config = getAtlassianConfigFromEnv();
-        const { limit, offset } = extractPagingParams(params);
+        const config = Config.getAtlassianConfigFromEnv();
+        const { limit, offset } = Resources.extractPagingParams(params);
         const jql = params.jql ? Array.isArray(params.jql) ? params.jql[0] : params.jql : '';
         const project = params.project ? Array.isArray(params.project) ? params.project[0] : params.project : '';
         const status = params.status ? Array.isArray(params.status) ? params.status[0] : params.status : '';
@@ -235,13 +213,13 @@ export function registerIssueResources(server: McpServer) {
         }
         
         logger.info(`Searching Jira issues with JQL: ${jqlQuery || 'All issues'}`);
-        const response = await searchIssuesByJql(config, jqlQuery, offset, limit);
+        const response = await searchIssuesApi(config, jqlQuery, limit);
         
         // Format issues data
         const formattedIssues = response.issues.map((issue: any) => formatIssueData(issue, config.baseUrl));
         
         const uriString = typeof uri === 'string' ? uri : uri.href;
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriString,
           formattedIssues,
           'issues',
@@ -277,7 +255,7 @@ export function registerIssueResources(server: McpServer) {
     }),
     async (uri, params, _extra) => {
       try {
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         let normalizedIssueKey = Array.isArray(params.issueKey) ? params.issueKey[0] : params.issueKey;
         
         if (!normalizedIssueKey) {
@@ -289,7 +267,7 @@ export function registerIssueResources(server: McpServer) {
         const formattedIssue = formatIssueData(issue, config.baseUrl);
         
         const uriString = typeof uri === 'string' ? uri : uri.href;
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriString,
           [formattedIssue],
           'issue',
@@ -325,7 +303,7 @@ export function registerIssueResources(server: McpServer) {
     }),
     async (uri, params, _extra) => {
       try {
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         let normalizedIssueKey = Array.isArray(params.issueKey) ? params.issueKey[0] : params.issueKey;
         
         if (!normalizedIssueKey) {
@@ -346,7 +324,7 @@ export function registerIssueResources(server: McpServer) {
         }));
         
         const uriString = typeof uri === 'string' ? uri : uri.href;
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriString,
           formattedTransitions,
           'transitions',
@@ -382,14 +360,14 @@ export function registerIssueResources(server: McpServer) {
     }),
     async (uri, params, _extra) => {
       try {
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         let normalizedIssueKey = Array.isArray(params.issueKey) ? params.issueKey[0] : params.issueKey;
         
         if (!normalizedIssueKey) {
           throw new Error('Missing issueKey in URI');
         }
         
-        const { limit, offset } = extractPagingParams(params);
+        const { limit, offset } = Resources.extractPagingParams(params);
         logger.info(`Getting comments for Jira issue: ${normalizedIssueKey}`);
         const commentData = await getIssueComments(config, normalizedIssueKey, offset, limit);
         
@@ -397,7 +375,7 @@ export function registerIssueResources(server: McpServer) {
         const formattedComments = (commentData.comments || []).map((c: any) => formatCommentData(c));
         
         const uriString = typeof uri === 'string' ? uri : uri.href;
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriString,
           formattedComments,
           'comments',

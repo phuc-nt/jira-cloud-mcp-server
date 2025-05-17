@@ -9,31 +9,9 @@ import { filterListSchema, filterSchema } from '../../schemas/jira.js';
 import { createStandardMetadata } from '../../schemas/common.js';
 import { getFilters, getFilterById, getMyFilters } from '../../utils/jira-resource-api.js';
 import { Logger } from '../../utils/logger.js';
-import { createStandardResource, extractPagingParams } from '../../utils/mcp-resource.js';
-import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
+import { Config, Resources } from '../../utils/mcp-helpers.js';
 
 const logger = Logger.getLogger('JiraFilterResources');
-
-/**
- * Get Atlassian config from environment variables
- */
-function getAtlassianConfigFromEnv(): AtlassianConfig {
-  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-
-  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
-    throw new Error('Missing Atlassian credentials in environment variables');
-  }
-
-  return {
-    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
-      ? `https://${ATLASSIAN_SITE_NAME}` 
-      : ATLASSIAN_SITE_NAME,
-    email: ATLASSIAN_USER_EMAIL,
-    apiToken: ATLASSIAN_API_TOKEN
-  };
-}
 
 /**
  * Register all Jira filter resources with MCP Server
@@ -91,11 +69,11 @@ export function registerFilterResources(server: McpServer) {
     async (uri: string | URL, params: Record<string, any>, _extra: any) => {
       try {
         // Get config from environment
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         
-        const { limit, offset } = extractPagingParams(params);
+        const { limit, offset } = Resources.extractPagingParams(params);
         const response = await getFilters(config, offset, limit);
-        return createStandardResource(
+        return Resources.createStandardResource(
           typeof uri === 'string' ? uri : uri.href,
           response.values,
           'filters',
@@ -116,11 +94,11 @@ export function registerFilterResources(server: McpServer) {
     async (uri: string | URL, params: Record<string, any>, _extra: any) => {
       try {
         // Get config from environment
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         
         const filterId = Array.isArray(params.filterId) ? params.filterId[0] : params.filterId;
         const filter = await getFilterById(config, filterId);
-        return createStandardResource(
+        return Resources.createStandardResource(
           typeof uri === 'string' ? uri : uri.href,
           [filter],
           'filter',
@@ -141,10 +119,10 @@ export function registerFilterResources(server: McpServer) {
     async (uri: string | URL, _params: Record<string, any>, _extra: any) => {
       try {
         // Get config from environment
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         
         const filters = await getMyFilters(config);
-        return createStandardResource(
+        return Resources.createStandardResource(
           typeof uri === 'string' ? uri : uri.href,
           filters,
           'filters',

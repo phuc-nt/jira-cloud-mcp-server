@@ -1,6 +1,66 @@
 # Kế hoạch Migration: Tái cấu trúc MCP Utils
 
-Kế hoạch này mô tả chi tiết các bước cần thực hiện để tái cấu trúc lại các module utility trong MCP Atlassian Server nhằm tối ưu codebase và giảm thiểu code dư thừa.
+## Checklist tiến độ migration (cập nhật mới nhất)
+
+### Resource (Jira + Confluence)
+- [x] Tạo helpers mới: `mcp-core.ts`, `mcp-helpers.ts`
+- [x] Migrate toàn bộ resource Confluence:
+  - [x] spaces.ts
+  - [x] pages.ts (bao gồm migrate metadata từ content-metadata.ts)
+  - [x] Xóa content-metadata.ts
+- [x] Migrate toàn bộ resource Jira:
+  - [x] issues.ts
+  - [x] projects.ts
+  - [x] boards.ts
+  - [x] sprints.ts
+  - [x] filters.ts
+  - [x] dashboards.ts
+  - [x] users.ts
+- [x] Chuẩn hóa response, schema, context cho toàn bộ resource
+- [x] Đảm bảo backward compatibility (giữ file tạm, không đổi format response đột ngột)
+- [x] Test lại toàn bộ resource bằng test client, Cline, Cursor, ...
+- [x] Cập nhật docs hướng dẫn mở rộng resource/tool đúng chuẩn refactor mới
+
+### Tool (Jira + Confluence)
+- [ ] Migrate toàn bộ tool Jira sang helpers mới (`Tools` trong mcp-helpers.ts)
+- [ ] Migrate toàn bộ tool Confluence sang helpers mới
+- [ ] Chuẩn hóa response, schema, context cho toàn bộ tool
+- [ ] Đảm bảo backward compatibility cho tool (giữ file tạm nếu cần)
+- [ ] Test lại toàn bộ tool bằng test client
+- [ ] Cập nhật docs hướng dẫn implement tool đúng chuẩn mới
+
+---
+## Hướng dẫn implement resource/tool (chuẩn mới)
+
+### Resource
+- Luôn import `Config`, `Resources` từ `../../utils/mcp-helpers.js`
+- Không dùng hàm cũ từ mcp-resource.js, mcp-response.js
+- Đăng ký resource qua `server.resource()` với ResourceTemplate, callback chuẩn hóa:
+  - Ưu tiên lấy config từ context nếu có, fallback về env: 
+    ```typescript
+    const config = (extra && typeof extra === 'object' && 'context' in extra && extra.context && (extra.context as any).atlassianConfig)
+      ? (extra.context as any).atlassianConfig
+      : Config.getAtlassianConfigFromEnv();
+    ```
+  - Luôn trả về qua `Resources.createStandardResource(...)`, không trả về object tự do
+  - Luôn có schema validate output, cập nhật schema nếu cần
+  - Không đăng ký trùng URI pattern ở nhiều file
+  - Không log credentials, không trả về thông tin nhạy cảm
+
+### Tool
+- Luôn import `Tools` từ `../../utils/mcp-helpers.js`
+- Không dùng hàm cũ từ tool-helpers.js, mcp-response.js
+- Đăng ký tool qua `server.tool()` hoặc `Tools.registerTool()` với schema input rõ ràng, callback chuẩn hóa:
+  - Ưu tiên lấy config từ context nếu có, fallback về env
+  - Luôn trả về qua `Tools.createToolResponse(...)`, không trả về object tự do
+  - Luôn có schema validate input/output, cập nhật schema nếu cần
+  - Không log credentials, không trả về thông tin nhạy cảm
+
+---
+## Tiến độ thực tế
+- Đã migrate xong 100% resource (Jira + Confluence) sang helpers mới, chuẩn hóa response, schema, context, giữ backward compatibility
+- Tool chưa migrate, cần thực hiện các bước checklist ở trên
+- Docs hướng dẫn implement resource/tool đã cập nhật đúng thực tế refactor mới (tham khảo docs/introduction/resources-and-tools.md)
 
 ## Thiết kế mới
 

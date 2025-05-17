@@ -1,9 +1,8 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { getDashboards, getMyDashboards, getDashboardById, getDashboardGadgets } from '../../utils/jira-resource-api.js';
-import { createStandardResource, extractPagingParams, getAtlassianConfigFromEnv } from '../../utils/mcp-resource.js';
 import { Logger } from '../../utils/logger.js';
 import { dashboardSchema, dashboardListSchema, gadgetListSchema } from '../../schemas/jira.js';
-import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
+import { Config, Resources } from '../../utils/mcp-helpers.js';
 
 const logger = Logger.getLogger('JiraDashboardResources');
 
@@ -32,12 +31,12 @@ export function registerDashboardResources(server: McpServer) {
     async (uri: string | URL, params: Record<string, any>, extra: any) => {
       try {
         // Get config from context or environment
-        const config: AtlassianConfig = extra?.context?.atlassianConfig || getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         const uriStr = typeof uri === 'string' ? uri : uri.href;
         
-        const { limit = 50, offset = 0 } = extractPagingParams(params);
+        const { limit, offset } = Resources.extractPagingParams(params);
         const data = await getDashboards(config, offset, limit);
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriStr,
           data.dashboards || [],
           'dashboards',
@@ -72,12 +71,12 @@ export function registerDashboardResources(server: McpServer) {
     async (uri: string | URL, params: Record<string, any>, extra: any) => {
       try {
         // Get config from context or environment
-        const config: AtlassianConfig = extra?.context?.atlassianConfig || getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         const uriStr = typeof uri === 'string' ? uri : uri.href;
         
-        const { limit = 50, offset = 0 } = extractPagingParams(params);
+        const { limit, offset } = Resources.extractPagingParams(params);
         const data = await getMyDashboards(config, offset, limit);
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriStr,
           data.dashboards || [],
           'dashboards',
@@ -112,12 +111,12 @@ export function registerDashboardResources(server: McpServer) {
     async (uri: string | URL, params: Record<string, any>, extra: any) => {
       try {
         // Get config from context or environment
-        const config: AtlassianConfig = extra?.context?.atlassianConfig || getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         const uriStr = typeof uri === 'string' ? uri : uri.href;
         
         const dashboardId = params.dashboardId || (uriStr.split('/').pop());
         const dashboard = await getDashboardById(config, dashboardId);
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriStr,
           [dashboard],
           'dashboard',
@@ -152,12 +151,12 @@ export function registerDashboardResources(server: McpServer) {
     async (uri: string | URL, params: Record<string, any>, extra: any) => {
       try {
         // Get config from context or environment
-        const config: AtlassianConfig = extra?.context?.atlassianConfig || getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         const uriStr = typeof uri === 'string' ? uri : uri.href;
         
         const dashboardId = params.dashboardId || (uriStr.split('/')[uriStr.split('/').length - 2]);
         const gadgets = await getDashboardGadgets(config, dashboardId);
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriStr,
           gadgets,
           'gadgets',

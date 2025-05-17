@@ -1,4 +1,5 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Config, Resources } from '../../utils/mcp-helpers.js';
 import { createStandardResource } from '../../utils/mcp-resource.js';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
@@ -8,27 +9,6 @@ import { projectsListSchema, projectSchema } from '../../schemas/jira.js';
 import { getProjects as getProjectsApi, getProject as getProjectApi } from '../../utils/jira-resource-api.js';
 
 const logger = Logger.getLogger('JiraResource:Projects');
-
-/**
- * Get Atlassian config from environment variables
- */
-function getAtlassianConfigFromEnv(): AtlassianConfig {
-  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-
-  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
-    throw new Error('Missing Atlassian credentials in environment variables');
-  }
-
-  return {
-    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
-      ? `https://${ATLASSIAN_SITE_NAME}` 
-      : ATLASSIAN_SITE_NAME,
-    email: ATLASSIAN_USER_EMAIL,
-    apiToken: ATLASSIAN_API_TOKEN
-  };
-}
 
 /**
  * Create basic headers for Atlassian API with Basic Authentication
@@ -83,7 +63,7 @@ export function registerProjectResources(server: McpServer) {
       logger.info('Getting list of Jira projects');
       try {
         // Get config from environment
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         
         // Get the list of projects from Jira API
         const projects = await getProjects(config);
@@ -99,7 +79,7 @@ export function registerProjectResources(server: McpServer) {
         
         const uriString = typeof uri === 'string' ? uri : uri.href;
         // Return standardized resource with metadata and schema
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriString,
           formattedProjects,
           'projects',
@@ -134,7 +114,7 @@ export function registerProjectResources(server: McpServer) {
     async (uri, params, _extra) => {
       try {
         // Get config from environment
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         
         // Get projectKey from URI pattern
         let normalizedProjectKey = '';
@@ -168,7 +148,7 @@ export function registerProjectResources(server: McpServer) {
         
         const uriString = typeof uri === 'string' ? uri : uri.href;
         // Chuẩn hóa metadata/schema
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriString,
           [formattedProject],
           'project',
@@ -203,7 +183,7 @@ export function registerProjectResources(server: McpServer) {
     async (uri, params, _extra) => {
       try {
         // Get config from environment
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         
         let normalizedProjectKey = '';
         if (params && 'projectKey' in params) {
@@ -259,7 +239,7 @@ export function registerProjectResources(server: McpServer) {
             required: ["roleName", "roleId", "url"]
           }
         };
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriString,
           roles,
           'roles',

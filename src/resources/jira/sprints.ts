@@ -6,33 +6,11 @@
 
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { sprintListSchema, sprintSchema, issuesListSchema } from '../../schemas/jira.js';
-import { createStandardResource, extractPagingParams } from '../../utils/mcp-resource.js';
 import { getSprintsByBoard, getSprintById, getSprintIssues } from '../../utils/jira-resource-api.js';
 import { Logger } from '../../utils/logger.js';
-import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
+import { Config, Resources } from '../../utils/mcp-helpers.js';
 
 const logger = Logger.getLogger('JiraSprintResources');
-
-/**
- * Get Atlassian config from environment variables
- */
-function getAtlassianConfigFromEnv(): AtlassianConfig {
-  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-
-  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
-    throw new Error('Missing Atlassian credentials in environment variables');
-  }
-
-  return {
-    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
-      ? `https://${ATLASSIAN_SITE_NAME}` 
-      : ATLASSIAN_SITE_NAME,
-    email: ATLASSIAN_USER_EMAIL,
-    apiToken: ATLASSIAN_API_TOKEN
-  };
-}
 
 /**
  * Register all Jira sprint resources with MCP Server
@@ -58,13 +36,13 @@ export function registerSprintResources(server: McpServer) {
     }),
     async (uri, params, _extra) => {
       try {
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         const boardId = Array.isArray(params.boardId) ? params.boardId[0] : params.boardId;
-        const { limit, offset } = extractPagingParams(params);
+        const { limit, offset } = Resources.extractPagingParams(params);
         const response = await getSprintsByBoard(config, boardId, offset, limit);
         
         const uriString = typeof uri === 'string' ? uri : uri.href;
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriString,
           response.values,
           'sprints',
@@ -98,12 +76,12 @@ export function registerSprintResources(server: McpServer) {
     }),
     async (uri, params, _extra) => {
       try {
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         const sprintId = Array.isArray(params.sprintId) ? params.sprintId[0] : params.sprintId;
         const sprint = await getSprintById(config, sprintId);
         
         const uriString = typeof uri === 'string' ? uri : uri.href;
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriString,
           [sprint],
           'sprint',
@@ -137,13 +115,13 @@ export function registerSprintResources(server: McpServer) {
     }),
     async (uri, params, _extra) => {
       try {
-        const config = getAtlassianConfigFromEnv();
+        const config = Config.getAtlassianConfigFromEnv();
         const sprintId = Array.isArray(params.sprintId) ? params.sprintId[0] : params.sprintId;
-        const { limit, offset } = extractPagingParams(params);
+        const { limit, offset } = Resources.extractPagingParams(params);
         const response = await getSprintIssues(config, sprintId, offset, limit);
         
         const uriString = typeof uri === 'string' ? uri : uri.href;
-        return createStandardResource(
+        return Resources.createStandardResource(
           uriString,
           response.issues,
           'issues',
