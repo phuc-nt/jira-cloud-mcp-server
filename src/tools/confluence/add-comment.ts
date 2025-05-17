@@ -6,6 +6,7 @@ import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
 import { addConfluenceCommentV2 } from '../../utils/confluence-tool-api.js';
+import { Config, Tools } from '../../utils/mcp-helpers.js';
 
 // Initialize logger
 const logger = Logger.getLogger('ConfluenceTools:addComment');
@@ -64,34 +65,63 @@ export const registerAddCommentTool = (server: McpServer) => {
     'addComment',
     'Add a comment to a Confluence page',
     addCommentSchema.shape,
-    async (params: AddCommentParams, context: Record<string, any>): Promise<McpResponse> => {
+    async (params: AddCommentParams, context: Record<string, any>) => {
       try {
-        // Get Atlassian config from context
-        const config = (context as any).atlassianConfig as AtlassianConfig;
-        
+        const config = context?.atlassianConfig ?? Config.getAtlassianConfigFromEnv();
         if (!config) {
-          return createErrorResponse('Invalid or missing Atlassian configuration');
+          return {
+            content: [
+              { type: 'text', text: 'Invalid or missing Atlassian configuration' }
+            ],
+            isError: true
+          };
         }
-        
         const result = await addCommentHandler(params, config);
-        
-        // Return result in MCP Response format
-        return createTextResponse(
-          `Comment added successfully with ID: ${result.id}`,
-          { id: result.id, created: result.created, author: result.author, body: result.body }
-        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                message: `Comment added successfully with ID: ${result.id}`,
+                id: result.id,
+                created: result.created,
+                author: result.author,
+                body: result.body
+              })
+            }
+          ]
+        };
       } catch (error) {
         if (error instanceof ApiError) {
-          return createErrorResponse(error.message, {
-            code: error.code,
-            statusCode: error.statusCode,
-            type: error.type
-          });
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  message: error.message,
+                  code: error.code,
+                  statusCode: error.statusCode,
+                  type: error.type
+                })
+              }
+            ],
+            isError: true
+          };
         }
-        
-        return createErrorResponse(
-          `Error while adding comment: ${error instanceof Error ? error.message : String(error)}`
-        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: false,
+                message: `Error while adding comment: ${error instanceof Error ? error.message : String(error)}`
+              })
+            }
+          ],
+          isError: true
+        };
       }
     }
   );

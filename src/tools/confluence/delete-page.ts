@@ -5,6 +5,7 @@ import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
 import { deleteConfluencePageV2 } from '../../utils/confluence-tool-api.js';
+import { Config } from '../../utils/mcp-helpers.js';
 
 const logger = Logger.getLogger('ConfluenceTools:deletePage');
 
@@ -45,25 +46,59 @@ export const registerDeletePageTool = (server: McpServer) => {
     'deletePage',
     'Delete a Confluence page (API v2)',
     deletePageSchema.shape,
-    async (params: DeletePageParams, context: Record<string, any>): Promise<McpResponse> => {
+    async (params: DeletePageParams, context: Record<string, any>) => {
       try {
-        const config = (context as any).atlassianConfig as AtlassianConfig;
+        const config = context?.atlassianConfig ?? Config.getAtlassianConfigFromEnv();
         if (!config) {
-          return createErrorResponse('Invalid or missing Atlassian configuration');
+          return {
+            content: [
+              { type: 'text', text: 'Invalid or missing Atlassian configuration' }
+            ],
+            isError: true
+          };
         }
         const result = await deletePageHandler(params, config);
-        return createTextResponse(result.message, { success: result.success });
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                message: result.message
+              })
+            }
+          ]
+        };
       } catch (error) {
         if (error instanceof ApiError) {
-          return createErrorResponse(error.message, {
-            code: error.code,
-            statusCode: error.statusCode,
-            type: error.type
-          });
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  message: error.message,
+                  code: error.code,
+                  statusCode: error.statusCode,
+                  type: error.type
+                })
+              }
+            ],
+            isError: true
+          };
         }
-        return createErrorResponse(
-          `Error while deleting page: ${error instanceof Error ? error.message : String(error)}`
-        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: false,
+                message: `Error while deleting page: ${error instanceof Error ? error.message : String(error)}`
+              })
+            }
+          ],
+          isError: true
+        };
       }
     }
   );

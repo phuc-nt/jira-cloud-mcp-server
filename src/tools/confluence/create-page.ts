@@ -6,6 +6,7 @@ import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
 import { createConfluencePageV2 } from '../../utils/confluence-tool-api.js';
+import { Config } from '../../utils/mcp-helpers.js';
 
 // Initialize logger
 const logger = Logger.getLogger('ConfluenceTools:createPage');
@@ -81,38 +82,62 @@ export const registerCreatePageTool = (server: McpServer) => {
     'createPage',
     'Create a new page in Confluence (API v2, chỉ hỗ trợ spaceId)',
     createPageSchema.shape,
-    async (params: CreatePageParams, context: Record<string, any>): Promise<McpResponse> => {
+    async (params: CreatePageParams, context: Record<string, any>) => {
       try {
-        // Get Atlassian config from context
-        const config = (context as any).atlassianConfig as AtlassianConfig;
-        
+        const config = context?.atlassianConfig ?? Config.getAtlassianConfigFromEnv();
         if (!config) {
-          return createErrorResponse('Invalid or missing Atlassian configuration');
+          return {
+            content: [
+              { type: 'text', text: 'Invalid or missing Atlassian configuration' }
+            ],
+            isError: true
+          };
         }
-        
         const result = await createPageHandler(params, config);
-        
-        return createTextResponse(
-          `Page created successfully!\n- ID: ${result.id}\n- Title: ${result.title}\n- SpaceId: ${result.spaceId}\n- Success: ${result.success}`,
-          {
-            id: result.id,
-            title: result.title,
-            spaceId: result.spaceId,
-            success: result.success
-          }
-        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                message: `Page created successfully!`,
+                id: result.id,
+                title: result.title,
+                spaceId: result.spaceId
+              })
+            }
+          ]
+        };
       } catch (error) {
         if (error instanceof ApiError) {
-          return createErrorResponse(error.message, {
-            code: error.code,
-            statusCode: error.statusCode,
-            type: error.type
-          });
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  message: error.message,
+                  code: error.code,
+                  statusCode: error.statusCode,
+                  type: error.type
+                })
+              }
+            ],
+            isError: true
+          };
         }
-        
-        return createErrorResponse(
-          `Error while creating page: ${error instanceof Error ? error.message : String(error)}`
-        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: false,
+                message: `Error while creating page: ${error instanceof Error ? error.message : String(error)}`
+              })
+            }
+          ],
+          isError: true
+        };
       }
     }
   );

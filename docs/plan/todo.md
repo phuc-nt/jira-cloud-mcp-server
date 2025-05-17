@@ -23,11 +23,15 @@
 
 ### Tool (Jira + Confluence)
 - [ ] Migrate toàn bộ tool Jira sang helpers mới (`Tools` trong mcp-helpers.ts)
-- [ ] Migrate toàn bộ tool Confluence sang helpers mới
-- [ ] Chuẩn hóa response, schema, context cho toàn bộ tool
-- [ ] Đảm bảo backward compatibility cho tool (giữ file tạm nếu cần)
-- [ ] Test lại toàn bộ tool bằng test client
-- [ ] Cập nhật docs hướng dẫn implement tool đúng chuẩn mới
+- [x] Migrate toàn bộ tool Confluence sang helpers mới
+- [x] Chuẩn hóa response, schema, context cho toàn bộ tool Confluence
+- [x] Đảm bảo backward compatibility cho tool Confluence (giữ file tạm nếu cần)
+- [x] Test lại toàn bộ tool Confluence bằng test client
+- [x] Cập nhật docs hướng dẫn implement tool Confluence đúng chuẩn mới
+- [ ] Chuẩn hóa response, schema, context cho toàn bộ tool Jira
+- [ ] Đảm bảo backward compatibility cho tool Jira (giữ file tạm nếu cần)
+- [ ] Test lại toàn bộ tool Jira bằng test client
+- [ ] Cập nhật docs hướng dẫn implement tool Jira đúng chuẩn mới
 
 ---
 ## Hướng dẫn implement resource/tool (chuẩn mới)
@@ -58,8 +62,9 @@
 
 ---
 ## Tiến độ thực tế
-- Đã migrate xong 100% resource (Jira + Confluence) sang helpers mới, chuẩn hóa response, schema, context, giữ backward compatibility
-- Tool chưa migrate, cần thực hiện các bước checklist ở trên
+- Đã migrate xong 100% resource (Jira + Confluence) và toàn bộ tool Confluence sang helpers mới, chuẩn hóa response, schema, context, giữ backward compatibility
+- Đã test lại toàn bộ resource/tool Confluence thành công
+- Tool Jira chưa migrate, cần thực hiện các bước checklist ở trên
 - Docs hướng dẫn implement resource/tool đã cập nhật đúng thực tế refactor mới (tham khảo docs/introduction/resources-and-tools.md)
 
 ## Thiết kế mới

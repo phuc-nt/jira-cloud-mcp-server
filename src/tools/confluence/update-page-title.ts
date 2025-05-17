@@ -5,6 +5,7 @@ import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpResponse, createTextResponse, createErrorResponse } from '../../utils/mcp-response.js';
 import { updateConfluencePageTitleV2 } from '../../utils/confluence-tool-api.js';
+import { Config } from '../../utils/mcp-helpers.js';
 
 const logger = Logger.getLogger('ConfluenceTools:updatePageTitle');
 
@@ -49,25 +50,62 @@ export const registerUpdatePageTitleTool = (server: McpServer) => {
     'updatePageTitle',
     'Update the title of a Confluence page (API v2)',
     updatePageTitleSchema.shape,
-    async (params: UpdatePageTitleParams, context: Record<string, any>): Promise<McpResponse> => {
+    async (params: UpdatePageTitleParams, context: Record<string, any>) => {
       try {
-        const config = (context as any).atlassianConfig as AtlassianConfig;
+        const config = context?.atlassianConfig ?? Config.getAtlassianConfigFromEnv();
         if (!config) {
-          return createErrorResponse('Invalid or missing Atlassian configuration');
+          return {
+            content: [
+              { type: 'text', text: 'Invalid or missing Atlassian configuration' }
+            ],
+            isError: true
+          };
         }
         const result = await updatePageTitleHandler(params, config);
-        return createTextResponse(result.message, { id: result.id, title: result.title, version: result.version, success: result.success });
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                message: result.message,
+                id: result.id,
+                title: result.title,
+                version: result.version
+              })
+            }
+          ]
+        };
       } catch (error) {
         if (error instanceof ApiError) {
-          return createErrorResponse(error.message, {
-            code: error.code,
-            statusCode: error.statusCode,
-            type: error.type
-          });
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  message: error.message,
+                  code: error.code,
+                  statusCode: error.statusCode,
+                  type: error.type
+                })
+              }
+            ],
+            isError: true
+          };
         }
-        return createErrorResponse(
-          `Error while updating page title: ${error instanceof Error ? error.message : String(error)}`
-        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: false,
+                message: `Error while updating page title: ${error instanceof Error ? error.message : String(error)}`
+              })
+            }
+          ],
+          isError: true
+        };
       }
     }
   );
