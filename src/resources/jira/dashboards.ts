@@ -1,8 +1,9 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { getDashboards, getMyDashboards, getDashboardById, getDashboardGadgets } from '../../utils/jira-resource-api.js';
-import { createStandardResource, extractPagingParams, registerResource } from '../../utils/mcp-resource.js';
+import { createStandardResource, extractPagingParams, getAtlassianConfigFromEnv } from '../../utils/mcp-resource.js';
 import { Logger } from '../../utils/logger.js';
 import { dashboardSchema, dashboardListSchema, gadgetListSchema } from '../../schemas/jira.js';
+import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 
 const logger = Logger.getLogger('JiraDashboardResources');
 
@@ -12,8 +13,7 @@ export function registerDashboardResources(server: McpServer) {
   logger.info('Registering Jira dashboard resources...');
 
   // List all dashboards
-  registerResource(
-    server,
+  server.resource(
     'jira-dashboards',
     new ResourceTemplate('jira://dashboards', {
       list: async (_extra) => {
@@ -29,26 +29,33 @@ export function registerDashboardResources(server: McpServer) {
         };
       }
     }),
-    'List all Jira dashboards',
-    async (params, { config, uri }) => {
-      const { limit = 50, offset = 0 } = extractPagingParams(params);
-      const data = await getDashboards(config, offset, limit);
-      return createStandardResource(
-        uri,
-        data.dashboards || [],
-        'dashboards',
-        dashboardListSchema,
-        data.total || (data.dashboards ? data.dashboards.length : 0),
-        limit,
-        offset,
-        `${config.baseUrl}/jira/dashboards` // UI URL
-      );
+    async (uri: string | URL, params: Record<string, any>, extra: any) => {
+      try {
+        // Get config from context or environment
+        const config: AtlassianConfig = extra?.context?.atlassianConfig || getAtlassianConfigFromEnv();
+        const uriStr = typeof uri === 'string' ? uri : uri.href;
+        
+        const { limit = 50, offset = 0 } = extractPagingParams(params);
+        const data = await getDashboards(config, offset, limit);
+        return createStandardResource(
+          uriStr,
+          data.dashboards || [],
+          'dashboards',
+          dashboardListSchema,
+          data.total || (data.dashboards ? data.dashboards.length : 0),
+          limit,
+          offset,
+          `${config.baseUrl}/jira/dashboards` // UI URL
+        );
+      } catch (error) {
+        logger.error(`Error handling resource request for jira-dashboards:`, error);
+        throw error;
+      }
     }
   );
 
   // List my dashboards
-  registerResource(
-    server,
+  server.resource(
     'jira-my-dashboards',
     new ResourceTemplate('jira://dashboards/my', {
       list: async (_extra) => ({
@@ -62,26 +69,33 @@ export function registerDashboardResources(server: McpServer) {
         ]
       })
     }),
-    'List dashboards owned by current user',
-    async (params, { config, uri }) => {
-      const { limit = 50, offset = 0 } = extractPagingParams(params);
-      const data = await getMyDashboards(config, offset, limit);
-      return createStandardResource(
-        uri,
-        data.dashboards || [],
-        'dashboards',
-        dashboardListSchema,
-        data.total || (data.dashboards ? data.dashboards.length : 0),
-        limit,
-        offset,
-        `${config.baseUrl}/jira/dashboards?filter=my`
-      );
+    async (uri: string | URL, params: Record<string, any>, extra: any) => {
+      try {
+        // Get config from context or environment
+        const config: AtlassianConfig = extra?.context?.atlassianConfig || getAtlassianConfigFromEnv();
+        const uriStr = typeof uri === 'string' ? uri : uri.href;
+        
+        const { limit = 50, offset = 0 } = extractPagingParams(params);
+        const data = await getMyDashboards(config, offset, limit);
+        return createStandardResource(
+          uriStr,
+          data.dashboards || [],
+          'dashboards',
+          dashboardListSchema,
+          data.total || (data.dashboards ? data.dashboards.length : 0),
+          limit,
+          offset,
+          `${config.baseUrl}/jira/dashboards?filter=my`
+        );
+      } catch (error) {
+        logger.error(`Error handling resource request for jira-my-dashboards:`, error);
+        throw error;
+      }
     }
   );
 
   // Dashboard details
-  registerResource(
-    server,
+  server.resource(
     'jira-dashboard-details',
     new ResourceTemplate('jira://dashboards/{dashboardId}', {
       list: async (_extra) => ({
@@ -95,26 +109,33 @@ export function registerDashboardResources(server: McpServer) {
         ]
       })
     }),
-    'Get details of a Jira dashboard',
-    async (params, { config, uri }) => {
-      const dashboardId = params.dashboardId || (uri.split('/').pop());
-      const dashboard = await getDashboardById(config, dashboardId);
-      return createStandardResource(
-        uri,
-        [dashboard],
-        'dashboard',
-        dashboardSchema,
-        1,
-        1,
-        0,
-        `${config.baseUrl}/jira/dashboards/${dashboardId}`
-      );
+    async (uri: string | URL, params: Record<string, any>, extra: any) => {
+      try {
+        // Get config from context or environment
+        const config: AtlassianConfig = extra?.context?.atlassianConfig || getAtlassianConfigFromEnv();
+        const uriStr = typeof uri === 'string' ? uri : uri.href;
+        
+        const dashboardId = params.dashboardId || (uriStr.split('/').pop());
+        const dashboard = await getDashboardById(config, dashboardId);
+        return createStandardResource(
+          uriStr,
+          [dashboard],
+          'dashboard',
+          dashboardSchema,
+          1,
+          1,
+          0,
+          `${config.baseUrl}/jira/dashboards/${dashboardId}`
+        );
+      } catch (error) {
+        logger.error(`Error handling resource request for jira-dashboard-details:`, error);
+        throw error;
+      }
     }
   );
 
   // Dashboard gadgets
-  registerResource(
-    server,
+  server.resource(
     'jira-dashboard-gadgets',
     new ResourceTemplate('jira://dashboards/{dashboardId}/gadgets', {
       list: async (_extra) => ({
@@ -128,20 +149,28 @@ export function registerDashboardResources(server: McpServer) {
         ]
       })
     }),
-    'List gadgets of a Jira dashboard',
-    async (params, { config, uri }) => {
-      const dashboardId = params.dashboardId || (uri.split('/')[uri.split('/').length - 2]);
-      const gadgets = await getDashboardGadgets(config, dashboardId);
-      return createStandardResource(
-        uri,
-        gadgets,
-        'gadgets',
-        gadgetListSchema,
-        gadgets.length,
-        gadgets.length,
-        0,
-        `${config.baseUrl}/jira/dashboards/${dashboardId}`
-      );
+    async (uri: string | URL, params: Record<string, any>, extra: any) => {
+      try {
+        // Get config from context or environment
+        const config: AtlassianConfig = extra?.context?.atlassianConfig || getAtlassianConfigFromEnv();
+        const uriStr = typeof uri === 'string' ? uri : uri.href;
+        
+        const dashboardId = params.dashboardId || (uriStr.split('/')[uriStr.split('/').length - 2]);
+        const gadgets = await getDashboardGadgets(config, dashboardId);
+        return createStandardResource(
+          uriStr,
+          gadgets,
+          'gadgets',
+          gadgetListSchema,
+          gadgets.length,
+          gadgets.length,
+          0,
+          `${config.baseUrl}/jira/dashboards/${dashboardId}`
+        );
+      } catch (error) {
+        logger.error(`Error handling resource request for jira-dashboard-gadgets:`, error);
+        throw error;
+      }
     }
   );
 
