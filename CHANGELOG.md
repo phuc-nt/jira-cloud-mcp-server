@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## [2.1.0] - 2025-05-17
+
+### ✨ Refactor & Standardization
+- Refactored the entire codebase to standardize resource/tool structure
+- Completely removed the content-metadata resource, merged metadata into the page resource
+- Updated and standardized developer documentation for easier extension and maintenance
+- Ensured compatibility with the latest MCP SDK, improved security, scalability, and maintainability
+- Updated `docs/introduction/resources-and-tools.md` to remove all references to content-metadata
+
+### 🔧 Bug Fixes
+- Fixed duplicate resource registration issues
+- Improved resource management and registration process
+- Resolved issues with conflicting resource patterns
+
 ## [2.0.0] - 2025-05-11
 
 ### ✨ Improvements

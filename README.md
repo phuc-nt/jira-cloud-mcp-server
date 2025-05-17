@@ -14,6 +14,8 @@
 - Ensured compatibility with the latest MCP SDK, improved security, scalability, and maintainability.
 - Updated `docs/introduction/resources-and-tools.md` to remove all references to content-metadata.
 
+👉 **See the full [CHANGELOG](./CHANGELOG.md) for details.**
+
 ## What's New in Version 2.0.1 🎉
 
 **MCP Atlassian Server v2.0.1** brings a major expansion of features and capabilities!
