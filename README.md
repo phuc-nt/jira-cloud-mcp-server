@@ -7,14 +7,16 @@
 [![MCP Atlassian Server (by phuc-nt)](https://img.shields.io/badge/MCP%20Marketplace--Pending%20Review-orange)](https://github.com/phuc-nt/mcp-atlassian-server)
 [![smithery badge](https://smithery.ai/badge/@phuc-nt/mcp-atlassian-server)](https://smithery.ai/server/@phuc-nt/mcp-atlassian-server)
 
-## What's New in Version 2.0.0 🎉
+## What's New in Version 2.0.1 🎉
 
-**MCP Atlassian Server v2.0.0** brings a major expansion of features and capabilities!
+**MCP Atlassian Server v2.0.1** brings a major expansion of features and capabilities!
 
 - **Updated APIs**: Now using the latest Atlassian APIs (Jira API v3, Confluence API v2)
 - **Expanded Features**: Grown from 21 to 48 features, including advanced Jira and Confluence capabilities
 - **Enhanced Board & Sprint Management**: Complete Agile/Scrum workflow support
 - **Advanced Confluence Features**: Page version management, attachments handling, and comment management
+- **Improved Resource Registration**: Fixed duplicate resource registration issues for a more stable experience
+- **Documentation Update**: New comprehensive documentation series explaining MCP architecture, resource/tool development
 
 For full details on all changes, improvements, and fixes, see the [CHANGELOG](./CHANGELOG.md).
 

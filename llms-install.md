@@ -2,6 +2,8 @@
 
 > **Important Note:** MCP Atlassian Server (by phuc-nt) is primarily developed and optimized for use with the Cline AI assistant. While it follows the MCP standard and can work with other compatible MCP clients, the best performance and experience are achieved with Cline.
 
+> **Version Note:** This guide is for MCP Atlassian Server v2.0.1. For detailed documentation on architecture, development, and usage, refer to the new documentation series in the `/docs/knowledge/` directory.
+
 ## System Requirements
 - macOS 10.15+ or Windows 10+
 - Atlassian Cloud account and API token
@@ -232,6 +234,16 @@ Replace:
   - Treat your API token like a password – never share it in LLM prompts
 
 > **Important**: If you do not ask the LLM to read the config file, your API token will only be used locally and will not be sent anywhere.
+
+## Documentation Resources
+
+MCP Atlassian Server (by phuc-nt) now includes a comprehensive documentation series:
+
+1. [MCP Overview & Architecture](./docs/knowledge/01-mcp-overview-architecture.md): Core concepts, architecture, and design principles
+2. [MCP Tools & Resources Development](./docs/knowledge/02-mcp-tools-resources.md): How to develop and extend MCP resources and tools
+3. [MCP Prompts & Sampling](./docs/knowledge/03-mcp-prompts-sampling.md): Guide for prompt engineering and sampling with MCP
+
+These documents provide deeper insights into the server's functionality and are valuable for both users and developers.
 
 ## Verify Installation
 
