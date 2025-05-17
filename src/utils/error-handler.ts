@@ -14,7 +14,8 @@ export enum ApiErrorType {
   RATE_LIMIT_ERROR = 'RATE_LIMIT_ERROR',
   SERVER_ERROR = 'SERVER_ERROR',
   NETWORK_ERROR = 'NETWORK_ERROR',
-  UNKNOWN_ERROR = 'UNKNOWN_ERROR'
+  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
+  RESOURCE_ERROR = 'RESOURCE_ERROR'
 }
 
 /**
@@ -75,6 +76,11 @@ export class ApiError extends Error {
  * @returns Normalized ApiError
  */
 export function handleAtlassianError(error: any): ApiError {
+  // If already an ApiError, return it
+  if (error instanceof ApiError) {
+    return error;
+  }
+  
   // Handle HTTP error from Atlassian API
   if (error.response) {
     const { status, data } = error.response;
@@ -163,4 +169,35 @@ export function withErrorHandling<T>(fn: () => Promise<T>): Promise<T> {
   return fn().catch(error => {
     throw handleAtlassianError(error);
   });
+}
+
+/**
+ * Higher-order function that wraps a resource handler with error handling
+ * @param resourceName Name of the resource for logging purposes
+ * @param handler Resource handler function to wrap
+ * @returns Wrapped handler function with error handling
+ */
+export function wrapResourceWithErrorHandling<T, P>(
+  resourceName: string,
+  handler: (params: P) => Promise<T>
+): (params: P) => Promise<T> {
+  return async (params: P): Promise<T> => {
+    try {
+      return await handler(params);
+    } catch (error) {
+      logger.error(`Error in resource ${resourceName}:`, error);
+      
+      // Convert to ApiError if not already
+      const apiError = error instanceof ApiError 
+        ? error 
+        : new ApiError(
+            ApiErrorType.RESOURCE_ERROR,
+            `Error processing resource ${resourceName}: ${error instanceof Error ? error.message : String(error)}`,
+            500,
+            error instanceof Error ? error : new Error(String(error))
+          );
+          
+      throw apiError;
+    }
+  };
 } 

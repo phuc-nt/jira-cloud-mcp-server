@@ -1,9 +1,31 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { AtlassianConfig } from './atlassian-api-base.js';
 import { Logger } from './logger.js';
 import { StandardMetadata, createStandardMetadata } from '../schemas/common.js';
 
 const logger = Logger.getLogger('MCPResource');
+
+/**
+ * Standard function to get Atlassian configuration from environment variables
+ * All resources should use this function to get consistent configuration
+ */
+export function getAtlassianConfigFromEnv(): AtlassianConfig {
+  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
+  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
+  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
+
+  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
+    logger.error('Missing Atlassian credentials in environment variables');
+    throw new Error('Missing Atlassian credentials in environment variables');
+  }
+
+  return {
+    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
+      ? `https://${ATLASSIAN_SITE_NAME}` 
+      : ATLASSIAN_SITE_NAME,
+    email: ATLASSIAN_USER_EMAIL,
+    apiToken: ATLASSIAN_API_TOKEN
+  };
+}
 
 /**
  * Create a resource response with JSON content
@@ -118,121 +140,4 @@ export function extractPagingParams(
   }
   
   return { limit, offset };
-}
-
-// Type definition for resource handler function
-export type ResourceHandlerFunction = (
-  params: any,
-  context: { config: AtlassianConfig, uri: string }
-) => Promise<any>;
-
-// Type definition for MCP resource callback parameters
-interface ResourceExtra {
-  context?: {
-    atlassianConfig?: AtlassianConfig;
-    [key: string]: any;
-  };
-  [key: string]: any;
-}
-
-/**
- * Get Atlassian config from environment variables
- * @deprecated Use getAtlassianConfigFromEnv in each resource file instead
- */
-export function getAtlassianConfigFromEnv(): AtlassianConfig {
-  const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-  const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-  const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-
-  if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
-    logger.error('Missing Atlassian credentials in environment variables');
-    throw new Error('Missing Atlassian credentials in environment variables');
-  }
-
-  return {
-    baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
-      ? `https://${ATLASSIAN_SITE_NAME}` 
-      : ATLASSIAN_SITE_NAME,
-    email: ATLASSIAN_USER_EMAIL,
-    apiToken: ATLASSIAN_API_TOKEN
-  };
-}
-
-/**
- * Register a resource with MCP Server
- * @param server MCP Server instance
- * @param resourceName Resource name
- * @param resourceUri Resource URI pattern
- * @param description Resource description
- * @param handler Request handler function for the resource
- */
-export function registerResource(
-  server: McpServer, 
-  resourceName: string,
-  resourceUri: string | any, // accept ResourceTemplate
-  description: string, 
-  handler: ResourceHandlerFunction
-) {
-  logger.info(`Registering resource: ${resourceName} (${resourceUri instanceof Object && 'pattern' in resourceUri ? resourceUri.pattern : resourceUri})`);
-  
-  // Kiểm tra nếu resourceUri là ResourceTemplate có handlers.list đã được định nghĩa
-  // Thì không đăng ký resource trực tiếp để tránh trùng lặp "Unknown" resources
-  if (resourceUri instanceof Object && resourceUri.handlers && typeof resourceUri.handlers.list === 'function') {
-    // Đã có list callback, chỉ đăng ký handler để xử lý data
-    server.resource(resourceName, resourceUri.pattern, 
-      async (uri: string | URL, params: Record<string, any>, extra: ResourceExtra) => {
-        try {
-          let config: AtlassianConfig;
-          if (extra && typeof extra === 'object' && 'context' in extra && extra.context && extra.context.atlassianConfig) {
-            config = extra.context.atlassianConfig;
-          } else {
-            // fallback to env
-            const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-            const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-            const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-            config = {
-              baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-              email: ATLASSIAN_USER_EMAIL,
-              apiToken: ATLASSIAN_API_TOKEN
-            };
-          }
-          return await handler(params, { config, uri: typeof uri === 'string' ? uri : uri.href });
-        } catch (error) {
-          logger.error(`Error handling resource request for ${resourceName}:`, error);
-          throw error;
-        }
-      }
-    );
-    return;
-  }
-  
-  // Trường hợp thông thường: đăng ký resource với MCP Server
-  server.resource(resourceName, resourceUri, 
-    // Callback function for ReadResourceCallback
-    async (uri: string | URL, params: Record<string, any>, extra: ResourceExtra) => {
-      try {
-        // Get config from context or env
-        let config: AtlassianConfig;
-        if (extra && typeof extra === 'object' && 'context' in extra && extra.context && extra.context.atlassianConfig) {
-          config = extra.context.atlassianConfig;
-        } else {
-          // fallback to env
-          const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
-          const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
-          const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
-          config = {
-            baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') ? `https://${ATLASSIAN_SITE_NAME}` : ATLASSIAN_SITE_NAME,
-            email: ATLASSIAN_USER_EMAIL,
-            apiToken: ATLASSIAN_API_TOKEN
-          };
-        }
-        
-        // Call handler with params, config and uri
-        return await handler(params, { config, uri: typeof uri === 'string' ? uri : uri.href });
-      } catch (error) {
-        logger.error(`Error handling resource request for ${resourceName}:`, error);
-        throw error;
-      }
-    }
-  );
 }
