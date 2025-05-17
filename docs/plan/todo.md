@@ -22,16 +22,16 @@
 - [x] Cập nhật docs hướng dẫn mở rộng resource/tool đúng chuẩn refactor mới
 
 ### Tool (Jira + Confluence)
-- [ ] Migrate toàn bộ tool Jira sang helpers mới (`Tools` trong mcp-helpers.ts)
+- [x] Migrate toàn bộ tool Jira sang helpers mới (`Tools` trong mcp-helpers.ts)
 - [x] Migrate toàn bộ tool Confluence sang helpers mới
 - [x] Chuẩn hóa response, schema, context cho toàn bộ tool Confluence
+- [x] Chuẩn hóa response, schema, context cho toàn bộ tool Jira
 - [x] Đảm bảo backward compatibility cho tool Confluence (giữ file tạm nếu cần)
+- [x] Đảm bảo backward compatibility cho tool Jira (giữ file tạm nếu cần)
 - [x] Test lại toàn bộ tool Confluence bằng test client
+- [x] Test lại toàn bộ tool Jira bằng test client
 - [x] Cập nhật docs hướng dẫn implement tool Confluence đúng chuẩn mới
-- [ ] Chuẩn hóa response, schema, context cho toàn bộ tool Jira
-- [ ] Đảm bảo backward compatibility cho tool Jira (giữ file tạm nếu cần)
-- [ ] Test lại toàn bộ tool Jira bằng test client
-- [ ] Cập nhật docs hướng dẫn implement tool Jira đúng chuẩn mới
+- [x] Cập nhật docs hướng dẫn implement tool Jira đúng chuẩn mới
 
 ---
 ## Hướng dẫn implement resource/tool (chuẩn mới)
@@ -577,3 +577,7 @@ return Tools.createToolResponse(false, 'Error message');
 
 3. **Rủi ro**: Định nghĩa interface mới có thể không bao quát đủ use case
    - **Giảm thiểu**: Xem xét tất cả các trường hợp sử dụng hiện tại, đảm bảo mở rộng được trong tương lai 
+
+## Cleanup utils cũ
+- [x] Đã xoá hoàn toàn các file tạm/deprecated: mcp-resource.ts, mcp-response.ts, tool-helpers.ts
+- [x] Codebase đã sạch, chỉ còn lại helpers mới (mcp-core.ts, mcp-helpers.ts) 

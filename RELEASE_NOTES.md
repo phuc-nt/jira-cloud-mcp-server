@@ -1,12 +1,18 @@
-# MCP Atlassian Server 2.0.1
+# MCP Atlassian Server 2.1.0
 
-🎉 **Maintenance release with important fixes and documentation updates!**
+🚀 **Major refactor: Standardized resource/tool structure, removed content-metadata resource, updated developer documentation!**
 
 Available on npm (@phuc-nt/mcp-atlassian-server) or download directly. Use with Cline or any MCP-compatible client.
 
 ---
 
-### Updates in 2.0.1
+### Updates in 2.1.0
+
+**Refactor & Standardization**
+- Refactored the entire codebase to standardize resource/tool structure, completely removed the content-metadata resource, and merged metadata into the page resource.
+- Updated and standardized developer documentation, making it easy for any developer to extend and maintain.
+- Ensured compatibility with the latest MCP SDK, improved security, scalability, and maintainability.
+- Updated `docs/introduction/resources-and-tools.md` to remove all references to content-metadata.
 
 **Bug Fixes**
 - Fixed duplicate resource registration issues for a more stable experience

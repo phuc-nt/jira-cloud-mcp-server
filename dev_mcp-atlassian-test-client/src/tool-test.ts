@@ -270,15 +270,15 @@ async function main() {
     let newPageId: string | null = null;
     if (spaceId && parentId) {
       try {
-        const createPageResult = await client.callTool({
-          name: "createPage",
-          arguments: {
+          const createPageResult = await client.callTool({
+            name: "createPage",
+            arguments: {
             spaceId: spaceId,
             parentId: parentId,
-            title: newPageTitle,
-            content: "<p>This is a test page created by MCP tool-test</p>"
-          }
-        });
+              title: newPageTitle,
+              content: "<p>This is a test page created by MCP tool-test</p>"
+            }
+          });
         console.log("createPageResult (raw):", createPageResult);
         let createPageObj = createPageResult;
         if (
@@ -420,7 +420,7 @@ async function main() {
       if (pagesResult.contents && pagesResult.contents[0].text) {
         const data = JSON.parse(String(pagesResult.contents[0].text));
         console.log("confluence://spaces/19464200/pages response: total pages:", data.metadata?.total ?? data.pages?.length ?? "?");
-      } else {
+    } else {
         console.log("No content returned for confluence://spaces/19464200/pages");
       }
     } catch (e) {

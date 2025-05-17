@@ -259,7 +259,7 @@ Khi muốn thêm mới **Resource** (truy vấn dữ liệu) hoặc **Tool** (th
 ### 7. Đăng ký tool theo chuẩn MCP
 - Đăng ký tool qua `server.tool()` với schema input rõ ràng, callback chuẩn hóa:
   ```typescript
-  export function registerYourTool(server: any) {
+  export function registerYourTool(server: McpServer) {
     server.tool(
       'tool-name',
       'Tool description',
@@ -279,6 +279,256 @@ Khi muốn thêm mới **Resource** (truy vấn dữ liệu) hoặc **Tool** (th
   }
   ```
 - Đăng ký tool trong `src/tools/index.ts` như resource.
+
+### 7.1 Hướng dẫn chi tiết implement tool Jira (chuẩn mới)
+
+Khi cần implement hoặc mở rộng tool Jira (thêm tool mới hoặc sửa tool hiện có), hãy làm theo hướng dẫn chi tiết sau:
+
+#### Cấu trúc chung cho tool Jira
+```typescript
+// 1. Import helpers mới
+import { z } from 'zod';
+import { Config, Tools } from '../../utils/mcp-helpers.js';
+import { McpResponse, createSuccessResponse, createErrorResponse } from '../../utils/mcp-core.js';
+import { Logger } from '../../utils/logger.js';
+import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+// Sử dụng các API helper chuẩn hóa
+import { createJiraIssueV3, updateJiraIssueV3 } from '../../utils/jira-tool-api-v3.js';
+// hoặc helper API Agile (cho Sprint, Board...)
+import { createSprint, updateSprint } from '../../utils/jira-tool-api-agile.js';
+
+// 2. Logger chuẩn
+const logger = Logger.getLogger('JiraTools:yourTool');
+
+// 3. Schema input chuẩn hóa với Zod
+export const yourToolSchema = z.object({
+  param1: z.string().describe('Parameter 1 description'),
+  param2: z.number().optional().describe('Optional parameter description'),
+  // các tham số khác...
+});
+
+// 4. Type cho tham số và kết quả
+type YourToolParams = z.infer<typeof yourToolSchema>;
+interface YourToolResult {
+  id: string;
+  key?: string;
+  success: boolean;
+  message: string;
+  // các trường kết quả khác...
+}
+
+// 5. Hàm handler chính (tách riêng xử lý logic)
+export async function yourToolHandler(
+  params: YourToolParams,
+  config: any
+): Promise<YourToolResult> {
+  try {
+    logger.info(`Starting yourTool with params: ${params.param1}`);
+    
+    // Gọi API Jira qua helper chuẩn hóa
+    const result = await yourToolApiFunction(config, {
+      // Map params sang API params
+      param1: params.param1,
+      param2: params.param2
+    });
+    
+    // Xử lý kết quả, chuẩn hóa trả về
+    return {
+      id: result.id,
+      key: result.key,
+      success: true,
+      message: `Operation completed successfully: ${result.id}`
+    };
+  } catch (error) {
+    // Xử lý lỗi chuẩn
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    logger.error(`Error in yourTool:`, error);
+    throw new ApiError(
+      ApiErrorType.SERVER_ERROR,
+      `Failed operation: ${error instanceof Error ? error.message : String(error)}`,
+      500
+    );
+  }
+}
+
+// 6. Hàm đăng ký tool
+export const registerYourTool = (server: McpServer) => {
+  server.tool(
+    'yourTool',
+    'Your tool description',
+    yourToolSchema.shape,
+    async (params: YourToolParams, context: Record<string, any>) => {
+      try {
+        // Lấy config từ context nếu có, fallback về env
+        const config = context?.atlassianConfig ?? Config.getAtlassianConfigFromEnv();
+        if (!config) {
+          return {
+            content: [
+              { type: 'text', text: JSON.stringify({
+                success: false,
+                message: 'Invalid or missing Atlassian configuration'
+              })}
+            ],
+            isError: true
+          };
+        }
+        
+        // Gọi handler
+        const result = await yourToolHandler(params, config);
+        
+        // Trả về chuẩn JSON trong content[0].text
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                id: result.id,
+                key: result.key,
+                message: result.message
+                // các trường khác...
+              })
+            }
+          ]
+        };
+      } catch (error) {
+        // Xử lý lỗi chuẩn
+        if (error instanceof ApiError) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  message: error.message,
+                  code: error.code,
+                  statusCode: error.statusCode,
+                  type: error.type
+                })
+              }
+            ],
+            isError: true
+          };
+        }
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: false,
+                message: `Error: ${error instanceof Error ? error.message : String(error)}`
+              })
+            }
+          ],
+          isError: true
+        };
+      }
+    }
+  );
+};
+```
+
+#### Ví dụ cụ thể: Tool createIssue
+```typescript
+// src/tools/jira/create-issue.ts
+import { z } from 'zod';
+import { Config } from '../../utils/mcp-helpers.js';
+import { McpResponse, createErrorResponse } from '../../utils/mcp-core.js';
+import { createJiraIssueV3 } from '../../utils/jira-tool-api-v3.js';
+import { Logger } from '../../utils/logger.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+
+const logger = Logger.getLogger('JiraTools:createIssue');
+
+// Schema chuẩn hóa
+export const createIssueSchema = z.object({
+  projectKey: z.string().describe('Jira project key (e.g. DEMO, TES, ...)'),
+  summary: z.string().describe('Issue summary'),
+  description: z.string().optional().describe('Issue description'),
+  issueType: z.string().describe('Issue type (e.g. Task, Bug, Story, ...)'),
+  priority: z.string().optional().describe('Issue priority (e.g. Highest, High, Medium, Low, Lowest)'),
+  assignee: z.string().optional().describe('Assignee account ID')
+});
+
+// Main handler
+export async function createIssueHandler(params, config) {
+  try {
+    logger.info(`Creating Jira issue in project: ${params.projectKey}`);
+    const issueData = await createJiraIssueV3(config, {
+      projectKey: params.projectKey,
+      summary: params.summary,
+      description: params.description || "",
+      issueType: params.issueType,
+      priority: params.priority,
+      assignee: params.assignee
+    });
+    
+    return {
+      id: issueData.id,
+      key: issueData.key,
+      self: issueData.self,
+      success: true
+    };
+  } catch (error) {
+    logger.error(`Error creating Jira issue:`, error);
+    throw error;
+  }
+}
+
+// Đăng ký tool
+export const registerCreateIssueTool = (server: McpServer) => {
+  server.tool(
+    'createIssue',
+    'Create a new Jira issue',
+    createIssueSchema.shape,
+    async (params, context) => {
+      try {
+        const config = context?.atlassianConfig ?? Config.getAtlassianConfigFromEnv();
+        const result = await createIssueHandler(params, config);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                id: result.id,
+                key: result.key,
+                self: result.self,
+                success: true
+              })
+            }
+          ]
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: false,
+                message: error instanceof Error ? error.message : String(error)
+              })
+            }
+          ],
+          isError: true
+        };
+      }
+    }
+  );
+};
+```
+
+#### Lưu ý quan trọng khi implement tool Jira
+- **Schema chuẩn**: Luôn định nghĩa schema input với Zod, bao gồm mô tả cho mỗi tham số.
+- **Response chuẩn**: Trả về object `{ success: true/false, key/id, message, ... }` trong `content[0].text` (JSON string).
+- **Error handling**: Xử lý mọi trường hợp lỗi, bao gồm lỗi invalid config, network errors, API errors.
+- **Logging**: Sử dụng Logger chuẩn, không log thông tin nhạy cảm.
+- **Helper API**: Sử dụng các helper API chuẩn hóa thay vì gọi trực tiếp fetch/axios:
+  - `jira-tool-api-v3.js`: Cho các API REST Jira (issue, filter, dashboard, ...)
+  - `jira-tool-api-agile.js`: Cho các API Agile (sprint, board, backlog, ...)
+- **Không dùng các hàm cũ** từ `tool-helpers.js`, `mcp-response.js`.
 
 ### 8. Testing, debugging và backward compatibility
 - Luôn test resource/tool mới bằng test client (`dev_mcp-atlassian-test-client`).
