@@ -1,30 +1,220 @@
-# MCP Server: Tools and Resources Development Guide
+# Tools và Resources của MCP Server: Hướng dẫn phát triển
 
-This document provides detailed instructions on developing resources and tools for the Model Context Protocol (MCP) Server. It focuses on practical implementation approaches with real-world examples from the Atlassian MCP Server codebase.
+Tài liệu này cung cấp hướng dẫn chi tiết về việc phát triển resources và tools cho Model Context Protocol (MCP) Server, tập trung vào các cách tiếp cận triển khai thực tế với ví dụ từ mã nguồn MCP Server Atlassian.
 
-## 1. Introduction to MCP Resources and Tools
+## 1. Tổng quan về MCP Resources và Tools
 
-In the MCP protocol, there are two primary ways for AI models to interact with external systems:
+Trong giao thức MCP, có hai cách chính để các mô hình AI tương tác với hệ thống bên ngoài:
 
-- **Resources**: Read-only endpoints that retrieve data (GET operations)
-- **Tools**: Action-oriented endpoints that modify data or perform operations (POST/PUT/DELETE operations)
+- **Resources**: Endpoint chỉ đọc để truy xuất dữ liệu (thao tác GET)
+- **Tools**: Endpoint định hướng hành động để sửa đổi dữ liệu hoặc thực hiện thao tác (thao tác POST/PUT/DELETE)
 
-This guide will walk you through the implementation details of both, with emphasis on code organization, best practices, and real examples from the Atlassian MCP Server.
+Hướng dẫn này sẽ hướng dẫn bạn qua chi tiết triển khai của cả hai, với trọng tâm là tổ chức mã, thực hành tốt nhất và ví dụ thực tế từ MCP Server Atlassian.
 
-## 2. Understanding MCP Resources
+## 2. Chi tiết triển khai MCP Server
 
-### 2.1. What are MCP Resources?
+### 2.1. Phân rã thành phần
 
-Resources in MCP are addressable endpoints that return data about specific entities. They:
+#### 2.1.1. Lớp giao diện MCP
 
-- Have unique URI patterns (e.g., `jira://issues`, `confluence://pages/{pageId}`)
-- Support query parameters for filtering and pagination
-- Return data in a consistent, schema-validated format
-- Are read-only (they don't modify data)
+Lớp này xuất các resources và tools cho MCP clients. Nó chịu trách nhiệm:
+- Đăng ký URI và templates resource
+- Đăng ký định nghĩa tool
+- Xử lý khám phá resource (liệt kê các tài nguyên có sẵn)
+- Xác thực các yêu cầu đến dựa trên schema
 
-### 2.2. Resource Directory Structure
+Các file chính:
+- `src/index.ts` - Khởi tạo và đăng ký server
+- `src/resources/index.ts` - Đăng ký resource
+- `src/tools/index.ts` - Đăng ký tool
 
-In the Atlassian MCP Server, resources are organized by product and entity type:
+#### 2.1.2. Xử lý Resource/Tool
+
+Lớp này triển khai logic nghiệp vụ cho mỗi resource và tool:
+- Xử lý tham số
+- Gọi API Atlassian thích hợp
+- Chuyển đổi dữ liệu phản hồi sang định dạng MCP
+- Xử lý lỗi và ghi nhật ký
+
+Thư mục chính:
+- `src/resources/jira/` - Triển khai resource Jira
+- `src/resources/confluence/` - Triển khai resource Confluence
+- `src/tools/jira/` - Triển khai tool Jira
+- `src/tools/confluence/` - Triển khai tool Confluence
+
+#### 2.1.3. Tích hợp API Atlassian
+
+Lớp này xử lý giao tiếp trực tiếp với API Atlassian:
+- REST API clients cho các endpoint Atlassian khác nhau
+- Định dạng yêu cầu
+- Phân tích phản hồi
+- Xử lý lỗi và thử lại
+
+Các file chính:
+- `src/utils/atlassian-api-base.ts` - Chức năng API cơ bản
+- `src/utils/jira-resource-api.ts` - API Jira cho resources
+- `src/utils/confluence-resource-api.ts` - API Confluence cho resources
+- `src/utils/jira-tool-api-v3.ts` - API Jira cho tools
+
+#### 2.1.4. Xác thực & Cấu hình
+
+Lớp này quản lý thông tin đăng nhập và cấu hình:
+- Cấu hình dựa trên môi trường
+- Quản lý thông tin đăng nhập
+- Tạo header xác thực
+- Cài đặt kết nối
+
+Các file chính:
+- `src/utils/mcp-helpers.ts` - Chứa namespace `Config` cho quản lý cấu hình
+- `src/utils/atlassian-api-base.ts` - Chứa giao diện `AtlassianConfig`
+- Biến môi trường (file `.env`) - Lưu trữ thông tin đăng nhập
+
+### 2.2. Helpers chuẩn hóa (v2.1.1)
+
+Từ phiên bản 2.1.1, MCP Atlassian Server sử dụng các helper chuẩn hóa để đảm bảo nhất quán:
+
+#### mcp-core.js
+
+Module này cung cấp các hàm core để tạo response chuẩn:
+
+```typescript
+/**
+ * Tạo response thành công chuẩn
+ */
+export function createSuccessResponse(uri: string, message: string, data?: any): McpResponse {
+  return createJsonResponse(uri, {
+    success: true,
+    message,
+    ...(data && { data })
+  });
+}
+
+/**
+ * Tạo response lỗi chuẩn
+ */
+export function createErrorResponse(uri: string, message: string, details?: any): McpResponse {
+  return {
+    contents: [
+      {
+        uri,
+        mimeType: 'application/json',
+        text: JSON.stringify({
+          success: false,
+          message,
+          ...(details && { details })
+        })
+      }
+    ],
+    isError: true
+  };
+}
+```
+
+#### mcp-helpers.js
+
+Module này cung cấp các namespace helper chuẩn hóa:
+
+```typescript
+export namespace Config {
+  /**
+   * Lấy cấu hình Atlassian từ biến môi trường
+   */
+  export function getAtlassianConfigFromEnv(): AtlassianConfig {
+    // Triển khai...
+  }
+}
+
+export namespace Resources {
+  /**
+   * Tạo resource chuẩn hóa với metadata và schema
+   */
+  export function createStandardResource(
+    uri: string,
+    data: any[],
+    dataKey: string,
+    schema: any,
+    totalCount: number,
+    limit: number,
+    offset: number,
+    uiUrl?: string
+  ): McpResponse {
+    // Triển khai...
+  }
+}
+```
+
+### 2.3. Luồng dữ liệu
+
+Khi MCP client yêu cầu dữ liệu, luồng qua hệ thống là:
+
+1. MCP client gửi yêu cầu đến MCP server (ví dụ: `GET jira://issues?jql=project=TEAM`)
+2. MCP server định tuyến yêu cầu đến handler resource thích hợp
+3. Resource handler trích xuất tham số và xây dựng yêu cầu API Atlassian
+4. Atlassian API client thực hiện yêu cầu HTTP đến Atlassian
+5. Phản hồi được chuyển đổi sang định dạng MCP
+6. Phản hồi được định dạng được trả về MCP client
+7. MCP client chuyển dữ liệu đến mô hình AI
+
+**Minh họa luồng xử lý Resource:**
+
+```mermaid
+sequenceDiagram
+    participant AI as AI Model
+    participant Client as MCP Client
+    participant Server as MCP Server
+    participant Handler as Resource Handler
+    participant API as Atlassian API
+
+    AI->>Client: Yêu cầu dữ liệu
+    Client->>Server: GET jira://issues?jql=project=TEAM
+    Server->>Handler: Định tuyến đến handler
+    Handler->>Handler: Trích xuất tham số
+    Handler->>API: Gọi API Atlassian
+    API-->>Handler: Trả về dữ liệu
+    Handler->>Handler: Chuyển đổi định dạng
+    Handler-->>Server: Trả về response MCP
+    Server-->>Client: Trả về kết quả
+    Client-->>AI: Chuyển dữ liệu đến AI
+```
+
+**Minh họa luồng xử lý Tool:**
+
+```mermaid
+sequenceDiagram
+    participant AI as AI Model
+    participant Client as MCP Client
+    participant Server as MCP Server
+    participant Handler as Tool Handler
+    participant API as Atlassian API
+
+    AI->>Client: Yêu cầu thực hiện hành động
+    Client->>Server: CALL createIssue(params)
+    Server->>Handler: Định tuyến đến handler
+    Handler->>Handler: Xác thực tham số
+    Handler->>API: POST /rest/api/3/issue
+    API-->>Handler: Trả về kết quả
+    Handler->>Handler: Định dạng phản hồi
+    Handler-->>Server: Trả về response MCP
+    Server-->>Client: Trả về kết quả
+    Client-->>AI: Xác nhận hoàn thành
+```
+
+Đối với tools, luồng tương tự nhưng liên quan đến thay đổi trạng thái trong hệ thống backend. Các tool thường yêu cầu xác thực nghiêm ngặt hơn và có thể cần xác nhận từ người dùng trước khi thực hiện các thao tác thay đổi dữ liệu.
+
+## 3. Hiểu về MCP Resources
+
+### 3.1. MCP Resources là gì?
+
+Resources trong MCP là endpoint có thể địa chỉ hóa trả về dữ liệu về các thực thể cụ thể. Chúng:
+
+- Có mẫu URI duy nhất (ví dụ: `jira://issues`, `confluence://pages/{pageId}`)
+- Hỗ trợ tham số truy vấn để lọc và phân trang
+- Trả về dữ liệu ở định dạng nhất quán, được xác thực schema
+- Chỉ đọc (không sửa đổi dữ liệu)
+
+### 3.2. Cấu trúc thư mục Resource
+
+Trong MCP Server Atlassian, resources được tổ chức theo sản phẩm và loại thực thể:
 
 ```
 /src
@@ -38,45 +228,45 @@ In the Atlassian MCP Server, resources are organized by product and entity type:
       spaces.ts              # Confluence space resources
       pages.ts               # Confluence page resources
       ...
-    index.ts                 # Main resource registration
+    index.ts                 # Đăng ký resource chính
 ```
 
-## 3. Implementing MCP Resources
+## 4. Triển khai MCP Resources
 
-### 3.1. Creating a New Resource
+### 4.1. Tạo Resource mới
 
-To create a new resource, follow these steps:
+Để tạo resource mới, hãy làm theo các bước sau:
 
-1. Create a new file in the appropriate directory (e.g., `src/resources/jira/your-resource.ts`)
-2. Define the resource template and handler
-3. Register the resource with a unique name
-4. Update the resource registration in the index file
+1. Tạo file mới trong thư mục thích hợp (ví dụ: `src/resources/jira/your-resource.ts`)
+2. Định nghĩa template và handler resource
+3. Đăng ký resource với tên duy nhất
+4. Cập nhật đăng ký resource trong file index
 
-### 3.2. Resource File Structure
+### 4.2. Cấu trúc file Resource
 
-A standard resource file includes:
+Một file resource tiêu chuẩn bao gồm:
 
 ```typescript
-// Import necessary libraries
+// Import thư viện cần thiết
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../../utils/logger.js';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
-// Import schemas and API helpers
+// Import schemas và API helpers
 import { yourSchema } from '../../schemas/your-schema.js';
 import { yourApiFunction } from '../../utils/your-api-function.js';
 
-// Initialize logger
+// Khởi tạo logger
 const logger = Logger.getLogger('YourResource');
 
-// Function to get Atlassian config from environment 
-// (Important: each resource file should have its own function)
+// Hàm lấy cấu hình Atlassian từ môi trường
+// (Quan trọng: mỗi file resource nên có hàm riêng)
 function getAtlassianConfigFromEnv(): AtlassianConfig {
   const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || '';
   const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || '';
   const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || '';
 
   if (!ATLASSIAN_SITE_NAME || !ATLASSIAN_USER_EMAIL || !ATLASSIAN_API_TOKEN) {
-    throw new Error('Missing Atlassian credentials in environment variables');
+    throw new Error('Thiếu thông tin đăng nhập Atlassian trong biến môi trường');
   }
 
   return {
@@ -88,19 +278,19 @@ function getAtlassianConfigFromEnv(): AtlassianConfig {
   };
 }
 
-// Function to register the resource with MCP Server
+// Hàm đăng ký resource với MCP Server
 export function registerYourResource(server: McpServer) {
-  logger.info('Registering Your Resource...');
+  logger.info('Đăng ký Your Resource...');
 
   server.resource(
-    'your-resource-name',  // Unique name for the resource
-    new ResourceTemplate('your://resource/pattern/{param}', {  // URI pattern with parameters
+    'your-resource-name',  // Tên duy nhất cho resource
+    new ResourceTemplate('your://resource/pattern/{param}', {  // Mẫu URI với tham số
       list: async (_extra) => ({
         resources: [
           {
             uri: 'your://resource/pattern/{param}',
-            name: 'Your Resource Name',
-            description: 'Description of your resource',
+            name: 'Tên Resource Của Bạn',
+            description: 'Mô tả về resource của bạn',
             mimeType: 'application/json'
           }
         ]
@@ -108,19 +298,19 @@ export function registerYourResource(server: McpServer) {
     }),
     async (uri, params, _extra) => {
       try {
-        // Get config from environment
+        // Lấy cấu hình từ môi trường
         const config = getAtlassianConfigFromEnv();
         
-        // Process parameters from URI
+        // Xử lý tham số từ URI
         const param = Array.isArray(params.param) ? params.param[0] : params.param;
         
-        // Call Atlassian API
+        // Gọi API Atlassian
         const data = await yourApiFunction(config, param);
         
-        // Format URI string
+        // Định dạng chuỗi URI
         const uriString = typeof uri === 'string' ? uri : uri.href;
         
-        // Return result in MCP format
+        // Trả về kết quả ở định dạng MCP
         return {
           contents: [{
             uri: uriString,
@@ -129,28 +319,28 @@ export function registerYourResource(server: McpServer) {
               yourData: data,
               metadata: { 
                 self: uriString,
-                // Add other metadata if needed
+                // Thêm metadata khác nếu cần
               }
             })
           }]
         };
       } catch (error) {
-        logger.error(`Error processing resource request:`, error);
+        logger.error(`Lỗi xử lý yêu cầu resource:`, error);
         throw error;
       }
     }
   );
 
-  logger.info('Your Resource registered successfully');
+  logger.info('Đăng ký Resource thành công');
 }
 ```
 
-### 3.3. Real Example: Jira Issues Resource
+### 4.3. Ví dụ thực tế: Jira Issues Resource
 
-Here's a real example from the [`src/resources/jira/issues.ts`](../src/resources/jira/issues.ts) file:
+Dưới đây là ví dụ thực tế từ file `src/resources/jira/issues.ts`:
 
 ```typescript
-// Excerpt from src/resources/jira/issues.ts
+// Trích từ src/resources/jira/issues.ts
 server.resource(
   'jira-issues-list',
   new ResourceTemplate('jira://issues', {
@@ -159,7 +349,7 @@ server.resource(
         {
           uri: 'jira://issues',
           name: 'Jira Issues',
-          description: 'List and search all Jira issues',
+          description: 'Liệt kê và tìm kiếm tất cả Jira issues',
           mimeType: 'application/json'
         }
       ]
@@ -167,17 +357,17 @@ server.resource(
   }),
   async (uri, params, _extra) => {
     try {
-      // Get config from environment
+      // Lấy cấu hình từ môi trường
       const config = getAtlassianConfigFromEnv();
       
-      // Process parameters
+      // Xử lý tham số
       const { limit, offset } = extractPagingParams(params);
       const jql = params?.jql ? (Array.isArray(params.jql) ? params.jql[0] : params.jql) : '';
       
-      // Call Jira API
+      // Gọi API Jira
       const response = await searchIssues(config, jql, offset, limit);
       
-      // Format and return results
+      // Định dạng và trả về kết quả
       const uriString = typeof uri === 'string' ? uri : uri.href;
       return createStandardResource(
         uriString,
@@ -190,61 +380,61 @@ server.resource(
         `${config.baseUrl}/issues/`
       );
     } catch (error) {
-      logger.error('Error getting issue list:', error);
+      logger.error('Lỗi khi lấy danh sách issue:', error);
       throw error;
     }
   }
 );
 ```
 
-### 3.4. Resource Registration
+### 4.4. Đăng ký Resource
 
-After creating a resource file, register it in the appropriate index file:
+Sau khi tạo file resource, đăng ký nó trong file index thích hợp:
 
 ```typescript
-// In src/resources/jira/index.ts
+// Trong src/resources/jira/index.ts
 import { registerYourResource } from './your-resource.js';
 
 export function registerJiraResources(server: McpServer) {
-  // Register other resources...
+  // Đăng ký resources khác...
   registerYourResource(server);
 }
 
-// In src/resources/index.ts (if not using a product-specific index)
+// Trong src/resources/index.ts (nếu không sử dụng index theo sản phẩm)
 import { registerYourResource } from './your-resource.js';
 
 export function registerAllResources(server: McpServer) {
-  // Register other resources...
+  // Đăng ký resources khác...
   registerYourResource(server);
 }
 ```
 
-### 3.5. Resource URI Patterns
+### 4.5. Mẫu URI Resource
 
-Design your resource URI patterns to be:
+Thiết kế mẫu URI resource của bạn để:
 
-- **Predictable**: Follow consistent naming conventions
-- **Hierarchical**: Reflect parent-child relationships
-- **RESTful**: Follow RESTful resource naming principles
-- **Queryable**: Support query parameters for filtering
+- **Dễ đoán**: Tuân theo quy ước đặt tên nhất quán
+- **Phân cấp**: Phản ánh quan hệ cha-con
+- **RESTful**: Tuân theo nguyên tắc đặt tên resource RESTful
+- **Có thể truy vấn**: Hỗ trợ tham số truy vấn để lọc
 
-Examples of well-designed URI patterns:
+Ví dụ về mẫu URI được thiết kế tốt:
 
-- `jira://issues` - List all issues
-- `jira://issues/{issueKey}` - Get a specific issue
-- `jira://projects/{projectKey}/issues` - List issues in a project
-- `confluence://spaces/{spaceKey}/pages` - List pages in a space
+- `jira://issues` - Liệt kê tất cả issues
+- `jira://issues/{issueKey}` - Lấy một issue cụ thể
+- `jira://projects/{projectKey}/issues` - Liệt kê issues trong dự án
+- `confluence://spaces/{spaceKey}/pages` - Liệt kê trang trong không gian
 
-### 3.6. Resource Response Format
+### 4.6. Định dạng phản hồi Resource
 
-Resources should return data in a consistent format:
+Resources nên trả về dữ liệu ở định dạng nhất quán:
 
 ```json
 {
   "yourData": [
     {
       "id": "123",
-      "name": "Example Item",
+      "name": "Mục ví dụ",
       "properties": {
         "key1": "value1",
         "key2": "value2"
@@ -260,139 +450,139 @@ Resources should return data in a consistent format:
 }
 ```
 
-The `metadata` section typically includes:
-- `self`: The URI of the resource
-- Pagination info (`totalResults`, `startAt`, `maxResults`)
-- Other metadata like API version, timestamp, etc.
+Phần `metadata` thường bao gồm:
+- `self`: URI của resource
+- Thông tin phân trang (`totalResults`, `startAt`, `maxResults`)
+- Metadata khác như phiên bản API, timestamp, v.v.
 
-## 4. Understanding MCP Tools
+## 5. Hiểu về MCP Tools
 
-### 4.1. What are MCP Tools?
+### 5.1. MCP Tools là gì?
 
-Tools in MCP are function-like endpoints that perform actions. They:
+Tools trong MCP là endpoint giống hàm thực hiện hành động. Chúng:
 
-- Have a unique name (e.g., `createIssue`, `updatePage`)
-- Accept parameters for the action
-- Validate inputs against a schema
-- Perform state changes (create, update, delete)
-- Return results of the operation
+- Có tên duy nhất (ví dụ: `createIssue`, `updatePage`)
+- Chấp nhận tham số cho hành động
+- Xác thực đầu vào dựa trên schema
+- Thực hiện thay đổi trạng thái (tạo, cập nhật, xóa)
+- Trả về kết quả của thao tác
 
-### 4.2. Tool Directory Structure
+### 5.2. Cấu trúc thư mục Tool
 
-In the Atlassian MCP Server, tools are organized by product and functionality:
+Trong MCP Server Atlassian, tools được tổ chức theo sản phẩm và chức năng:
 
 ```
 /src
   /tools
     /jira
-      create-issue.ts        # Tool to create Jira issues
-      update-issue.ts        # Tool to update Jira issues
+      create-issue.ts        # Tool tạo Jira issues
+      update-issue.ts        # Tool cập nhật Jira issues
       ...
     /confluence
-      create-page.ts         # Tool to create Confluence pages
-      update-page.ts         # Tool to update Confluence pages
+      create-page.ts         # Tool tạo trang Confluence
+      update-page.ts         # Tool cập nhật trang Confluence
       ...
-    index.ts                 # Main tool registration
+    index.ts                 # Đăng ký tool chính
 ```
 
-## 5. Implementing MCP Tools
+## 6. Triển khai MCP Tools
 
-### 5.1. Creating a New Tool
+### 6.1. Tạo Tool mới
 
-To create a new tool, follow these steps:
+Để tạo tool mới, hãy làm theo các bước sau:
 
-1. Create a new file in the appropriate directory (e.g., `src/tools/jira/your-tool.ts`)
-2. Define the tool schema and handler
-3. Register the tool with a unique name
-4. Update the tool registration in the index file
+1. Tạo file mới trong thư mục thích hợp (ví dụ: `src/tools/jira/your-tool.ts`)
+2. Định nghĩa schema và handler tool
+3. Đăng ký tool với tên duy nhất
+4. Cập nhật đăng ký tool trong file index
 
-### 5.2. Tool File Structure
+### 6.2. Cấu trúc file Tool
 
-A standard tool file includes:
+Một file tool tiêu chuẩn bao gồm:
 
 ```typescript
-// Import necessary libraries
+// Import thư viện cần thiết
 import { Logger } from '../../utils/logger.js';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 // Import API helpers
 import { yourToolApiFunction } from '../../utils/your-tool-api.js';
 
-// Initialize logger
+// Khởi tạo logger
 const logger = Logger.getLogger('YourTool');
 
-// Input schema for the tool
+// Schema đầu vào cho tool
 const YOUR_TOOL_SCHEMA = {
   type: 'object',
   properties: {
     param1: { 
       type: 'string', 
-      description: 'Description for parameter 1' 
+      description: 'Mô tả cho tham số 1' 
     },
     param2: { 
       type: 'number', 
-      description: 'Description for parameter 2' 
+      description: 'Mô tả cho tham số 2' 
     }
-    // Add other parameters...
+    // Thêm tham số khác...
   },
-  required: ['param1'] // Required parameters
+  required: ['param1'] // Tham số bắt buộc
 };
 
-// Function to register the tool
+// Hàm đăng ký tool
 export function registerYourTool(server: any) {
-  logger.info('Registering Your Tool...');
+  logger.info('Đăng ký Your Tool...');
 
   server.tool(
-    'your-tool-name',  // Tool name
-    'Description of what your tool does', // Tool description
-    YOUR_TOOL_SCHEMA, // Input schema
+    'your-tool-name',  // Tên tool
+    'Mô tả về chức năng của tool', // Mô tả tool
+    YOUR_TOOL_SCHEMA, // Schema đầu vào
     async (params: any, context: any) => {
       try {
-        // Get config from context
+        // Lấy cấu hình từ context
         const { atlassianConfig } = context;
         
-        // Process parameters
+        // Xử lý tham số
         const { param1, param2 } = params;
         
-        // Call Atlassian API
+        // Gọi API Atlassian
         const result = await yourToolApiFunction(atlassianConfig, param1, param2);
         
-        // Return result in MCP format
+        // Trả về kết quả ở định dạng MCP
         return {
           content: [
-            { type: 'text', text: `Operation completed successfully: ${result.id}` }
+            { type: 'text', text: `Thao tác hoàn thành thành công: ${result.id}` }
           ]
         };
       } catch (error) {
-        logger.error(`Error executing tool:`, error);
+        logger.error(`Lỗi thực thi tool:`, error);
         return {
-          content: [{ type: 'text', text: `Error: ${error.message}` }],
+          content: [{ type: 'text', text: `Lỗi: ${error.message}` }],
           isError: true
         };
       }
     }
   );
 
-  logger.info('Your Tool registered successfully');
+  logger.info('Đăng ký Tool thành công');
 }
 ```
 
-### 5.3. Real Example: Create Issue Tool
+### 6.3. Ví dụ thực tế: Create Issue Tool
 
-Here's a real example from the [`src/tools/jira/create-issue.ts`](../src/tools/jira/create-issue.ts) file:
+Dưới đây là ví dụ thực tế từ file `src/tools/jira/create-issue.ts`:
 
 ```typescript
-// Excerpt from src/tools/jira/create-issue.ts
+// Trích từ src/tools/jira/create-issue.ts
 server.tool(
   'createIssue',
-  'Create a new issue in Jira',
+  'Tạo mới một issue trong Jira',
   {
     type: 'object',
     properties: {
-      projectKey: { type: 'string', description: 'Project key (e.g., PROJ)' },
-      summary: { type: 'string', description: 'Issue title/summary' },
-      description: { type: 'string', description: 'Issue description' },
-      issueType: { type: 'string', description: 'Issue type (e.g., "Task", "Bug")' },
-      // Other parameters...
+      projectKey: { type: 'string', description: 'Mã dự án (ví dụ: PROJ)' },
+      summary: { type: 'string', description: 'Tiêu đề/tóm tắt issue' },
+      description: { type: 'string', description: 'Mô tả issue' },
+      issueType: { type: 'string', description: 'Loại issue (ví dụ: "Task", "Bug")' },
+      // Tham số khác...
     },
     required: ['projectKey', 'summary', 'issueType']
   },
@@ -400,33 +590,33 @@ server.tool(
     try {
       const { atlassianConfig } = context;
       
-      // Prepare data
+      // Chuẩn bị dữ liệu
       const issueData = {
         fields: {
           project: { key: params.projectKey },
           summary: params.summary,
           description: params.description,
           issuetype: { name: params.issueType }
-          // Other fields...
+          // Trường khác...
         }
       };
       
-      // Call Jira API
+      // Gọi API Jira
       const result = await createJiraIssue(atlassianConfig, issueData);
       
-      // Return result
+      // Trả về kết quả
       return {
         content: [
           {
             type: 'text',
-            text: `Successfully created issue ${result.key}: ${params.summary}`
+            text: `Đã tạo issue thành công ${result.key}: ${params.summary}`
           }
         ]
       };
     } catch (error) {
-      logger.error(`Error creating Jira issue:`, error);
+      logger.error(`Lỗi khi tạo Jira issue:`, error);
       return {
-        content: [{ type: 'text', text: `Error creating issue: ${error.message}` }],
+        content: [{ type: 'text', text: `Lỗi khi tạo issue: ${error.message}` }],
         isError: true
       };
     }
@@ -434,33 +624,33 @@ server.tool(
 );
 ```
 
-### 5.4. Tool Registration
+### 6.4. Đăng ký Tool
 
-After creating a tool file, register it in the tools index file:
+Sau khi tạo file tool, đăng ký nó trong file index tool:
 
 ```typescript
-// In src/tools/index.ts
+// Trong src/tools/index.ts
 import { registerYourTool } from './jira/your-tool.js';
-// or
+// hoặc
 import { registerYourTool } from './confluence/your-tool.js';
 
 export function registerAllTools(server: any) {
-  // Register other tools...
+  // Đăng ký tools khác...
   registerYourTool(server);
 }
 ```
 
-### 5.5. Tool Input Schemas
+### 6.5. Schema đầu vào Tool
 
-Tool input schemas are critical for validation and documentation. A well-designed schema:
+Schema đầu vào tool rất quan trọng cho việc xác thực và tài liệu. Schema được thiết kế tốt:
 
-- Clearly describes each parameter
-- Marks required vs. optional parameters
-- Provides default values where appropriate
-- Includes type information and constraints
-- Has helpful descriptions for AI models
+- Mô tả rõ ràng từng tham số
+- Đánh dấu tham số bắt buộc và tùy chọn
+- Cung cấp giá trị mặc định khi thích hợp
+- Bao gồm thông tin kiểu và ràng buộc
+- Có mô tả hữu ích cho mô hình AI
 
-Example of a good tool schema:
+Ví dụ về schema tool tốt:
 
 ```typescript
 {
@@ -468,26 +658,26 @@ Example of a good tool schema:
   properties: {
     projectKey: { 
       type: 'string', 
-      description: 'The project key (e.g., "PROJ")'
+      description: 'Mã dự án (ví dụ: "PROJ")'
     },
     summary: { 
       type: 'string', 
-      description: 'Brief summary of the issue'
+      description: 'Tóm tắt ngắn về issue'
     },
     description: { 
       type: 'string', 
-      description: 'Detailed description of the issue',
+      description: 'Mô tả chi tiết về issue',
       nullable: true 
     },
     issueType: { 
       type: 'string', 
-      description: 'Type of issue to create',
+      description: 'Loại issue cần tạo',
       enum: ['Bug', 'Task', 'Story', 'Epic'],
       default: 'Task'
     },
     priority: { 
       type: 'string', 
-      description: 'Issue priority',
+      description: 'Độ ưu tiên issue',
       enum: ['Highest', 'High', 'Medium', 'Low', 'Lowest'],
       nullable: true 
     }
@@ -497,348 +687,180 @@ Example of a good tool schema:
 }
 ```
 
-### 5.6. Tool Response Format
+## 7. Các vấn đề triển khai
 
-Tools should return results in a consistent format:
+### 7.1. Thiết lập môi trường
 
-```typescript
+MCP Server yêu cầu cấu hình cho kết nối Atlassian:
+- ATLASSIAN_SITE_NAME - Tên site Atlassian (ví dụ: "yourcompany.atlassian.net")
+- ATLASSIAN_USER_EMAIL - Email để xác thực API
+- ATLASSIAN_API_TOKEN - Token API để xác thực
+
+Những thông tin này thường được lưu trữ trong file `.env` và tải khi chạy.
+
+### 7.2. Chiến lược xử lý lỗi
+
+Xử lý lỗi mạnh mẽ là rất quan trọng cho sự ổn định của MCP Server:
+
+- **Suy giảm từ từ**: Trả về kết quả một phần khi có thể
+- **Lỗi thông tin**: Trả về thông báo lỗi rõ ràng giúp chẩn đoán vấn đề
+- **Ghi nhật ký**: Ghi nhật ký toàn diện để gỡ lỗi
+- **Thử lại**: Triển khai thử lại cho lỗi tạm thời
+- **Xác thực**: Xác thực sớm tham số để tránh lỗi hạ nguồn
+
+### 7.3. Cân nhắc hiệu suất
+
+Để hiệu suất tối ưu, cân nhắc:
+
+- **Bộ nhớ đệm**: Lưu trữ bộ nhớ đệm các tài nguyên truy cập thường xuyên
+- **Phân trang**: Triển khai phân trang thích hợp cho tập kết quả lớn
+- **Phân lô**: Phân lô yêu cầu API khi có thể
+- **Trường có chọn lọc**: Chỉ yêu cầu các trường cần thiết từ API Atlassian
+- **Pooling kết nối**: Tái sử dụng kết nối HTTP
+
+### 7.4. Thực hành tốt nhất về bảo mật
+
+Các cân nhắc bảo mật cho MCP Server bao gồm:
+
+- **Quản lý token API**: Lưu trữ an toàn các token API
+- **Xác thực đầu vào**: Xác thực tất cả tham số đầu vào
+- **Không rò rỉ thông tin đăng nhập**: Không bao giờ hiển thị thông tin đăng nhập trong phản hồi
+- **Đặc quyền tối thiểu**: Sử dụng token API với quyền tối thiểu cần thiết
+- **Giới hạn tốc độ**: Triển khai giới hạn tốc độ để ngăn lạm dụng
+
+## 8. Thực hành tốt nhất và mẫu thiết kế
+
+### 8.1. Thực hành tốt nhất về Resources
+
+Khi triển khai resources, hãy tuân theo các thực hành tốt nhất:
+
+- **Nhất quán URI**: Sử dụng mẫu URI nhất quán trên tất cả resources
+- **Phân trang rõ ràng**: Cung cấp phân trang với limit, offset và tổng số
+- **Metadata phong phú**: Bao gồm metadata hữu ích trong mỗi phản hồi
+- **Xử lý tham số**: Xác thực và chuẩn hóa tham số đầu vào
+- **Sơ đồ rõ ràng**: Định nghĩa schema rõ ràng cho tất cả resources
+- **Xử lý lỗi duyên dáng**: Trả về lỗi chuẩn hóa và đầy đủ thông tin
+
+### 8.2. Thực hành tốt nhất về Tools
+
+Khi triển khai tools, hãy tuân theo các thực hành tốt nhất:
+
+- **Xác thực nghiêm ngặt**: Xác thực tất cả đầu vào dựa trên schema
+- **Thông báo rõ ràng**: Trả về thông báo thành công/thất bại rõ ràng
+- **Kết quả đầy đủ**: Bao gồm dữ liệu đầy đủ trong phản hồi thành công
+- **Là nguyên tử**: Đảm bảo thao tác là nguyên tử khi có thể
+- **Hỗ trợ hoàn tác**: Cung cấp các công cụ để hoàn tác thay đổi khi thích hợp
+- **Cấu trúc nhất quán**: Tuân theo cấu trúc mã và quy ước đặt tên nhất quán
+
+### 8.3. Mẫu mã nguồn
+
+Cả hai resource và tool nên tuân theo cấu trúc mã nguồn nhất quán:
+
+1. **Imports và dependencies** - Ở đầu file
+2. **Cấu hình và helpers** - Constants và helpers
+3. **Schema** - Định nghĩa schema bao gồm các kiểu và xác thực
+4. **Handler** - Hàm xử lý chính
+5. **Export** - Hàm đăng ký để công khai
+
+## 9. Ví dụ về tài nguyên và công cụ MCP
+
+### 9.1. Các Resources MCP phổ biến
+
+Các resource Jira phổ biến:
+- `jira://issues` - Liệt kê tất cả issues
+- `jira://issues/{issueKey}` - Lấy issue cụ thể
+- `jira://projects` - Liệt kê tất cả dự án
+- `jira://projects/{projectKey}` - Lấy dự án cụ thể
+- `jira://boards` - Liệt kê tất cả boards
+- `jira://boards/{boardId}` - Lấy board cụ thể
+
+Các resource Confluence phổ biến:
+- `confluence://spaces` - Liệt kê tất cả spaces
+- `confluence://spaces/{spaceKey}` - Lấy space cụ thể
+- `confluence://spaces/{spaceKey}/pages` - Liệt kê tất cả pages trong space
+- `confluence://pages/{pageId}` - Lấy page cụ thể
+- `confluence://pages/{pageId}/children` - Liệt kê trang con của page cụ thể
+
+### 9.2. Các Tools MCP phổ biến
+
+Các tool Jira phổ biến:
+- `createIssue` - Tạo một issue mới
+- `updateIssue` - Cập nhật issue hiện có
+- `transitionIssue` - Chuyển trạng thái issue
+- `addComment` - Thêm comment vào issue
+- `assignIssue` - Gán issue cho người dùng
+
+Các tool Confluence phổ biến:
+- `createPage` - Tạo trang mới
+- `updatePage` - Cập nhật trang hiện có
+- `addComment` - Thêm comment vào trang
+- `createChildPage` - Tạo trang con dưới trang cha
+- `attachFile` - Đính kèm file vào trang
+
+### 9.3. Ví dụ về Schema đầu ra Resource
+
+Ví dụ về schema đầu ra cho Jira issue:
+
+```json
 {
-  content: [
-    { type: 'text', text: 'Operation description' },
-    { type: 'text', text: 'Additional information' }
-  ],
-  // For errors:
-  isError: true // Only include for errors
-}
-```
-
-The `content` array can include multiple text blocks to structure the response.
-
-## 6. API Integration Layer
-
-### 6.1. Creating API Helper Functions
-
-API helper functions are created in utility files to:
-- Encapsulate API call logic
-- Handle common error patterns
-- Format requests consistently
-- Parse responses
-
-Example of creating an API helper function:
-
-```typescript
-// In src/utils/jira-resource-api.ts or src/utils/jira-tool-api-v3.ts
-export async function getJiraIssuesByJql(
-  config: AtlassianConfig, 
-  jql: string, 
-  startAt: number = 0, 
-  maxResults: number = 50
-): Promise<any> {
-  const url = `${config.baseUrl}/rest/api/3/search`;
-  
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${Buffer.from(`${config.email}:${config.apiToken}`).toString('base64')}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      jql,
-      startAt,
-      maxResults,
-      fields: ['summary', 'description', 'status', 'assignee', 'reporter', 'priority', 'created', 'updated', 'issuetype', 'project']
-    })
-  });
-  
-  if (!response.ok) {
-    throw new Error(`Jira API error: ${response.status} ${await response.text()}`);
-  }
-  
-  return await response.json();
-}
-```
-
-### 6.2. Data Transformation
-
-Data transformation functions convert between Atlassian API data and MCP format:
-
-```typescript
-// Example of a transformation function
-function transformJiraIssueToMcpFormat(jiraIssue: any): any {
-  return {
-    id: jiraIssue.id,
-    key: jiraIssue.key,
-    summary: jiraIssue.fields.summary,
-    description: jiraIssue.fields.description,
-    status: {
-      id: jiraIssue.fields.status.id,
-      name: jiraIssue.fields.status.name,
-      category: jiraIssue.fields.status.statusCategory.name
-    },
-    issueType: {
-      id: jiraIssue.fields.issuetype.id,
-      name: jiraIssue.fields.issuetype.name
-    },
-    projectKey: jiraIssue.fields.project.key,
-    created: jiraIssue.fields.created,
-    updated: jiraIssue.fields.updated,
-    // Transform other fields as needed
-  };
-}
-```
-
-### 6.3. Schema Definitions
-
-Define schemas in dedicated files:
-
-```typescript
-// In src/schemas/jira.ts
-export const issueSchema = {
-  type: 'object',
-  properties: {
-    id: { type: 'string', description: 'Issue ID' },
-    key: { type: 'string', description: 'Issue key (e.g., PROJ-123)' },
-    // Other properties
-  },
-  required: ['id', 'key', 'summary', 'status']
-};
-
-export const issueListSchema = {
-  type: 'array',
-  items: issueSchema
-};
-```
-
-## 7. Testing and Debugging
-
-### 7.1. Using the Test Client
-
-The MCP Server comes with a test client in `dev_mcp-atlassian-test-client`:
-
-```bash
-# List all registered resources and tools
-cd dev_mcp-atlassian-test-client
-npx ts-node --esm src/list-mcp-inventory.ts
-
-# Test specific resources
-npx ts-node --esm src/test-jira-issues.ts
-npx ts-node --esm src/test-confluence-pages.ts
-```
-
-### 7.2. Creating Custom Test Scripts
-
-You can create custom test scripts for your resources and tools:
-
-```typescript
-// Example test script in dev_mcp-atlassian-test-client/src/test-your-resource.ts
-import { McpClient } from '@modelcontextprotocol/sdk/client/mcp.js';
-
-async function main() {
-  console.log('Testing your resource...');
-  
-  // Connect to MCP server
-  const client = new McpClient('http://localhost:3000');
-  await client.connect();
-  
-  // Test resource
-  try {
-    const result = await client.fetch('your://resource/pattern/param');
-    console.log('Resource result:', JSON.parse(result.contents[0].text));
-  } catch (error) {
-    console.error('Error testing resource:', error);
-  }
-  
-  // Test tool
-  try {
-    const result = await client.invoke('your-tool-name', {
-      param1: 'value1',
-      param2: 123
-    });
-    console.log('Tool result:', result);
-  } catch (error) {
-    console.error('Error testing tool:', error);
-  }
-}
-
-main().catch(console.error);
-```
-
-### 7.3. Logging
-
-Use the logger for effective debugging:
-
-```typescript
-import { Logger } from '../../utils/logger.js';
-const logger = Logger.getLogger('YourComponent');
-
-// Log levels
-logger.debug('Detailed debug info');
-logger.info('General info');
-logger.warn('Warning');
-logger.error('Error message', error);
-```
-
-## 8. Best Practices
-
-### 8.1. Code Organization
-
-1. **Single responsibility**: Keep each resource/tool in its own file
-2. **Consistent naming**: Use clear naming conventions
-3. **Functional organization**: Group by product and functionality
-
-### 8.2. Error Handling
-
-1. **Catch and log errors**: Always catch errors and log details
-2. **Helpful error messages**: Return clear error messages
-3. **Error differentiation**: Distinguish between MCP, Atlassian API, and internal errors
-
-### 8.3. Avoiding Resource Duplication
-
-1. **Unique resource names**: Ensure each resource has a unique name
-2. **Single URI pattern registration**: Register each URI pattern only once
-3. **Verification**: Test registrations with the client
-
-### 8.4. Schema and Validation
-
-1. **Clear schemas**: Define detailed schemas for input/output
-2. **Parameter validation**: Validate parameters before API calls
-3. **Consistent format**: Ensure consistent data format
-
-## 9. Common Pitfalls and Solutions
-
-### 9.1. Resource Registration Issues
-
-**Problem**: Resources not appearing in the inventory
-**Solution**:
-- Ensure unique resource names
-- Verify resource registration in index files
-- Check list callback returns correct resources
-
-### 9.2. Authentication Problems
-
-**Problem**: API calls failing with authentication errors
-**Solution**:
-- Check environment variables
-- Verify token permissions
-- Check for API format changes
-
-### 9.3. Data Formatting Issues
-
-**Problem**: Resource returning malformed data
-**Solution**:
-- Validate response data
-- Check transformation functions
-- Ensure proper error handling
-
-### 9.4. Tool Execution Failures
-
-**Problem**: Tools failing to complete actions
-**Solution**:
-- Verify input parameter validation
-- Check error handling
-- Test API calls separately
-
-## 10. Working with Special Data Types
-
-### 10.1. Atlassian Document Format (ADF)
-
-When working with rich text in Atlassian, you'll encounter ADF:
-
-```typescript
-// Example of handling ADF in resource transformers
-function handleDescription(description: any): string | object {
-  if (!description) return null;
-  
-  // If it's already plain text
-  if (typeof description === 'string') return description;
-  
-  // If it's ADF
-  if (description.content && description.version) {
-    // Return entire ADF object
-    return description;
-    
-    // Alternatively, extract plain text if needed:
-    // return extractPlainTextFromADF(description);
-  }
-  
-  return null;
-}
-
-// Example transformer for ADF
-function extractPlainTextFromADF(adf: any): string {
-  if (!adf || !adf.content) return '';
-  
-  // Recursively extract text
-  let text = '';
-  
-  function extractText(nodes: any[]) {
-    if (!nodes || !Array.isArray(nodes)) return;
-    
-    for (const node of nodes) {
-      if (node.type === 'text' && node.text) {
-        text += node.text;
-      }
-      
-      if (node.content) {
-        extractText(node.content);
-      }
-      
-      // Add spaces between paragraphs
-      if (node.type === 'paragraph') {
-        text += '\n';
+  "issues": [
+    {
+      "id": "10001",
+      "key": "PROJ-123",
+      "self": "https://yourcompany.atlassian.net/rest/api/3/issue/10001",
+      "fields": {
+        "summary": "Tiêu đề issue",
+        "description": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Mô tả issue"
+                }
+              ]
+            }
+          ]
+        },
+        "issuetype": {
+          "id": "10001",
+          "name": "Task",
+          "iconUrl": "https://yourcompany.atlassian.net/images/icons/issuetypes/task.svg"
+        },
+        "priority": {
+          "id": "3",
+          "name": "Medium"
+        },
+        "status": {
+          "id": "10000",
+          "name": "To Do"
+        },
+        "assignee": {
+          "id": "5b10a0effa615349433854",
+          "displayName": "Tên Người Dùng",
+          "emailAddress": "user@example.com"
+        }
       }
     }
+  ],
+  "metadata": {
+    "startAt": 0,
+    "maxResults": 50,
+    "totalResults": 1
   }
-  
-  extractText(adf.content);
-  return text;
 }
 ```
 
-### 10.2. Pagination and Large Datasets
+## 10. Tài liệu tham khảo
 
-Handle pagination for large datasets:
-
-```typescript
-// Example of paginated resource fetch
-async function fetchAllItems(config: AtlassianConfig, uri: string, params: any): Promise<any[]> {
-  let allItems = [];
-  let startAt = 0;
-  const maxResults = 50;
-  let total = 0;
-  
-  do {
-    const response = await fetchPage(config, uri, {
-      ...params,
-      startAt,
-      maxResults
-    });
-    
-    allItems = [...allItems, ...response.items];
-    total = response.total;
-    startAt += maxResults;
-  } while (startAt < total);
-  
-  return allItems;
-}
-```
-
-## 11. Next Steps
-
-After understanding how to implement resources and tools:
-
-1. Study the MCP Protocol specifications for advanced features
-2. Learn about prompting and AI integration in [03-mcp-prompts-sampling.md](03-mcp-prompts-sampling.md)
-3. Explore creating resources/tools for other Atlassian products
-4. Contribute improvements to the existing codebase
-
-## 12. References
-
-- [MCP Protocol Documentation](https://github.com/modelcontextprotocol/mcp)
-- [Atlassian API Documentation](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/)
-- [Resources & Tools Reference](../introduction/resources-and-tools.md)
-- [MCP Server Architecture Overview](01-mcp-overview-architecture.md)
+- [Đặc tả giao thức MCP chính thức](https://github.com/modelcontextprotocol/mcp)
+- [Tài liệu Atlassian REST API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/)
+- [Jira REST API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/)
+- [Confluence REST API](https://developer.atlassian.com/cloud/confluence/rest/v2/intro/)
+- [Thực hành tốt nhất Node.js](https://github.com/goldbergyoni/nodebestpractices)
 
 ---
 
-*Last updated: May 2025* 
+*Cập nhật lần cuối: Tháng 5, 2025 (v2.1.1)*
