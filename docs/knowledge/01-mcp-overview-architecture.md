@@ -95,6 +95,34 @@ MCP Atlassian Server tuân theo kiến trúc phân lớp:
 └─────────────────────────────────────┘
 ```
 
+Mỗi lớp trong kiến trúc có vai trò và trách nhiệm cụ thể:
+
+1. **Lớp Giao diện MCP (Presentation)**
+   - Định nghĩa các Resource templates và Tool definitions 
+   - Cung cấp điểm giao tiếp cho AI Agents qua STDIO, HTTP hoặc WebSockets
+   - Xử lý định dạng yêu cầu và phản hồi theo đặc tả MCP
+   - Quản lý phiên và trạng thái kết nối
+
+2. **Lớp Xử lý Resource/Tool (Business Logic)**
+   - Xử lý logic kinh doanh từ yêu cầu AI tới hành động backend
+   - Thực hiện xác thực và kiểm soát quyền
+   - Chuyển đổi từ mô hình MCP sang các thực thể Atlassian
+   - Triển khai các kiểm tra validation theo biz rules
+
+3. **Lớp Tích hợp API Atlassian (Data Access)**
+   - Gọi Atlassian REST API (Jira, Confluence)
+   - Quản lý các tối ưu hóa (caching, rate limiting)
+   - Xử lý lỗi API và retry strategies
+   - Ánh xạ dữ liệu từ API sang đối tượng domain
+
+4. **Lớp Xác thực & Cấu hình (Infrastructure)**
+   - Quản lý cấu hình và biến môi trường
+   - Xử lý xác thực OAuth với Atlassian
+   - Logging, monitoring và telemetry
+   - Quản lý vòng đời ứng dụng
+
+Kiến trúc phân lớp này tạo điều kiện cho việc phát triển, bảo trì và mở rộng MCP Server. Mỗi lớp có thể được phát triển, kiểm thử và tối ưu hóa độc lập, đồng thời đảm bảo tách biệt rõ ràng các mối quan tâm.
+
 ## 3. Khái niệm cốt lõi trong MCP
 
 ### 3.1. Resources (Dữ liệu có cấu trúc)
@@ -169,56 +197,6 @@ Ví dụ về loại tool trong MCP Server Atlassian:
 - Tạo hoặc cập nhật Jira issue
 - Chuyển đổi trạng thái Jira issue
 - Tạo hoặc cập nhật trang Confluence
-
-**Ví dụ triển khai Tool (từ source code thực tế v2.1.1):**
-
-```typescript
-// Đăng ký tool để tạo issue mới
-server.tool(
-  'createIssue',
-  'Tạo mới một issue trong Jira',
-  createIssueSchema.shape,
-  async (params, context) => {
-    try {
-      // Lấy cấu hình Atlassian từ context hoặc env
-      const config = context?.atlassianConfig ?? Config.getAtlassianConfigFromEnv();
-      
-      // Gọi handler xử lý logic
-      const result = await createIssueHandler(params, config);
-
-      // Trả về kết quả chuẩn hóa v2.1.1
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              success: true,
-              key: result.key,
-              id: result.id,
-              url: result.url,
-              message: `Đã tạo issue thành công với key: ${result.key}`
-            })
-          }
-        ]
-      };
-    } catch (error) {
-      // Xử lý lỗi chuẩn hóa v2.1.1
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              success: false,
-              message: `Lỗi khi tạo issue: ${error instanceof Error ? error.message : String(error)}`
-            })
-          }
-        ],
-        isError: true
-      };
-    }
-  }
-);
-```
 
 ### 3.3. Prompts (Template)
 

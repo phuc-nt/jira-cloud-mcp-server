@@ -201,6 +201,174 @@ sequenceDiagram
 
 Đối với tools, luồng tương tự nhưng liên quan đến thay đổi trạng thái trong hệ thống backend. Các tool thường yêu cầu xác thực nghiêm ngặt hơn và có thể cần xác nhận từ người dùng trước khi thực hiện các thao tác thay đổi dữ liệu.
 
+### 2.4. Mối quan hệ giữa Resources và Tools
+
+Resources và Tools là hai khái niệm bổ sung cho nhau trong MCP, cùng nhau tạo nên một hệ thống hoàn chỉnh để AI Agents tương tác với Atlassian.
+
+```mermaid
+sequenceDiagram
+    actor User as Người dùng
+    participant AI as AI Agents
+    participant RS as Resources
+    participant TL as Tools
+    participant Data as Dữ liệu Atlassian
+    
+    User->>AI: Yêu cầu thông tin/hành động
+    AI->>RS: 1. Truy vấn thông tin
+    RS->>Data: Đọc dữ liệu
+    Data-->>RS: Trả về dữ liệu
+    RS-->>AI: 2. Trả về dữ liệu có cấu trúc
+    
+    Note over AI: 3. Phân tích & quyết định
+    
+    AI->>TL: 4. Thực hiện hành động
+    TL->>Data: Cập nhật dữ liệu
+    Data-->>TL: Xác nhận thay đổi
+    TL-->>AI: 5. Xác nhận kết quả
+    AI-->>User: Phản hồi kết quả
+```
+
+**Ví dụ luồng hoàn chỉnh:** Khi AI Agents giúp người dùng quản lý issues trong Jira:
+
+1. AI sử dụng Resource `jira://issues` để liệt kê các issues hiện tại
+2. AI phân tích dữ liệu issues trả về
+3. Dựa trên yêu cầu người dùng, AI quyết định cần tạo issue mới 
+4. AI sử dụng Tool `createIssue` để tạo issue trong Jira
+5. Sau khi issue được tạo, AI sử dụng Resource `jira://issues/{issueKey}` để xác nhận thông tin đã tạo
+
+Qua ví dụ này, ta thấy Resources (đọc) và Tools (ghi) làm việc cùng nhau để tạo một vòng phản hồi khép kín, cho phép AI tương tác hiệu quả với hệ thống Atlassian.
+
+### 2.5. Taxonomy URI và Mối quan hệ Data
+
+MCP sử dụng cấu trúc URI nhất quán để tổ chức và truy cập dữ liệu. Cấu trúc này tạo ra một taxonomy dữ liệu rõ ràng:
+
+```
+[scheme]://[collection]/[identifier]?[parameters]
+    |           |             |          |
+    |           |             |          └── Bộ lọc, sắp xếp, phân trang
+    |           |             └───────────── Mã định danh cụ thể (IDs)
+    |           └─────────────────────────── Loại tài nguyên (issues, projects)
+    └─────────────────────────────────────── Dịch vụ (jira, confluence)
+```
+
+**Mối quan hệ dữ liệu trong Atlassian:**
+
+Các resources trong MCP phản ánh cấu trúc dữ liệu và mối quan hệ giữa các đối tượng trong hệ sinh thái Atlassian:
+
+```mermaid
+graph TD
+    A["jira://projects"] --> B["jira://projects/{projectKey}"]
+    B --> C["jira://projects/{projectKey}/issues"]
+    C --> D["jira://issues/{issueKey}"]
+    D --> E["jira://issues/{issueKey}/comments"]
+    D --> F["jira://issues/{issueKey}/worklogs"]
+    D --> G["jira://issues/{issueKey}/transitions"]
+    
+    H["confluence://spaces"] --> I["confluence://spaces/{spaceKey}"]
+    I --> J["confluence://spaces/{spaceKey}/pages"]
+    J --> K["confluence://pages/{pageId}"]
+    K --> L["confluence://pages/{pageId}/children"]
+    K --> M["confluence://pages/{pageId}/comments"]
+    
+    B -.-> N["jira://users"]
+    D -.-> N
+    E -.-> N
+    I -.-> N
+    K -.-> N
+    M -.-> N
+```
+
+Mô hình quan hệ này giúp AI Agents dễ dàng điều hướng và truy xuất dữ liệu liên quan, tương tự cách một người dùng điều hướng qua giao diện Atlassian.
+
+### 2.6. Vòng đời yêu cầu MCP
+
+Mỗi yêu cầu MCP trải qua một vòng đời được định nghĩa rõ ràng, từ khi khởi tạo đến khi hoàn thành:
+
+```mermaid
+stateDiagram-v2
+    [*] --> RequestInitiated
+    RequestInitiated --> Validating: AI gửi yêu cầu
+    
+    Validating --> AuthChecking: Hợp lệ
+    Validating --> ErrorHandling: Không hợp lệ
+    
+    AuthChecking --> Processing: Ủy quyền OK
+    AuthChecking --> ErrorHandling: Từ chối ủy quyền
+    
+    Processing --> AtlassianAPICall: Chuẩn bị gọi API
+    AtlassianAPICall --> ResponseFormatting: API trả về OK
+    AtlassianAPICall --> ErrorHandling: API lỗi
+    
+    ResponseFormatting --> Complete: Dữ liệu được định dạng
+    ResponseFormatting --> ErrorHandling: Lỗi định dạng
+    
+    ErrorHandling --> Complete: Trả về lỗi có cấu trúc
+    
+    Complete --> [*]: Trả kết quả cho AI
+```
+
+**Xử lý lỗi trong MCP Server:**
+
+MCP Server triển khai xử lý lỗi toàn diện để đảm bảo AI Agents luôn nhận được phản hồi có cấu trúc, ngay cả khi có lỗi:
+
+- **Lỗi xác thực**: Khi token API không hợp lệ hoặc hết hạn
+- **Lỗi ủy quyền**: Khi người dùng không có quyền truy cập tài nguyên
+- **Lỗi API**: Khi Atlassian API trả về lỗi (503, 429, v.v.)
+- **Lỗi định dạng**: Khi không thể chuyển đổi dữ liệu API thành định dạng MCP
+
+Mỗi loại lỗi được trả về trong cấu trúc chuẩn hóa với mã lỗi, thông báo và hướng dẫn khắc phục, giúp AI Agents xử lý lỗi một cách thông minh.
+
+### 2.7. Mô hình bảo mật
+
+MCP Server triển khai mô hình bảo mật nhiều lớp để bảo vệ dữ liệu và đảm bảo tương tác an toàn:
+
+1. **Xác thực API Atlassian**:
+   - OAuth 2.0 với JWT
+   - Quản lý token và refresh
+   - Xác thực theo ngữ cảnh
+
+2. **Kiểm soát quyền truy cập**:
+   - Phân quyền dựa trên người dùng Atlassian
+   - Kiểm tra quyền truy cập resource
+   - Kiểm soát quyền thực thi tool
+
+3. **Bảo vệ dữ liệu**:
+   - Lọc dữ liệu nhạy cảm
+   - Hạn chế phạm vi truy vấn
+   - Chuẩn hóa output
+
+4. **Xác nhận hành động**:
+   - Yêu cầu xác nhận cho các thao tác ghi
+   - Theo dõi và kiểm toán
+   - Khả năng hoàn tác thao tác
+
+```mermaid
+flowchart TB
+    A[AI Agents & Request] --> B{Xác thực}
+    B -->|Thành công| C{Kiểm tra quyền}
+    B -->|Thất bại| Z[Từ chối & Log]
+    
+    C -->|Được phép| D[Xử lý yêu cầu]
+    C -->|Không được phép| Z
+    
+    D --> E{Loại yêu cầu}
+    E -->|Resource - Đọc| F[Truy vấn & Lọc dữ liệu]
+    E -->|Tool - Ghi| G{Xác nhận người dùng?}
+    
+    G -->|Cần xác nhận| H[Yêu cầu người dùng xác nhận]
+    G -->|Auto-approve| I[Thực thi thao tác]
+    H -->|Người dùng đồng ý| I
+    H -->|Người dùng từ chối| Z
+    
+    F --> J[Trả kết quả đã lọc]
+    I --> K[Kiểm toán & Trả kết quả]
+    
+    J --> L[Hoàn thành]
+    K --> L
+```
+
+Mô hình bảo mật này đảm bảo rằng AI Agents chỉ có thể truy cập và thao tác trên dữ liệu mà người dùng có quyền, và các thao tác quan trọng đều yêu cầu xác nhận rõ ràng từ người dùng.
+
 ## 3. Hiểu về MCP Resources
 
 ### 3.1. MCP Resources là gì?
@@ -687,173 +855,103 @@ Ví dụ về schema tool tốt:
 }
 ```
 
-## 7. Các vấn đề triển khai
+## 7. Trải nghiệm cho nhà phát triển
 
-### 7.1. Thiết lập môi trường
+### 7.1. Danh sách kiểm tra triển khai
 
-MCP Server yêu cầu cấu hình cho kết nối Atlassian:
-- ATLASSIAN_SITE_NAME - Tên site Atlassian (ví dụ: "yourcompany.atlassian.net")
-- ATLASSIAN_USER_EMAIL - Email để xác thực API
-- ATLASSIAN_API_TOKEN - Token API để xác thực
+Khi triển khai một Resource hoặc Tool mới, hãy đảm bảo tuân theo danh sách kiểm tra sau:
 
-Những thông tin này thường được lưu trữ trong file `.env` và tải khi chạy.
+#### Triển khai Resource mới
 
-### 7.2. Chiến lược xử lý lỗi
+- [ ] **Xác định URI**: Đặt tên URI tuân theo quy ước (`service://collection/identifier`)
+- [ ] **Định nghĩa lược đồ**: Xác định lược đồ đầu ra với Zod
+- [ ] **Tham số truy vấn**: Xác định các tham số truy vấn được hỗ trợ
+- [ ] **Xử lý lỗi**: Triển khai xử lý các trường hợp lỗi phổ biến
+- [ ] **Pagination**: Triển khai phân trang nếu resource trả về nhiều kết quả
+- [ ] **Tối ưu hoá**: Xem xét caching và chiến lược tải dữ liệu
+- [ ] **Tài liệu**: Cung cấp mô tả và ví dụ trong code
+- [ ] **Kiểm thử**: Viết unit tests và integration tests
 
-Xử lý lỗi mạnh mẽ là rất quan trọng cho sự ổn định của MCP Server:
+#### Triển khai Tool mới
 
-- **Suy giảm từ từ**: Trả về kết quả một phần khi có thể
-- **Lỗi thông tin**: Trả về thông báo lỗi rõ ràng giúp chẩn đoán vấn đề
-- **Ghi nhật ký**: Ghi nhật ký toàn diện để gỡ lỗi
-- **Thử lại**: Triển khai thử lại cho lỗi tạm thời
-- **Xác thực**: Xác thực sớm tham số để tránh lỗi hạ nguồn
+- [ ] **Đặt tên**: Chọn tên cụ thể và mô tả rõ ràng
+- [ ] **Tham số**: Định nghĩa lược đồ tham số đầu vào với Zod
+- [ ] **Kết quả**: Định nghĩa cấu trúc kết quả đầu ra rõ ràng
+- [ ] **Xác thực đầu vào**: Triển khai xác thực đầu vào kỹ lưỡng
+- [ ] **Xử lý lỗi**: Triển khai xử lý lỗi toàn diện với thông báo hữu ích
+- [ ] **Kiểm soát quyền**: Đảm bảo kiểm tra quyền truy cập
+- [ ] **Kiểm thử**: Viết các test cases bao gồm các trường hợp biên và lỗi
+- [ ] **Tài liệu**: Cung cấp ví dụ usage trong code
 
-### 7.3. Cân nhắc hiệu suất
+### 7.2. Quy trình debug và troubleshooting
 
-Để hiệu suất tối ưu, cân nhắc:
+Khi cần debug MCP Server, hãy tuân theo quy trình sau:
 
-- **Bộ nhớ đệm**: Lưu trữ bộ nhớ đệm các tài nguyên truy cập thường xuyên
-- **Phân trang**: Triển khai phân trang thích hợp cho tập kết quả lớn
-- **Phân lô**: Phân lô yêu cầu API khi có thể
-- **Trường có chọn lọc**: Chỉ yêu cầu các trường cần thiết từ API Atlassian
-- **Pooling kết nối**: Tái sử dụng kết nối HTTP
+1. **Kiểm tra logs**:
+   ```bash
+   # Xem logs với mức độ debug
+   LOG_LEVEL=debug npm start
+   ```
 
-### 7.4. Thực hành tốt nhất về bảo mật
+2. **Sử dụng trace ID**:
+   - Mỗi yêu cầu MCP được gán một traceId duy nhất
+   - Tìm kiếm logs theo traceId để theo dõi yêu cầu đầu-cuối
 
-Các cân nhắc bảo mật cho MCP Server bao gồm:
+3. **Công cụ debug**:
+   - Sử dụng Node Inspector để debug code thời gian thực
+   ```bash
+   node --inspect server.js
+   ```
+   - Mở Chrome DevTools (chrome://inspect) để kết nối
 
-- **Quản lý token API**: Lưu trữ an toàn các token API
-- **Xác thực đầu vào**: Xác thực tất cả tham số đầu vào
-- **Không rò rỉ thông tin đăng nhập**: Không bao giờ hiển thị thông tin đăng nhập trong phản hồi
-- **Đặc quyền tối thiểu**: Sử dụng token API với quyền tối thiểu cần thiết
-- **Giới hạn tốc độ**: Triển khai giới hạn tốc độ để ngăn lạm dụng
+4. **Lỗi thường gặp**:
 
-## 8. Thực hành tốt nhất và mẫu thiết kế
+   | Mã lỗi | Mô tả | Giải pháp |
+   |--------|-------|-----------|
+   | `AUTH_ERROR` | Lỗi xác thực | Kiểm tra thông tin đăng nhập và token Atlassian |
+   | `PERMISSION_DENIED` | Không đủ quyền | Kiểm tra vai trò người dùng trong Atlassian |
+   | `RATE_LIMIT` | Vượt quá giới hạn API | Triển khai exponential backoff |
+   | `VALIDATION_ERROR` | Lỗi xác thực đầu vào | Kiểm tra lại tham số đầu vào |
+   | `API_ERROR` | Lỗi từ Atlassian API | Kiểm tra logs Atlassian API |
 
-### 8.1. Thực hành tốt nhất về Resources
+5. **Performance profiling**:
+   ```bash
+   # Sử dụng Node.js built-in profiler
+   node --prof server.js
+   ```
 
-Khi triển khai resources, hãy tuân theo các thực hành tốt nhất:
+### 7.3. Thực hành tốt và mẫu thiết kế
 
-- **Nhất quán URI**: Sử dụng mẫu URI nhất quán trên tất cả resources
-- **Phân trang rõ ràng**: Cung cấp phân trang với limit, offset và tổng số
-- **Metadata phong phú**: Bao gồm metadata hữu ích trong mỗi phản hồi
-- **Xử lý tham số**: Xác thực và chuẩn hóa tham số đầu vào
-- **Sơ đồ rõ ràng**: Định nghĩa schema rõ ràng cho tất cả resources
-- **Xử lý lỗi duyên dáng**: Trả về lỗi chuẩn hóa và đầy đủ thông tin
+Khi phát triển MCP Server, hãy tuân theo các thực hành tốt sau:
 
-### 8.2. Thực hành tốt nhất về Tools
+1. **Clean Code**:
+   - Đặt tên biến và hàm có ý nghĩa
+   - Tách nhỏ hàm (mỗi hàm dưới 30 dòng)
+   - Sử dụng TypeScript để tăng type safety
 
-Khi triển khai tools, hãy tuân theo các thực hành tốt nhất:
+2. **Xử lý lỗi**:
+   - Sử dụng try/catch cho các hoạt động không đồng bộ
+   - Chuẩn hóa lỗi với class riêng
+   - Báo cáo lỗi chi tiết nhưng không lộ thông tin nhạy cảm
 
-- **Xác thực nghiêm ngặt**: Xác thực tất cả đầu vào dựa trên schema
-- **Thông báo rõ ràng**: Trả về thông báo thành công/thất bại rõ ràng
-- **Kết quả đầy đủ**: Bao gồm dữ liệu đầy đủ trong phản hồi thành công
-- **Là nguyên tử**: Đảm bảo thao tác là nguyên tử khi có thể
-- **Hỗ trợ hoàn tác**: Cung cấp các công cụ để hoàn tác thay đổi khi thích hợp
-- **Cấu trúc nhất quán**: Tuân theo cấu trúc mã và quy ước đặt tên nhất quán
+3. **Bất đồng bộ**:
+   - Sử dụng async/await thay vì callbacks
+   - Xử lý Promise.all cho các hoạt động song song
+   - Triển khai timeout cho tất cả các yêu cầu HTTP
 
-### 8.3. Mẫu mã nguồn
+4. **Cấu trúc project**:
+   ```
+   src/
+   ├── resources/        # Định nghĩa các resources
+   ├── tools/            # Định nghĩa các tools
+   ├── services/         # Các dịch vụ nghiệp vụ
+   ├── clients/          # API clients
+   ├── utils/            # Tiện ích
+   ├── config/           # Cấu hình
+   └── index.ts          # Entry point
+   ```
 
-Cả hai resource và tool nên tuân theo cấu trúc mã nguồn nhất quán:
-
-1. **Imports và dependencies** - Ở đầu file
-2. **Cấu hình và helpers** - Constants và helpers
-3. **Schema** - Định nghĩa schema bao gồm các kiểu và xác thực
-4. **Handler** - Hàm xử lý chính
-5. **Export** - Hàm đăng ký để công khai
-
-## 9. Ví dụ về tài nguyên và công cụ MCP
-
-### 9.1. Các Resources MCP phổ biến
-
-Các resource Jira phổ biến:
-- `jira://issues` - Liệt kê tất cả issues
-- `jira://issues/{issueKey}` - Lấy issue cụ thể
-- `jira://projects` - Liệt kê tất cả dự án
-- `jira://projects/{projectKey}` - Lấy dự án cụ thể
-- `jira://boards` - Liệt kê tất cả boards
-- `jira://boards/{boardId}` - Lấy board cụ thể
-
-Các resource Confluence phổ biến:
-- `confluence://spaces` - Liệt kê tất cả spaces
-- `confluence://spaces/{spaceKey}` - Lấy space cụ thể
-- `confluence://spaces/{spaceKey}/pages` - Liệt kê tất cả pages trong space
-- `confluence://pages/{pageId}` - Lấy page cụ thể
-- `confluence://pages/{pageId}/children` - Liệt kê trang con của page cụ thể
-
-### 9.2. Các Tools MCP phổ biến
-
-Các tool Jira phổ biến:
-- `createIssue` - Tạo một issue mới
-- `updateIssue` - Cập nhật issue hiện có
-- `transitionIssue` - Chuyển trạng thái issue
-- `addComment` - Thêm comment vào issue
-- `assignIssue` - Gán issue cho người dùng
-
-Các tool Confluence phổ biến:
-- `createPage` - Tạo trang mới
-- `updatePage` - Cập nhật trang hiện có
-- `addComment` - Thêm comment vào trang
-- `createChildPage` - Tạo trang con dưới trang cha
-- `attachFile` - Đính kèm file vào trang
-
-### 9.3. Ví dụ về Schema đầu ra Resource
-
-Ví dụ về schema đầu ra cho Jira issue:
-
-```json
-{
-  "issues": [
-    {
-      "id": "10001",
-      "key": "PROJ-123",
-      "self": "https://yourcompany.atlassian.net/rest/api/3/issue/10001",
-      "fields": {
-        "summary": "Tiêu đề issue",
-        "description": {
-          "type": "doc",
-          "content": [
-            {
-              "type": "paragraph",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Mô tả issue"
-                }
-              ]
-            }
-          ]
-        },
-        "issuetype": {
-          "id": "10001",
-          "name": "Task",
-          "iconUrl": "https://yourcompany.atlassian.net/images/icons/issuetypes/task.svg"
-        },
-        "priority": {
-          "id": "3",
-          "name": "Medium"
-        },
-        "status": {
-          "id": "10000",
-          "name": "To Do"
-        },
-        "assignee": {
-          "id": "5b10a0effa615349433854",
-          "displayName": "Tên Người Dùng",
-          "emailAddress": "user@example.com"
-        }
-      }
-    }
-  ],
-  "metadata": {
-    "startAt": 0,
-    "maxResults": 50,
-    "totalResults": 1
-  }
-}
-```
-
-## 10. Tài liệu tham khảo
+## 8. Tài liệu tham khảo
 
 - [Đặc tả giao thức MCP chính thức](https://github.com/modelcontextprotocol/mcp)
 - [Tài liệu Atlassian REST API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/)
