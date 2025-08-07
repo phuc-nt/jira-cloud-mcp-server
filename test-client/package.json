@@ -1,13 +1,13 @@
 {
-  "name": "dev_mcp-atlassian-test-client",
-  "version": "1.0.0",
-  "description": "Test client for MCP Atlassian server",
+  "name": "mcp-jira-test-client",
+  "version": "1.0.0", 
+  "description": "Test client for MCP Jira Server v3.0.0 (tools-only)",
   "type": "module",
   "main": "dist/tool-test.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "ts-node --esm src/index.ts"
+    "test": "node dist/tool-test.js",
+    "inventory": "node dist/list-mcp-inventory.js"
   },
   "keywords": [],
   "author": "",

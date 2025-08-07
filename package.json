@@ -1,7 +1,7 @@
 {
   "name": "@phuc-nt/mcp-atlassian-server",
   "version": "2.1.1",
-  "description": "MCP Server for interacting with Atlassian Jira and Confluence",
+  "description": "MCP Server for interacting with Atlassian Jira (tools-only architecture)",
   "type": "module",
   "main": "dist/index.js",
   "files": [
@@ -14,7 +14,6 @@
     "mcp-atlassian-server": "dist/index.js"
   },
   "scripts": {
-    "test": "jest",
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "nodemon --exec ts-node --esm src/index.ts",
@@ -27,7 +26,7 @@
     "protocol",
     "atlassian",
     "jira",
-    "confluence"
+    "tools-only"
   ],
   "author": "Phuc Nguyen",
   "license": "MIT",
