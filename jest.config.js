@@ -1,6 +1,6 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 export default {
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
   transform: {
@@ -8,6 +8,7 @@ export default {
       'ts-jest',
       {
         useESM: true,
+        isolatedModules: true,
       },
     ],
   },
@@ -28,9 +29,7 @@ export default {
   testPathIgnorePatterns: ['/node_modules/'],
   verbose: true,
   setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
-  globals: {
-    'ts-jest': {
-      isolatedModules: true
-    }
-  }
+  transformIgnorePatterns: [
+    'node_modules/(?!(@modelcontextprotocol)/)',
+  ],
 }; 

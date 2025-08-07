@@ -41,67 +41,33 @@ const server = new McpServer({
   }
 });
 
-// Log config info for debugging
-logger.info(`Atlassian config available: ${JSON.stringify(atlassianConfig, null, 2)}`);
-
-// Create simplified tool registration with context injection
-const registerToolWithContext = (name: string, description: string, schema: any, handler: any) => {
-  server.tool(name, description, schema, async (params: any, context: any) => {
-    // Add Atlassian config to context
-    context.atlassianConfig = atlassianConfig;
-    
-    logger.debug(`Tool ${name} called with context keys: [${Object.keys(context)}]`);
-    
-    try {
+// Create server wrapper with context injection
+const serverWithContext = {
+  tool: (name: string, description: string, schema: any, handler: any) => {
+    server.tool(name, description, schema, async (params: any, context: any) => {
+      context.atlassianConfig = atlassianConfig;
       return await handler(params, context);
-    } catch (error) {
-      logger.error(`Error in tool handler for ${name}:`, error);
-      return {
-        content: [{ type: 'text', text: `Error in tool handler: ${error instanceof Error ? error.message : String(error)}` }],
-        isError: true
-      };
-    }
-  });
+    });
+  }
 };
 
-// Create simple server proxy for tools registration
-const toolServerProxy: any = {
-  tool: registerToolWithContext
-};
-
-// Register all tools (no resources in tools-only architecture)
+// Register all tools with context injection
 logger.info('Registering all MCP Tools...');
-registerAllTools(toolServerProxy);
+registerAllTools(serverWithContext);
 
-// Start the server based on configured transport type
+// Start server with simplified initialization
 async function startServer() {
   try {
-    // Always use STDIO transport for highest reliability
-    const stdioTransport = new StdioServerTransport();
-    await server.connect(stdioTransport);
-    logger.info('MCP Atlassian Server started with STDIO transport');
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
     
-    // Print startup info
-    logger.info(`MCP Server Name: ${process.env.MCP_SERVER_NAME || 'phuc-nt/mcp-atlassian-server'}`);
-    logger.info(`MCP Server Version: ${process.env.MCP_SERVER_VERSION || '1.0.0'}`);
-    logger.info(`Connected to Atlassian site: ${ATLASSIAN_SITE_NAME}`);
-    
-    logger.info('Registered tools:');
-    // Liệt kê tất cả các tool đã đăng ký
-    logger.info('- Jira issue tools: createIssue, updateIssue, transitionIssue, assignIssue');
-    logger.info('- Jira filter tools: createFilter, updateFilter, deleteFilter');
-    logger.info('- Jira sprint tools: createSprint, startSprint, closeSprint, addIssueToSprint');
-    logger.info('- Jira board tools: addIssueToBoard, configureBoardColumns');
-    logger.info('- Jira backlog tools: addIssuesToBacklog, rankBacklogIssues');
-    logger.info('- Jira dashboard tools: createDashboard, updateDashboard, addGadgetToDashboard, removeGadgetFromDashboard');
-    
-    // Tools-only architecture - no resources
-    logger.info('Architecture: Tools-only (resources removed)');
+    logger.info(`MCP Jira Server v3.0.0 started successfully`);
+    logger.info(`Connected to: ${ATLASSIAN_SITE_NAME}`);
+    logger.info(`Architecture: Tools-only (18+ Jira tools registered)`);
   } catch (error) {
-    logger.error('Failed to start MCP Server:', error);
+    logger.error('Server startup failed:', error);
     process.exit(1);
   }
 }
 
-// Start server
 startServer(); 

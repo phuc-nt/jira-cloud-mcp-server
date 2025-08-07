@@ -1,12 +1,76 @@
 /**
- * Helper functions for MCP resources and tools
+ * Core MCP utilities and helper functions
+ * Consolidated from mcp-core.ts for simplified architecture
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { McpResponse, createJsonResponse, createErrorResponse, createSuccessResponse } from './mcp-core.js';
 import { ApiError, ApiErrorType } from './error-handler.js';
 import { AtlassianConfig } from './atlassian-api-base.js';
 import { Logger } from './logger.js';
 import { StandardMetadata, createStandardMetadata } from '../schemas/common.js';
+
+/**
+ * Standard MCP response interface
+ */
+export interface McpResponse<T = any> {
+  contents: Array<McpContent>;
+  isError?: boolean;
+  data?: T;
+  [key: string]: unknown;
+}
+
+/**
+ * MCP content types
+ */
+export type McpContent = 
+  { uri: string; mimeType: string; text: string; [key: string]: unknown }
+  | { uri: string; mimeType: string; blob: string; [key: string]: unknown };
+
+/**
+ * Create a standard response with JSON content
+ */
+export function createJsonResponse<T>(uri: string, data: T, mimeType = 'application/json'): McpResponse<T> {
+  return {
+    contents: [
+      {
+        uri,
+        mimeType,
+        text: JSON.stringify(data)
+      }
+    ],
+    data
+  };
+}
+
+/**
+ * Create a standard success response
+ */
+export function createSuccessResponse(uri: string, message: string, data?: any): McpResponse {
+  return createJsonResponse(uri, {
+    success: true,
+    message,
+    ...(data && { data })
+  });
+}
+
+/**
+ * Create a standard error response
+ */
+export function createErrorResponse(uri: string, message: string, details?: any): McpResponse {
+  return {
+    contents: [
+      {
+        uri,
+        mimeType: 'application/json',
+        text: JSON.stringify({
+          success: false,
+          message,
+          ...(details && { details })
+        })
+      }
+    ],
+    isError: true
+  };
+}
 
 const logger = Logger.getLogger('MCPHelpers');
 

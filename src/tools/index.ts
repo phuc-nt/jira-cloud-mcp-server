@@ -7,6 +7,7 @@ import { registerUpdateFilterTool } from './jira/update-filter.js';
 import { registerDeleteFilterTool } from './jira/delete-filter.js';
 import { registerCreateSprintTool } from './jira/create-sprint.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { AtlassianConfig } from '../utils/atlassian-api-base.js';
 import { registerStartSprintTool } from './jira/start-sprint.js';
 import { registerCloseSprintTool } from './jira/close-sprint.js';
 import { registerAddIssuesToBacklogTool } from './jira/add-issues-to-backlog.js';
@@ -20,40 +21,30 @@ import { registerGetJiraGadgetsTool } from './jira/get-gadgets.js';
 
 /**
  * Register all tools with MCP Server
- * @param server MCP Server instance
+ * @param server MCP Server instance (with context injection already applied)
  */
-export function registerAllTools(server: McpServer) {
-  // Jira issue tools
+export function registerAllTools(server: any) {
+  // Register all Jira tools
   registerCreateIssueTool(server);
   registerUpdateIssueTool(server);
   registerTransitionIssueTool(server);
   registerAssignIssueTool(server);
   
-  // Jira filter tools
   registerCreateFilterTool(server);
   registerUpdateFilterTool(server);
   registerDeleteFilterTool(server);
   
-  // Jira sprint tools
   registerCreateSprintTool(server);
   registerStartSprintTool(server);
   registerCloseSprintTool(server);
+  registerAddIssueToSprintTool(server);
   
-  // Jira board tools
-  // registerAddIssueToBoardTool(server);
-  
-  // Jira backlog tools
   registerAddIssuesToBacklogTool(server);
   registerRankBacklogIssuesTool(server);
   
-  // Jira dashboard/gadget tools
   registerCreateDashboardTool(server);
   registerUpdateDashboardTool(server);
   registerAddGadgetToDashboardTool(server);
   registerRemoveGadgetFromDashboardTool(server);
-  
-  registerAddIssueToSprintTool(server);
-  
-  // Additional tools
   registerGetJiraGadgetsTool(server);
 }

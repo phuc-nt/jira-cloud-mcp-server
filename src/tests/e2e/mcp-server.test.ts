@@ -1,79 +1,105 @@
+import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import { McpClient } from '@modelcontextprotocol/sdk/client/mcp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { InMemoryClientServerPair } from '@modelcontextprotocol/sdk/server/memory.js';
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
-import { registerGetIssueTool } from '../../tools/jira/get-issue.js';
-import { registerSearchIssuesTool } from '../../tools/jira/search-issues.js';
+import { registerCreateIssueTool } from '../../tools/jira/create-issue.js';
+import { registerCreateFilterTool } from '../../tools/jira/create-filter.js';
 import dotenv from 'dotenv';
 
-// Tải biến môi trường
+// Load environment variables
 dotenv.config();
 
-describe('MCP Server E2E Tests', () => {
+describe('MCP Server E2E Tests - Jira Tools Only', () => {
   let server: McpServer;
   let client: McpClient;
   let testConfig: AtlassianConfig;
 
-  beforeEach(() => {
-    // Thiết lập cấu hình test từ biến môi trường
+  beforeEach(async () => {
+    // Setup test configuration from environment variables
     const ATLASSIAN_SITE_NAME = process.env.ATLASSIAN_SITE_NAME || 'test-site';
     const ATLASSIAN_USER_EMAIL = process.env.ATLASSIAN_USER_EMAIL || 'test@example.com';
     const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN || 'test-token';
 
     testConfig = {
-      baseUrl: `https://${ATLASSIAN_SITE_NAME}.atlassian.net`,
+      baseUrl: ATLASSIAN_SITE_NAME.includes('.atlassian.net') 
+        ? `https://${ATLASSIAN_SITE_NAME}` 
+        : ATLASSIAN_SITE_NAME,
       email: ATLASSIAN_USER_EMAIL,
       apiToken: ATLASSIAN_API_TOKEN
     };
 
-    // Tạo cặp server-client cho test
+    // Create server-client pair for testing
     const pair = new InMemoryClientServerPair();
     server = new McpServer({
-      name: 'mcp-atlassian-test-server',
-      version: '1.0.0'
+      name: 'mcp-jira-test-server',
+      version: '3.0.0',
+      capabilities: {
+        tools: {}  // Tools-only capability
+      }
     });
     client = new McpClient();
 
-    // Kết nối server và client
-    server.connect(pair.serverTransport);
-    client.connect(pair.clientTransport);
+    // Connect server and client
+    await server.connect(pair.serverTransport);
+    await client.connect(pair.clientTransport);
 
-    // Đăng ký context cho mỗi tool handler
-    const context = new Map<string, any>();
-    context.set('atlassianConfig', testConfig);
+    // Create server wrapper with context injection
+    const serverWithContext = {
+      tool: (name: string, description: string, schema: any, handler: any) => {
+        server.tool(name, description, schema, async (params: any, context: any) => {
+          context.atlassianConfig = testConfig;
+          return await handler(params, context);
+        });
+      }
+    };
     
-    // Đăng ký một số tools để test
-    registerGetIssueTool(server);
-    registerSearchIssuesTool(server);
-    registerGetPageTool(server);
-    registerGetSpacesTool(server);
+    // Register some tools for testing (using existing ones)
+    registerCreateIssueTool(serverWithContext);
+    registerCreateFilterTool(serverWithContext);
   });
 
   afterEach(() => {
-    // Đóng kết nối sau mỗi test
+    // Close connections after each test
     server.close();
     client.close();
   });
 
-  test('Server should register tools correctly', async () => {
-    // Lấy danh sách tools đã đăng ký
-    const tools = await client.getToolList();
+  test('Server should initialize with tools-only capability', async () => {
+    // Get server capabilities
+    const capabilities = await client.getServerCapabilities();
     
-    // Kiểm tra số lượng tools đã đăng ký
-    expect(tools.length).toBeGreaterThan(0);
+    // Check that server has tools capability
+    expect(capabilities.tools).toBeDefined();
     
-    // Kiểm tra các tools cụ thể
-    const toolNames = tools.map(tool => tool.name);
-    expect(toolNames).toContain('getIssue');
-    expect(toolNames).toContain('searchIssues');
-    expect(toolNames).toContain('getPage');
-    expect(toolNames).toContain('getSpaces');
+    // Check that server does NOT have resources capability  
+    expect(capabilities.resources).toBeUndefined();
   });
 
-  // Thêm các test case cho tool calls sẽ được bổ sung sau
-  // khi hoàn thiện việc cập nhật API các tools
-  
-  test.todo('Should call getIssue tool successfully');
-  test.todo('Should call searchIssues tool successfully');
-  test.todo('Should handle error cases properly');
+  test('Server should register Jira tools correctly', async () => {
+    // Get list of registered tools
+    const tools = await client.listTools();
+    
+    // Check that tools are registered
+    expect(tools.tools.length).toBeGreaterThan(0);
+    
+    // Check for specific Jira tools
+    const toolNames = tools.tools.map(tool => tool.name);
+    expect(toolNames).toContain('createIssue');
+    expect(toolNames).toContain('createFilter');
+  });
+
+  test('Tools should have proper schema definition', async () => {
+    const tools = await client.listTools();
+    const createIssueTool = tools.tools.find(tool => tool.name === 'createIssue');
+    
+    expect(createIssueTool).toBeDefined();
+    expect(createIssueTool?.inputSchema).toBeDefined();
+    expect(createIssueTool?.description).toContain('Create a new Jira issue');
+  });
+
+  // TODO: Add integration tests when ready for live API testing
+  test.todo('Should call createIssue tool successfully');
+  test.todo('Should handle API errors properly');
+  test.todo('Should validate tool parameters correctly');
 }); 
