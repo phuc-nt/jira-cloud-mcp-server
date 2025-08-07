@@ -1,5 +1,5 @@
 /**
- * Schema definitions for Jira resources
+ * Schema definitions for Jira tools
  */
 import { standardMetadataSchema } from './common.js';
 

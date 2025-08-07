@@ -6,13 +6,6 @@ import { registerCreateFilterTool } from './jira/create-filter.js';
 import { registerUpdateFilterTool } from './jira/update-filter.js';
 import { registerDeleteFilterTool } from './jira/delete-filter.js';
 import { registerCreateSprintTool } from './jira/create-sprint.js';
-import { registerCreatePageTool } from './confluence/create-page.js';
-import { registerUpdatePageTool } from './confluence/update-page.js';
-import { registerAddCommentTool } from './confluence/add-comment.js';
-import { registerDeletePageTool } from './confluence/delete-page.js';
-import { registerUpdatePageTitleTool } from './confluence/update-page-title.js';
-import { registerUpdateFooterCommentTool } from './confluence/update-footer-comment.js';
-import { registerDeleteFooterCommentTool } from './confluence/delete-footer-comment.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerStartSprintTool } from './jira/start-sprint.js';
 import { registerCloseSprintTool } from './jira/close-sprint.js';
@@ -23,6 +16,7 @@ import { registerUpdateDashboardTool } from './jira/update-dashboard.js';
 import { registerAddGadgetToDashboardTool } from './jira/add-gadget-to-dashboard.js';
 import { registerRemoveGadgetFromDashboardTool } from './jira/remove-gadget-from-dashboard.js';
 import { registerAddIssueToSprintTool } from './jira/add-issue-to-sprint.js';
+import { registerGetJiraGadgetsTool } from './jira/get-gadgets.js';
 
 /**
  * Register all tools with MCP Server
@@ -58,14 +52,8 @@ export function registerAllTools(server: McpServer) {
   registerAddGadgetToDashboardTool(server);
   registerRemoveGadgetFromDashboardTool(server);
   
-  // Confluence tools
-  registerCreatePageTool(server);
-  registerUpdatePageTool(server);
-  registerAddCommentTool(server);
-  registerDeletePageTool(server);
-  registerUpdatePageTitleTool(server);
-  registerUpdateFooterCommentTool(server);
-  registerDeleteFooterCommentTool(server);
-
   registerAddIssueToSprintTool(server);
+  
+  // Additional tools
+  registerGetJiraGadgetsTool(server);
 }

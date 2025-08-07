@@ -4,8 +4,6 @@ import { InMemoryClientServerPair } from '@modelcontextprotocol/sdk/server/memor
 import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
 import { registerGetIssueTool } from '../../tools/jira/get-issue.js';
 import { registerSearchIssuesTool } from '../../tools/jira/search-issues.js';
-import { registerGetPageTool } from '../../tools/confluence/get-page.js';
-import { registerGetSpacesTool } from '../../tools/confluence/get-spaces.js';
 import dotenv from 'dotenv';
 
 // Tải biến môi trường

@@ -1,9 +1,9 @@
 /**
- * Common schema definitions and metadata utilities for MCP resources
+ * Common schema definitions and utilities for MCP tools
  */
 
 /**
- * Standard metadata interface for all resources
+ * Standard metadata interface for tool responses
  */
 export interface StandardMetadata {
   total: number;          // Total number of records
@@ -11,14 +11,14 @@ export interface StandardMetadata {
   offset: number;         // Starting position
   hasMore: boolean;       // Whether there are more records
   links?: {               // Useful links
-    self: string;         // Link to this resource
+    self: string;         // Link to this data
     ui?: string;          // Link to Atlassian UI
     next?: string;        // Link to next page
   }
 }
 
 /**
- * Creates standard metadata object for resource responses
+ * Creates standard metadata object for tool responses
  */
 export function createStandardMetadata(
   total: number,
