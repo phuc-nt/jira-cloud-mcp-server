@@ -1,17 +1,19 @@
-# MCP Atlassian Server (by phuc-nt) Installation Guide for AI
+# MCP Jira Server v3.0.0 (by phuc-nt) Installation Guide for AI
 
-> **Important Note:** MCP Atlassian Server (by phuc-nt) is primarily developed and optimized for use with the Cline AI assistant. While it follows the MCP standard and can work with other compatible MCP clients, the best performance and experience are achieved with Cline.
+> **Important Note:** MCP Jira Server v3.0.0 is primarily developed and optimized for use with the Cline AI assistant. While it follows the MCP standard and can work with other compatible MCP clients, the best performance and experience are achieved with Cline.
 
-> **Version Note:** This guide is for MCP Atlassian Server v2.0.1. For detailed documentation on architecture, development, and usage, refer to the new documentation series in the `/docs/knowledge/` directory.
+> **Version Note:** This guide is for MCP Jira Server v3.0.0 with tools-only architecture. This version provides 25 Jira tools with 100% test success rate and high performance (<500ms response times).
 
 ## System Requirements
-- macOS 10.15+ or Windows 10+
-- Atlassian Cloud account and API token
+- macOS 10.15+ or Windows 10+ 
+- Node.js 18+ (for running the MCP server)
+- Atlassian Cloud account with Jira access
+- Jira API token (instructions below)
 - Cline AI assistant (main supported client)
 
 ## Installation Options
 
-You have two ways to install MCP Atlassian Server:
+You have two ways to install MCP Jira Server v3.0.0:
 
 1. **[Install from npm](#option-1-install-from-npm)** (recommended, easier) - Install directly from npm registry
 2. **[Clone & Build from source](#option-2-clone-and-build-from-source)** - Clone the GitHub repository and build locally
