@@ -25,6 +25,10 @@ import { registerListProjectsTool } from './jira/list-projects.js';
 import { registerGetProjectTool } from './jira/get-project.js';
 import { registerGetUserTool } from './jira/get-user.js';
 import { registerSearchUsersTool } from './jira/search-users.js';
+import { registerGetIssueTransitionsTool } from './jira/get-issue-transitions.js';
+import { registerGetIssueCommentsTool } from './jira/get-issue-comments.js';
+import { registerAddIssueCommentTool } from './jira/add-issue-comment.js';
+import { registerUpdateIssueCommentTool } from './jira/update-issue-comment.js';
 
 /**
  * Register all tools with MCP Server
@@ -37,12 +41,16 @@ export function registerAllTools(server: any) {
   registerListIssuesTool(server);
   registerGetIssueTool(server);
   registerSearchIssuesTool(server);
+  registerGetIssueTransitionsTool(server);
+  registerGetIssueCommentsTool(server);
   
   // Issue management tools (write operations)
   registerCreateIssueTool(server);
   registerUpdateIssueTool(server);
   registerTransitionIssueTool(server);
   registerAssignIssueTool(server);
+  registerAddIssueCommentTool(server);
+  registerUpdateIssueCommentTool(server);
   
   // Project management tools
   registerListProjectsTool(server);
