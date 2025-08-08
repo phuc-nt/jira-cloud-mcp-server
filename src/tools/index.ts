@@ -18,6 +18,13 @@ import { registerAddGadgetToDashboardTool } from './jira/add-gadget-to-dashboard
 import { registerRemoveGadgetFromDashboardTool } from './jira/remove-gadget-from-dashboard.js';
 import { registerAddIssueToSprintTool } from './jira/add-issue-to-sprint.js';
 import { registerGetJiraGadgetsTool } from './jira/get-gadgets.js';
+import { registerListIssuesTool } from './jira/list-issues.js';
+import { registerGetIssueTool } from './jira/get-issue.js';
+import { registerSearchIssuesTool } from './jira/search-issues.js';
+import { registerListProjectsTool } from './jira/list-projects.js';
+import { registerGetProjectTool } from './jira/get-project.js';
+import { registerGetUserTool } from './jira/get-user.js';
+import { registerSearchUsersTool } from './jira/search-users.js';
 
 /**
  * Register all tools with MCP Server
@@ -25,10 +32,25 @@ import { registerGetJiraGadgetsTool } from './jira/get-gadgets.js';
  */
 export function registerAllTools(server: any) {
   // Register all Jira tools
+  
+  // Issue management tools (read operations)
+  registerListIssuesTool(server);
+  registerGetIssueTool(server);
+  registerSearchIssuesTool(server);
+  
+  // Issue management tools (write operations)
   registerCreateIssueTool(server);
   registerUpdateIssueTool(server);
   registerTransitionIssueTool(server);
   registerAssignIssueTool(server);
+  
+  // Project management tools
+  registerListProjectsTool(server);
+  registerGetProjectTool(server);
+  
+  // User management tools
+  registerGetUserTool(server);
+  registerSearchUsersTool(server);
   
   registerCreateFilterTool(server);
   registerUpdateFilterTool(server);
