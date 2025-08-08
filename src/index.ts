@@ -45,6 +45,10 @@ const server = new McpServer({
 const serverWithContext = {
   tool: (name: string, description: string, schema: any, handler: any) => {
     server.tool(name, description, schema, async (params: any, context: any) => {
+      // Ensure context object exists before setting properties
+      if (!context) {
+        context = {};
+      }
       context.atlassianConfig = atlassianConfig;
       return await handler(params, context);
     });

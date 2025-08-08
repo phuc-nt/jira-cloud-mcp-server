@@ -15,12 +15,11 @@ type GetGadgetsParams = z.infer<typeof getGadgetsSchema>;
 
 async function getGadgetsImpl(params: GetGadgetsParams, context: any) {
   logger.info('Getting available Jira gadgets');
-  logger.debug('Context received:', context ? 'present' : 'null/undefined');
   
-  const config: AtlassianConfig = Config.getConfigFromContextOrEnv(context);
-  logger.debug('Config loaded successfully');
-
   try {
+    const config: AtlassianConfig = Config.getConfigFromContextOrEnv(context);
+    logger.debug('Config loaded successfully');
+
     // Try the API first
     const headers = createBasicHeaders(config.email, config.apiToken);
     const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);

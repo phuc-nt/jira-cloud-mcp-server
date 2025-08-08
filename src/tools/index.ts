@@ -17,7 +17,7 @@ import { registerUpdateDashboardTool } from './jira/update-dashboard.js';
 import { registerAddGadgetToDashboardTool } from './jira/add-gadget-to-dashboard.js';
 import { registerRemoveGadgetFromDashboardTool } from './jira/remove-gadget-from-dashboard.js';
 import { registerAddIssueToSprintTool } from './jira/add-issue-to-sprint.js';
-import { registerGetJiraGadgetsTool } from './jira/get-gadgets.js';
+import { registerGetJiraGadgetsTool } from './jira/get-gadgets-new.js';
 import { registerListIssuesTool } from './jira/list-issues.js';
 import { registerGetIssueTool } from './jira/get-issue.js';
 import { registerSearchIssuesTool } from './jira/search-issues.js';

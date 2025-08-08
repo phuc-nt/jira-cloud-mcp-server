@@ -243,8 +243,51 @@ async function main() {
       console.log("getProject: ❌ Error:", error instanceof Error ? error.message : String(error));
     }
 
-    // 8. Test searchUsers tool (new)
-    console.log("\n8. Testing searchUsers...");
+    // 8. Test getIssue tool (new) - using first issue from listIssues
+    console.log("\n8. Testing getIssue...");
+    try {
+      // First get an issue key to test with
+      const listResult = await client.callTool({
+        name: "listIssues",
+        arguments: {
+          projectKey: jiraProjectKey,
+          limit: 1
+        }
+      });
+
+      let listData = listResult;
+      if (listResult.content && Array.isArray(listResult.content) && listResult.content[0]?.text) {
+        listData = JSON.parse(listResult.content[0].text);
+      }
+
+      if ((listData as any).success && (listData as any).issues && (listData as any).issues.length > 0) {
+        const issueKey = (listData as any).issues[0].key;
+        
+        const getIssueResult = await client.callTool({
+          name: "getIssue",
+          arguments: {
+            issueKey: issueKey
+          }
+        });
+
+        let issueData = getIssueResult;
+        if (getIssueResult.content && Array.isArray(getIssueResult.content) && getIssueResult.content[0]?.text) {
+          issueData = JSON.parse(getIssueResult.content[0].text);
+        }
+
+        console.log("getIssue result:", (issueData as any).success ? "✅ Success" : "❌ Failed");
+        if ((issueData as any).issue && (issueData as any).issue.key) {
+          console.log(`Retrieved issue details: ${(issueData as any).issue.key} - ${(issueData as any).issue.summary}`);
+        }
+      } else {
+        console.log("getIssue: ⚠️ Skipped - No issues found to test with");
+      }
+    } catch (error) {
+      console.log("getIssue: ❌ Error:", error instanceof Error ? error.message : String(error));
+    }
+
+    // 9. Test searchUsers tool (new)
+    console.log("\n9. Testing searchUsers...");
     try {
       const searchUsersResult = await client.callTool({
         name: "searchUsers",
@@ -267,8 +310,51 @@ async function main() {
       console.log("searchUsers: ❌ Error:", error instanceof Error ? error.message : String(error));
     }
 
-    // 9. Test getJiraGadgets tool (existing)  
-    console.log("\n9. Testing getJiraGadgets...");
+    // 10. Test getUser tool (new) - using current user or first found user
+    console.log("\n10. Testing getUser...");
+    try {
+      // Try to get a user accountId to test with - first try searching
+      const searchResult = await client.callTool({
+        name: "searchUsers",
+        arguments: {
+          query: "",  // Empty query to get any users
+          maxResults: 1
+        }
+      });
+
+      let searchData = searchResult;
+      if (searchResult.content && Array.isArray(searchResult.content) && searchResult.content[0]?.text) {
+        searchData = JSON.parse(searchResult.content[0].text);
+      }
+
+      if ((searchData as any).success && (searchData as any).users && (searchData as any).users.length > 0) {
+        const accountId = (searchData as any).users[0].accountId;
+        
+        const getUserResult = await client.callTool({
+          name: "getUser",
+          arguments: {
+            accountId: accountId
+          }
+        });
+
+        let userData = getUserResult;
+        if (getUserResult.content && Array.isArray(getUserResult.content) && getUserResult.content[0]?.text) {
+          userData = JSON.parse(getUserResult.content[0].text);
+        }
+
+        console.log("getUser result:", (userData as any).success ? "✅ Success" : "❌ Failed");
+        if ((userData as any).user && (userData as any).user.displayName) {
+          console.log(`Retrieved user details: ${(userData as any).user.displayName} (${(userData as any).user.accountId})`);
+        }
+      } else {
+        console.log("getUser: ⚠️ Skipped - No users found to test with");
+      }
+    } catch (error) {
+      console.log("getUser: ❌ Error:", error instanceof Error ? error.message : String(error));
+    }
+
+    // 11. Test getJiraGadgets tool (existing)  
+    console.log("\n11. Testing getJiraGadgets...");
     try {
       const gadgetsResult = await client.callTool({
         name: "getJiraGadgets",
@@ -281,8 +367,8 @@ async function main() {
       }
 
       console.log("getJiraGadgets result:", (gadgetsData as any).success ? "✅ Success" : "❌ Failed");
-      if ((gadgetsData as any).data && Array.isArray((gadgetsData as any).data.gadgets)) {
-        console.log("Available gadgets:", (gadgetsData as any).data.gadgets.length);
+      if ((gadgetsData as any).gadgets && Array.isArray((gadgetsData as any).gadgets)) {
+        console.log("Available gadgets:", (gadgetsData as any).gadgets.length);
       }
     } catch (error) {
       console.log("getJiraGadgets: ❌ Error:", error instanceof Error ? error.message : String(error));
@@ -295,9 +381,11 @@ async function main() {
     console.log("✅ Tools-only capability confirmed");
     console.log("✅ No resources capability (as expected)");
     console.log(`✅ ${toolsList.tools.length} Jira tools available`);
-    console.log("✅ Sprint 2.1 new tools validated");
-    console.log("✅ Read operations: listIssues, searchIssues, listProjects, getProject, searchUsers");
-    console.log("\n🎉 Phase 2 Sprint 2.1: 7 NEW TOOLS IMPLEMENTATION COMPLETE");
+    console.log("✅ Sprint 2.1 all 7 new tools tested");
+    console.log("✅ Issues: listIssues, getIssue, searchIssues");
+    console.log("✅ Projects: listProjects, getProject");  
+    console.log("✅ Users: getUser, searchUsers");
+    console.log("\n🎉 Phase 2 Sprint 2.1: COMPLETE TEST COVERAGE FOR ALL NEW TOOLS");
 
     await client.close();
     console.log("✅ Connection closed successfully");
