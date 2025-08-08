@@ -40,6 +40,11 @@ import { registerGetSprintIssuesTool } from './jira/get-sprint-issues.js';
 import { registerListFiltersTool } from './jira/list-filters.js';
 import { registerGetFilterTool } from './jira/get-filter.js';
 import { registerGetMyFiltersTool } from './jira/get-my-filters.js';
+import { registerListDashboardsTool } from './jira/list-dashboards.js';
+import { registerGetDashboardTool } from './jira/get-dashboard.js';
+import { registerGetDashboardGadgetsTool } from './jira/get-dashboard-gadgets.js';
+import { registerListUsersTool } from './jira/list-users.js';
+import { registerGetAssignableUsersTool } from './jira/get-assignable-users.js';
 
 /**
  * Register all tools with MCP Server
@@ -70,6 +75,8 @@ export function registerAllTools(server: any) {
   // User management tools
   registerGetUserTool(server);
   registerSearchUsersTool(server);
+  registerListUsersTool(server);
+  registerGetAssignableUsersTool(server);
   
   // Board management tools (read operations)
   registerListBoardsTool(server);
@@ -87,6 +94,11 @@ export function registerAllTools(server: any) {
   registerListFiltersTool(server);
   registerGetFilterTool(server);
   registerGetMyFiltersTool(server);
+  
+  // Dashboard management tools (read operations)
+  registerListDashboardsTool(server);
+  registerGetDashboardTool(server);
+  registerGetDashboardGadgetsTool(server);
   
   registerCreateFilterTool(server);
   registerUpdateFilterTool(server);
