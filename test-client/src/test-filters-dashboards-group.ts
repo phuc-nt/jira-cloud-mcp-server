@@ -176,7 +176,7 @@ async function main() {
     );
 
     let createdFilterId = null;
-    if (createFilterResult) {
+    if (createFilterResult && typeof createFilterResult === 'string') {
       createdFilterId = createFilterResult;
       
       // 5. Update Filter (Write)
@@ -230,7 +230,7 @@ async function main() {
     );
 
     let createdDashboardId = null;
-    if (createDashboardResult) {
+    if (createDashboardResult && typeof createDashboardResult === 'string') {
       createdDashboardId = createDashboardResult;
       
       // 10. Update Dashboard (Write)
