@@ -29,6 +29,11 @@ import { registerGetIssueTransitionsTool } from './jira/get-issue-transitions.js
 import { registerGetIssueCommentsTool } from './jira/get-issue-comments.js';
 import { registerAddIssueCommentTool } from './jira/add-issue-comment.js';
 import { registerUpdateIssueCommentTool } from './jira/update-issue-comment.js';
+import { registerListBoardsTool } from './jira/list-boards.js';
+import { registerGetBoardTool } from './jira/get-board.js';
+import { registerGetBoardIssuesTool } from './jira/get-board-issues.js';
+import { registerGetBoardConfigurationTool } from './jira/get-board-configuration.js';
+import { registerGetBoardSprintsTool } from './jira/get-board-sprints.js';
 
 /**
  * Register all tools with MCP Server
@@ -59,6 +64,13 @@ export function registerAllTools(server: any) {
   // User management tools
   registerGetUserTool(server);
   registerSearchUsersTool(server);
+  
+  // Board management tools (read operations)
+  registerListBoardsTool(server);
+  registerGetBoardTool(server);
+  registerGetBoardIssuesTool(server);
+  registerGetBoardConfigurationTool(server);
+  registerGetBoardSprintsTool(server);
   
   registerCreateFilterTool(server);
   registerUpdateFilterTool(server);
