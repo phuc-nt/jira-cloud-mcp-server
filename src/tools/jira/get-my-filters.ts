@@ -116,19 +116,24 @@ async function getMyFiltersImpl(params: GetMyFiltersParams, context: any) {
           displayName: permission.user.displayName
         } : null
       })) || [],
-      // Subscriptions if expanded
-      subscriptions: filter.subscriptions?.map((subscription: any) => ({
-        id: subscription.id,
-        user: subscription.user ? {
-          accountId: subscription.user.accountId,
-          displayName: subscription.user.displayName
-        } : null,
-        group: subscription.group ? {
-          name: subscription.group.name,
-          groupId: subscription.group.groupId
-        } : null,
-        emailRecipient: subscription.emailRecipient
-      })) || [],
+      // Subscriptions if expanded (safely handle non-array subscriptions)
+      subscriptions: (() => {
+        if (!filter.subscriptions || !Array.isArray(filter.subscriptions)) {
+          return [];
+        }
+        return filter.subscriptions.map((subscription: any) => ({
+          id: subscription.id,
+          user: subscription.user ? {
+            accountId: subscription.user.accountId,
+            displayName: subscription.user.displayName
+          } : null,
+          group: subscription.group ? {
+            name: subscription.group.name,
+            groupId: subscription.group.groupId
+          } : null,
+          emailRecipient: subscription.emailRecipient
+        }));
+      })(),
       // Additional metadata
       approximateLastUsed: filter.approximateLastUsed
     })) || [];

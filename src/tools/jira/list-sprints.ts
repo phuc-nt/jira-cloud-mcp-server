@@ -34,23 +34,89 @@ async function listSprintsImpl(params: ListSprintsParams, context: any) {
 
     // Use different endpoint based on whether boardId is specified
     let url: string;
+    let response: Response;
+    
     if (params.boardId) {
       // Get sprints from specific board
       url = `${baseUrl}/rest/agile/1.0/board/${encodeURIComponent(params.boardId.toString())}/sprint`;
+      if (queryParams.toString()) {
+        url += `?${queryParams.toString()}`;
+      }
+      
+      response = await fetch(url, { 
+        method: 'GET',
+        headers, 
+        credentials: 'omit' 
+      });
     } else {
-      // Get all sprints across all boards
+      // Try to get all sprints across all boards
       url = `${baseUrl}/rest/agile/1.0/sprint`;
+      if (queryParams.toString()) {
+        url += `?${queryParams.toString()}`;
+      }
+      
+      response = await fetch(url, { 
+        method: 'GET',
+        headers, 
+        credentials: 'omit' 
+      });
+      
+      // If global sprint endpoint fails (405 Method Not Allowed), try board-based approach
+      if (!response.ok && response.status === 405) {
+        logger.info('Global sprint endpoint not available, trying board-based approach...');
+        
+        try {
+          // Get available boards first
+          const boardsResponse = await fetch(`${baseUrl}/rest/agile/1.0/board?maxResults=50`, {
+            method: 'GET',
+            headers,
+            credentials: 'omit'
+          });
+          
+          if (boardsResponse.ok) {
+            const boardsData = await boardsResponse.json();
+            const allSprints: any[] = [];
+            
+            // Get sprints from each board
+            for (const board of boardsData.values || []) {
+              try {
+                const boardSprintsUrl = `${baseUrl}/rest/agile/1.0/board/${board.id}/sprint`;
+                const sprintParams = new URLSearchParams();
+                if (params.maxResults !== undefined) sprintParams.append('maxResults', '50'); // Get more per board
+                if (params.state) sprintParams.append('state', params.state);
+                
+                const boardSprintsResponse = await fetch(
+                  boardSprintsUrl + (sprintParams.toString() ? `?${sprintParams.toString()}` : ''),
+                  { method: 'GET', headers, credentials: 'omit' }
+                );
+                
+                if (boardSprintsResponse.ok) {
+                  const boardSprintsData = await boardSprintsResponse.json();
+                  allSprints.push(...(boardSprintsData.values || []));
+                }
+              } catch (error) {
+                // Continue with other boards if one fails
+                logger.warn(`Failed to get sprints from board ${board.id}:`, error);
+              }
+            }
+            
+            // Create a mock response with aggregated data
+            const aggregatedData = {
+              values: allSprints.slice(params.startAt || 0, (params.startAt || 0) + (params.maxResults || 50)),
+              startAt: params.startAt || 0,
+              maxResults: params.maxResults || 50,
+              total: allSprints.length,
+              isLast: ((params.startAt || 0) + (params.maxResults || 50)) >= allSprints.length
+            };
+            
+            // Use aggregated data for processing
+            response = { ok: true, json: async () => aggregatedData } as any;
+          }
+        } catch (fallbackError) {
+          logger.error('Fallback board-based approach also failed:', fallbackError);
+        }
+      }
     }
-
-    if (queryParams.toString()) {
-      url += `?${queryParams.toString()}`;
-    }
-
-    const response = await fetch(url, { 
-      method: 'GET',
-      headers, 
-      credentials: 'omit' 
-    });
 
     if (!response.ok) {
       const responseText = await response.text();

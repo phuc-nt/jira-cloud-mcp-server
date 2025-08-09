@@ -46,6 +46,29 @@ async function getBoardSprintsImpl(params: GetBoardSprintsParams, context: any) 
 
     if (!response.ok) {
       const responseText = await response.text();
+      
+      // Handle specific case where board doesn't support sprints
+      if (response.status === 400 && responseText.includes('does not support sprints')) {
+        logger.info(`Board ${params.boardId} does not support sprints (likely a Kanban board)`);
+        
+        // Return empty sprints result instead of error for better UX
+        return {
+          boardId: params.boardId,
+          sprints: [],
+          pagination: {
+            startAt: params.startAt || 0,
+            maxResults: params.maxResults || 50,
+            total: 0,
+            isLast: true
+          },
+          totalSprints: 0,
+          filters: params,
+          boardType: 'kanban', // Inferred from error
+          message: 'This board does not support sprints (Kanban board)',
+          success: true
+        };
+      }
+      
       logger.error(`Jira Agile API error (get board sprints, ${response.status}):`, responseText);
       throw new ApiError(ApiErrorType.SERVER_ERROR, `Jira Agile API error: ${response.status} ${responseText}`, response.status);
     }
