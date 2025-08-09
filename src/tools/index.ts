@@ -20,6 +20,7 @@ import { registerAddIssueToSprintTool } from './jira/add-issue-to-sprint.js';
 import { registerGetJiraGadgetsTool } from './jira/get-gadgets-new.js';
 import { registerListIssuesTool } from './jira/list-issues.js';
 import { registerGetIssueTool } from './jira/get-issue.js';
+import { registerEnhancedGetIssueTool } from './jira/enhanced-get-issue.js';
 import { registerSearchIssuesTool } from './jira/search-issues.js';
 import { registerEnhancedSearchIssuesTool } from './jira/enhanced-search-issues.js';
 import { registerListProjectsTool } from './jira/list-projects.js';
@@ -62,6 +63,8 @@ import { registerCreateStoryTool } from './jira/create-story.js';
 import { registerSearchStoriesTool } from './jira/search-stories.js';
 import { registerCreateSubtaskTool } from './jira/create-subtask.js';
 import { registerCreateBulkSubtasksTool } from './jira/create-bulk-subtasks.js';
+// Enhanced consolidated tools (Sprint 5.1)
+import { registerEnhancedUpdateIssueTool } from './jira/enhanced-update-issue.js';
 
 /**
  * Register all tools with MCP Server
@@ -72,7 +75,8 @@ export function registerAllTools(server: any) {
   
   // Issue management tools (read operations)
   registerListIssuesTool(server);
-  registerGetIssueTool(server);
+  // registerGetIssueTool(server); // Replaced by enhanced version
+  registerEnhancedGetIssueTool(server); // Enhanced getIssue with context expansion
   // registerSearchIssuesTool(server); // Replaced by enhanced version
   registerEnhancedSearchIssuesTool(server); // Enhanced search with smart filtering
   registerGetIssueTransitionsTool(server);
@@ -80,7 +84,8 @@ export function registerAllTools(server: any) {
   
   // Issue management tools (write operations)
   registerCreateIssueTool(server);
-  registerUpdateIssueTool(server);
+  // registerUpdateIssueTool(server); // Replaced by enhanced version
+  registerEnhancedUpdateIssueTool(server); // Enhanced update with type-specific handling
   registerTransitionIssueTool(server);
   registerAssignIssueTool(server);
   registerAddIssueCommentTool(server);
@@ -145,8 +150,8 @@ export function registerAllTools(server: any) {
   registerUpdateFixVersionTool(server);
 
   // Epic, Story & Sub-task Management Tools (Sprint 4.5)
-  registerGetEpicTool(server);
-  registerUpdateEpicTool(server);
+  // registerGetEpicTool(server); // Replaced by enhanced getIssue
+  // registerUpdateEpicTool(server); // Replaced by enhanced updateIssue
   registerGetEpicIssuesTool(server);
   // registerSearchEpicsTool(server); // Replaced by enhanced searchIssues
   registerCreateStoryTool(server);

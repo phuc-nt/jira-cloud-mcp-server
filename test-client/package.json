@@ -15,6 +15,7 @@
     "test:subtask": "node dist/test-subtask.js",
     "test:enhanced": "node dist/test-enhanced-createissue.js",
     "test:search": "node dist/test-enhanced-search.js",
+    "test:getissue": "node dist/test-enhanced-getissue.js",
     "inventory": "node dist/list-mcp-inventory.js"
   },
   "keywords": [],
