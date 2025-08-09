@@ -1,12 +1,12 @@
 # MCP Jira Server v3.0.0: Complete Tools Reference
 
-Tài liệu này liệt kê đầy đủ 59 tools mà MCP Jira Server v3.0.0 hỗ trợ, kèm endpoint Atlassian API thực tế và thông tin kỹ thuật chi tiết dành cho developers.
+Tài liệu này liệt kê đầy đủ 52 tools mà MCP Jira Server v3.0.0 hỗ trợ, kèm endpoint Atlassian API thực tế và thông tin kỹ thuật chi tiết dành cho developers.
 
 **Version**: 3.0.0  
-**Architecture**: Tools-only (no resources)  
-**Total Tools**: 59 tools  
+**Architecture**: Tools-only (no resources) với Universal/Enhanced tool consolidation  
+**Total Tools**: 52 tools (12% reduction qua tool consolidation)  
 **API Coverage**: Jira Platform API v3 + Agile API v1.0  
-**Last Updated**: August 9, 2025 (Sprint 4.5 Complete)
+**Last Updated**: August 9, 2025 (Sprint 5.2 Complete - User & Board Consolidation)
 
 ## Tools by Category
 
@@ -34,27 +34,33 @@ Tài liệu này liệt kê đầy đủ 59 tools mà MCP Jira Server v3.0.0 h�
 | listProjects | Liệt kê projects | limit | `/rest/api/3/project` | Array của Project objects |
 | getProject | Lấy chi tiết project | projectKey | `/rest/api/3/project/{projectKey}` | Single Project object |
 
-### 3. User Management (4 tools)
+### 3. User Management (2 tools) - **CONSOLIDATED**
 
 | Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
 |------|-------|---------------|-----------------------|----------------|
 | getUser | Lấy thông tin user | accountId | `/rest/api/3/user` | Single User object |
-| searchUsers | Tìm kiếm users | query | `/rest/api/3/user/search` | Array của User objects |
-| listUsers | Liệt kê users | startAt, maxResults | `/rest/api/3/users/search` | Array của User objects |
-| getAssignableUsers | Lấy users có thể assign | project, issueKey | `/rest/api/3/user/assignable/search` | Array của User objects |
+| **searchUsers** | **UNIVERSAL USER SEARCH** - Thay thế 3 tools | **mode** (all/assignable/project-members), query, projectKey, issueKey | Multiple endpoints theo mode | Array của User objects với statistics |
 
-### 4. Board Management (6 tools)
+**🔄 Tool Consolidation (Sprint 5.2)**:
+- ~~listUsers~~ → **searchUsers** (mode: "all")
+- ~~getAssignableUsers~~ → **searchUsers** (mode: "assignable") 
+- **3 → 1 tool consolidation (66% reduction)**
+
+### 4. Board Management (5 tools) - **CONSOLIDATED**
 
 | Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
 |------|-------|---------------|-----------------------|----------------|
 | listBoards | Liệt kê boards | projectKeyOrId, type | `/rest/agile/1.0/board` | Array của Board objects |
 | getBoard | Lấy chi tiết board | boardId | `/rest/agile/1.0/board/{boardId}` | Single Board object |
-| getBoardIssues | Lấy issues trên board | boardId | `/rest/agile/1.0/board/{boardId}/issue` | Array của Issue objects |
+| **getBoardIssues** | **ENHANCED BOARD ISSUES** - Thay thế 2 tools | boardId, **scope** (all/backlog/active-sprints/done-sprints), sprintId, jql | Multiple endpoints theo scope | Array của Issue objects với statistics |
 | getBoardConfiguration | Lấy cấu hình board | boardId | `/rest/agile/1.0/board/{boardId}/configuration` | Board config object |
 | getBoardSprints | Lấy sprints của board | boardId | `/rest/agile/1.0/board/{boardId}/sprint` | Array của Sprint objects |
-| listBacklogIssues | Lấy issues trong backlog | boardId | `/rest/agile/1.0/board/{boardId}/backlog` | Array của Issue objects |
 
-### 5. Sprint Management (8 tools)
+**🔄 Tool Consolidation (Sprint 5.2)**:
+- ~~listBacklogIssues~~ → **getBoardIssues** (scope: "backlog")
+- **2 → 1 tool consolidation (50% reduction)**
+
+### 5. Sprint Management (7 tools)
 
 | Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
 |------|-------|---------------|-----------------------|----------------|
@@ -165,16 +171,25 @@ Tài liệu này liệt kê đầy đủ 59 tools mà MCP Jira Server v3.0.0 h�
 - Stories: createStory
 - Sub-tasks: createSubtask, createBulkSubtasks
 
-## Success Metrics
+## Success Metrics - Sprint 5.2 Consolidation Update
 
-- **Total Tools**: 59 tools operational
-- **Test Coverage**: 100% success rate (59/59 tools working)
-- **API Coverage**: Complete Jira v3 + Agile v1.0 integration
-- **Architecture**: Clean tools-only MCP server
-- **Validation**: Comprehensive AI Client testing on real projects
+- **Total Tools**: 52 tools operational (12% reduction from 59 tools)
+- **Tool Consolidation**: 
+  - Universal searchUsers: 3 → 1 tool (66% user tools reduction)
+  - Enhanced getBoardIssues: 2 → 1 tool (50% board tools reduction)
+- **Test Coverage**: 100% success rate (52/52 tools working)
+- **API Coverage**: Complete Jira v3 + Agile v1.0 integration với intelligent endpoint selection
+- **Architecture**: Enhanced tools-only MCP server với Universal/Enhanced consolidation patterns
+- **Validation**: Comprehensive testing with consolidated tools maintaining backward compatibility
+
+### Consolidation Benefits
+- **Simplified API Surface**: 12% fewer tools to learn and maintain
+- **Enhanced Functionality**: Consolidated tools offer more features than specialized tools
+- **Better User Experience**: Single tools handle related operations with intelligent mode/scope switching
+- **Maintained Compatibility**: All existing tool names preserved for seamless migration
 
 ---
 
 *Generated: August 9, 2025*  
 *MCP Jira Server v3.0.0 - Complete Tools Reference*  
-*Sprint 4.5: Epic, Story & Sub-task Management Complete*
+*Sprint 5.2: User & Board Consolidation Complete - 52 tools operational*

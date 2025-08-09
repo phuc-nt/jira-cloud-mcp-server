@@ -26,14 +26,14 @@ import { registerEnhancedSearchIssuesTool } from './jira/enhanced-search-issues.
 import { registerListProjectsTool } from './jira/list-projects.js';
 import { registerGetProjectTool } from './jira/get-project.js';
 import { registerGetUserTool } from './jira/get-user.js';
-import { registerSearchUsersTool } from './jira/search-users.js';
+import { registerUniversalSearchUsersTool } from './jira/universal-search-users.js';
 import { registerGetIssueTransitionsTool } from './jira/get-issue-transitions.js';
 import { registerGetIssueCommentsTool } from './jira/get-issue-comments.js';
 import { registerAddIssueCommentTool } from './jira/add-issue-comment.js';
 import { registerUpdateIssueCommentTool } from './jira/update-issue-comment.js';
 import { registerListBoardsTool } from './jira/list-boards.js';
 import { registerGetBoardTool } from './jira/get-board.js';
-import { registerGetBoardIssuesTool } from './jira/get-board-issues.js';
+import { registerEnhancedGetBoardIssuesTool } from './jira/enhanced-get-board-issues.js';
 import { registerGetBoardConfigurationTool } from './jira/get-board-configuration.js';
 import { registerGetBoardSprintsTool } from './jira/get-board-sprints.js';
 import { registerListSprintsTool } from './jira/list-sprints.js';
@@ -45,10 +45,9 @@ import { registerGetMyFiltersTool } from './jira/get-my-filters.js';
 import { registerListDashboardsTool } from './jira/list-dashboards.js';
 import { registerGetDashboardTool } from './jira/get-dashboard.js';
 import { registerGetDashboardGadgetsTool } from './jira/get-dashboard-gadgets.js';
-import { registerListUsersTool } from './jira/list-users.js';
-import { registerGetAssignableUsersTool } from './jira/get-assignable-users.js';
+
 import { registerDeleteIssueTool } from './jira/delete-issue.js';
-import { registerListBacklogIssuesTool } from './jira/list-backlog-issues.js';
+
 // Fix Version Management Tools (Sprint 4.4)
 import { registerCreateFixVersionTool } from './jira/create-fix-version.js';
 import { registerListProjectVersionsTool } from './jira/list-project-versions.js';
@@ -98,17 +97,14 @@ export function registerAllTools(server: any) {
   
   // User management tools
   registerGetUserTool(server);
-  registerSearchUsersTool(server);
-  registerListUsersTool(server);
-  registerGetAssignableUsersTool(server);
+  registerUniversalSearchUsersTool(server); // Universal tool replacing searchUsers, listUsers, getAssignableUsers
   
   // Board management tools (read operations)
   registerListBoardsTool(server);
   registerGetBoardTool(server);
-  registerGetBoardIssuesTool(server);
+  registerEnhancedGetBoardIssuesTool(server); // Enhanced tool replacing getBoardIssues, listBacklogIssues
   registerGetBoardConfigurationTool(server);
   registerGetBoardSprintsTool(server);
-  registerListBacklogIssuesTool(server);  // Added: List backlog issues functionality
   
   // Sprint management tools (read operations)
   registerListSprintsTool(server);
