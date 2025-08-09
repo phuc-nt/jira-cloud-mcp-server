@@ -21,6 +21,7 @@ import { registerGetJiraGadgetsTool } from './jira/get-gadgets-new.js';
 import { registerListIssuesTool } from './jira/list-issues.js';
 import { registerGetIssueTool } from './jira/get-issue.js';
 import { registerSearchIssuesTool } from './jira/search-issues.js';
+import { registerEnhancedSearchIssuesTool } from './jira/enhanced-search-issues.js';
 import { registerListProjectsTool } from './jira/list-projects.js';
 import { registerGetProjectTool } from './jira/get-project.js';
 import { registerGetUserTool } from './jira/get-user.js';
@@ -72,7 +73,8 @@ export function registerAllTools(server: any) {
   // Issue management tools (read operations)
   registerListIssuesTool(server);
   registerGetIssueTool(server);
-  registerSearchIssuesTool(server);
+  // registerSearchIssuesTool(server); // Replaced by enhanced version
+  registerEnhancedSearchIssuesTool(server); // Enhanced search with smart filtering
   registerGetIssueTransitionsTool(server);
   registerGetIssueCommentsTool(server);
   
@@ -146,9 +148,9 @@ export function registerAllTools(server: any) {
   registerGetEpicTool(server);
   registerUpdateEpicTool(server);
   registerGetEpicIssuesTool(server);
-  registerSearchEpicsTool(server);
+  // registerSearchEpicsTool(server); // Replaced by enhanced searchIssues
   registerCreateStoryTool(server);
-  registerSearchStoriesTool(server);
+  // registerSearchStoriesTool(server); // Replaced by enhanced searchIssues
   registerCreateSubtaskTool(server);
   registerCreateBulkSubtasksTool(server);
 }

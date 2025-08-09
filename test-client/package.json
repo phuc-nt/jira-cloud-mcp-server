@@ -12,6 +12,9 @@
     "test:boards": "node dist/test-boards-sprints-group.js",
     "test:filters": "node dist/test-filters-dashboards-group.js",
     "test:projects": "node dist/test-projects-users-group.js",
+    "test:subtask": "node dist/test-subtask.js",
+    "test:enhanced": "node dist/test-enhanced-createissue.js",
+    "test:search": "node dist/test-enhanced-search.js",
     "inventory": "node dist/list-mcp-inventory.js"
   },
   "keywords": [],

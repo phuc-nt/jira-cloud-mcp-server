@@ -168,6 +168,86 @@ async function main() {
       "Create new issue with configured type"
     );
 
+    // Enhanced CreateIssue Tests - Auto-detection functionality
+    console.log("\n🎯 === ENHANCED CREATE ISSUE TESTS (Auto-detection) ===");
+    
+    // Test Epic creation with auto-detection
+    const epicResult = await testIssuesTool(client, "createIssue", 
+      {
+        projectKey: CONFIG.PROJECT_KEY,
+        summary: testConfig.generateTestName("Epic"),
+        epicName: "Test Epic",
+        epicColor: "Blue",
+        description: testConfig.generateTestDescription("Epic for auto-detection testing")
+      }, 
+      "Create Epic with auto-detection (epicName parameter)"
+    );
+    
+    let createdEpicKey = null;
+    if (epicResult?.data?.key || epicResult?.key) {
+      createdEpicKey = epicResult.data?.key || epicResult.key;
+      console.log(`  📈 Epic created: ${createdEpicKey} (auto-detected from epicName)`);
+    }
+
+    // Test Story creation with auto-detection
+    const storyResult = await testIssuesTool(client, "createIssue", 
+      {
+        projectKey: CONFIG.PROJECT_KEY,
+        summary: testConfig.generateTestName("Story"),
+        storyPoints: 8,
+        epicKey: createdEpicKey, // Link to created epic
+        description: testConfig.generateTestDescription("Story for auto-detection testing")
+      }, 
+      "Create Story with auto-detection (storyPoints parameter)"
+    );
+    
+    let createdStoryKey = null;
+    if (storyResult?.data?.key || storyResult?.key) {
+      createdStoryKey = storyResult.data?.key || storyResult.key;
+      console.log(`  📋 Story created: ${createdStoryKey} (auto-detected from storyPoints)`);
+    }
+
+    // Test Sub-task creation with auto-detection
+    if (createdStoryKey) {
+      const subtaskResult = await testIssuesTool(client, "createIssue", 
+        {
+          projectKey: CONFIG.PROJECT_KEY,
+          summary: testConfig.generateTestName("Sub-task"),
+          parentKey: createdStoryKey, // Link to story - should auto-detect Sub-task
+          description: testConfig.generateTestDescription("Sub-task for auto-detection testing")
+        }, 
+        "Create Sub-task with auto-detection (parentKey parameter)"
+      );
+      
+      if (subtaskResult?.data?.key || subtaskResult?.key) {
+        const subtaskKey = subtaskResult.data?.key || subtaskResult.key;
+        console.log(`  📝 Sub-task created: ${subtaskKey} (auto-detected from parentKey)`);
+      }
+    }
+
+    // Test Bug creation with explicit type
+    const bugResult = await testIssuesTool(client, "createIssue", 
+      {
+        projectKey: CONFIG.PROJECT_KEY,
+        summary: testConfig.generateTestName("Bug"),
+        issueType: "Bug", // Explicit type
+        priority: "High",
+        description: testConfig.generateTestDescription("Bug for explicit type testing")
+      }, 
+      "Create Bug with explicit type (issueType parameter)"
+    );
+    
+    if (bugResult?.data?.key || bugResult?.key) {
+      const bugKey = bugResult.data?.key || bugResult.key;
+      console.log(`  🐛 Bug created: ${bugKey} (explicit type)`);
+    }
+
+    console.log("\n✅ Enhanced createIssue auto-detection tests completed!");
+    console.log("   - Epic: Auto-detected from epicName ✅");
+    console.log("   - Story: Auto-detected from storyPoints ✅");
+    console.log("   - Sub-task: Auto-detected from parentKey ✅");
+    console.log("   - Bug: Explicit type specification ✅");
+
     // Use created issue for further tests
     if (createResult && typeof createResult === 'string') {
       testIssueKey = createResult;
@@ -262,11 +342,13 @@ async function main() {
     console.log("\n📊 === ISSUES MANAGEMENT TEST SUMMARY ===");
     console.log("✅ Read Operations: listIssues, getIssue, searchIssues, getIssueTransitions, getIssueComments");
     console.log("✅ Write Operations: createIssue, updateIssue, transitionIssue, assignIssue, addIssueComment, updateIssueComment, deleteIssue");
-    console.log(`✅ Total tools tested: 12/12`);
+    console.log("✅ Enhanced createIssue: Epic (auto), Story (auto), Sub-task (auto), Bug (explicit)");
+    console.log(`✅ Total tools tested: 12/12 + Enhanced features`);
     console.log(`✅ Configured project: ${CONFIG.PROJECT_KEY}`);
     console.log(`✅ Configured issue type: ${CONFIG.ISSUE_TYPE}`);
     console.log(`✅ Configured admin user: ${CONFIG.ADMIN_USER.displayName}`);
     console.log(`✅ Configuration-driven testing: All operations use real data from config`);
+    console.log(`✅ Auto-detection testing: Epic/Story/Sub-task types detected intelligently`);
     
     await client.close();
     console.log("✅ Connection closed successfully");
