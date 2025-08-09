@@ -434,7 +434,7 @@ CONTEXT INTELLIGENCE:
 
 ---
 
-## 🤖 AI-Friendly Tool Design Patterns
+## AI-Friendly Tool Design Patterns
 
 ### **Critical Success Factor: AI Pattern Recognition**
 
@@ -482,26 +482,26 @@ User Request: "Find all epics in DEMO project"
 Every enhanced tool MUST follow this description pattern:
 
 ```typescript
-`🎯 [TOOL PURPOSE] - Replaces N specialized tools
+`[TOOL PURPOSE] - Replaces N specialized tools
 
 CONSOLIDATES: [list of old tools this replaces]
 
-🤖 AI DECISION TRIGGERS:
+AI DECISION TRIGGERS:
 User says: "[trigger phrase]" → Use this tool with [specific parameters]
 
-🎲 USAGE PATTERNS:
+USAGE PATTERNS:
 [Visual parameter combinations with clear outcomes]
 
-🧠 INTELLIGENT DETECTION:
+INTELLIGENT DETECTION:
 [Auto-detection rules and parameter relationships]
 
-⚡ ENHANCED CAPABILITIES:
+ENHANCED CAPABILITIES:
 [What this tool does better than the old ones]
 
-🔄 EXACT MIGRATION MAPPINGS:
+EXACT MIGRATION MAPPINGS:
 [Old tool calls → New tool calls with same results]
 
-💡 AI CONTEXT UNDERSTANDING:
+AI CONTEXT UNDERSTANDING:
 [How AI should interpret user intent and map to parameters]`
 ```
 

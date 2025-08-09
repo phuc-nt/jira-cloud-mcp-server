@@ -184,7 +184,7 @@ TASKS:
 
 ---
 
-## 🤖 AI-Friendly Tool Descriptions & Usage Patterns
+## AI-Friendly Tool Descriptions & Usage Patterns
 
 ### **Critical Requirement: Enhanced Tool Descriptions**
 
@@ -197,70 +197,70 @@ Each enhanced tool MUST include comprehensive descriptions covering:
 ### **Enhanced `createIssue` Tool Description Template**
 
 ```typescript
-description: `🎯 UNIVERSAL ISSUE CREATION - Replaces 8 specialized tools
+description: `UNIVERSAL ISSUE CREATION - Replaces 8 specialized tools
     
 CONSOLIDATES: createStory, createSubtask, createBulkSubtasks, createEpic, 
               createTask, createBug (and any issue type)
 
-🤖 AI USAGE PATTERNS:
-┌─ Epic Creation ─────────────────────────────────────────────────┐
-│ createIssue({                                                   │
-│   projectKey: "PROJ",                                          │
-│   summary: "User Authentication Epic",                         │
-│   epicName: "Auth Epic", // ← AUTO-DETECTS Epic type          │
-│   epicColor: "Blue",                                          │
-│   description: "Epic for all auth features"                   │
-│ })                                                             │
-│ REPLACES: createEpic() with same parameters                   │
-└─────────────────────────────────────────────────────────────────┘
+AI USAGE PATTERNS:
+--- Epic Creation -----------------------------------------------------------
+createIssue({
+  projectKey: "PROJ",
+  summary: "User Authentication Epic",
+  epicName: "Auth Epic", // AUTO-DETECTS Epic type
+  epicColor: "Blue",
+  description: "Epic for all auth features"
+})
+REPLACES: createEpic() with same parameters
+---------------------------------------------------------------------------
 
-┌─ Story Creation ────────────────────────────────────────────────┐
-│ createIssue({                                                   │
-│   projectKey: "PROJ",                                          │
-│   summary: "Login form implementation",                        │
-│   epicKey: "PROJ-123", // ← AUTO-DETECTS Story type           │
-│   storyPoints: 5,                                             │
-│   assignee: "dev-user"                                        │
-│ })                                                             │
-│ REPLACES: createStory() with same parameters                  │
-└─────────────────────────────────────────────────────────────────┘
+--- Story Creation --------------------------------------------------------
+createIssue({
+  projectKey: "PROJ",
+  summary: "Login form implementation",
+  epicKey: "PROJ-123", // AUTO-DETECTS Story type
+  storyPoints: 5,
+  assignee: "dev-user"
+})
+REPLACES: createStory() with same parameters
+---------------------------------------------------------------------------
 
-┌─ Sub-task Creation ─────────────────────────────────────────────┐
-│ createIssue({                                                   │
-│   projectKey: "PROJ",                                          │
-│   summary: "Add login button styling",                         │
-│   parentKey: "PROJ-124", // ← AUTO-DETECTS Sub-task type      │
-│   assignee: "ui-dev"                                          │
-│ })                                                             │
-│ REPLACES: createSubtask() with same parameters                │
-└─────────────────────────────────────────────────────────────────┘
+--- Sub-task Creation -----------------------------------------------------
+createIssue({
+  projectKey: "PROJ",
+  summary: "Add login button styling",
+  parentKey: "PROJ-124", // AUTO-DETECTS Sub-task type
+  assignee: "ui-dev"
+})
+REPLACES: createSubtask() with same parameters
+---------------------------------------------------------------------------
 
-┌─ Generic Task/Bug Creation ─────────────────────────────────────┐
-│ createIssue({                                                   │
-│   projectKey: "PROJ",                                          │
-│   summary: "Fix login validation bug",                         │
-│   issueType: "Bug", // ← EXPLICIT type specification          │
-│   priority: "High",                                           │
-│   assignee: "bug-fixer"                                       │
-│ })                                                             │
-│ REPLACES: createBug() or generic createIssue()               │
-└─────────────────────────────────────────────────────────────────┘
+--- Generic Task/Bug Creation ---------------------------------------------
+createIssue({
+  projectKey: "PROJ",
+  summary: "Fix login validation bug",
+  issueType: "Bug", // EXPLICIT type specification
+  priority: "High",
+  assignee: "bug-fixer"
+})
+REPLACES: createBug() or generic createIssue()
+---------------------------------------------------------------------------
 
-🧠 INTELLIGENT DETECTION RULES:
+INTELLIGENT DETECTION RULES:
 • epicName provided → Epic type
 • parentKey provided → Sub-task type  
 • epicKey OR storyPoints provided → Story type
 • issueType explicitly set → Use specified type
 • None of above → Default to Task
 
-⚡ ENHANCED CAPABILITIES vs SPECIALIZED TOOLS:
+ENHANCED CAPABILITIES vs SPECIALIZED TOOLS:
 • Single tool handles ALL issue types (vs 8 separate tools)
 • Automatic parent/epic relationship creation
 • Type-specific field validation and defaults
 • Consistent parameter patterns across all types
 • Better error handling with context-aware messages
 
-🔄 MIGRATION FROM SPECIALIZED TOOLS:
+MIGRATION FROM SPECIALIZED TOOLS:
 OLD: createStory({projectKey, summary, epicKey, storyPoints})
 NEW: createIssue({projectKey, summary, epicKey, storyPoints}) // Auto-detects Story
 
@@ -274,57 +274,57 @@ NEW: createIssue({projectKey, summary, epicName, epicColor}) // Auto-detects Epi
 ### **Enhanced `searchIssues` Tool Description Template**
 
 ```typescript
-description: `🔍 UNIVERSAL ISSUE SEARCH - Replaces 4 specialized search tools
+description: `UNIVERSAL ISSUE SEARCH - Replaces 4 specialized search tools
 
 CONSOLIDATES: searchEpics, searchStories, getEpicIssues, listIssues
 
-🤖 AI USAGE PATTERNS:
-┌─ Epic Search ───────────────────────────────────────────────────┐
-│ searchIssues({                                                  │
-│   projectKey: "PROJ",                                          │
-│   issueTypes: ["Epic"], // ← FILTER by Epic type              │
-│   maxResults: 50                                              │
-│ })                                                             │
-│ REPLACES: searchEpics({projectKey, maxResults})               │
-└─────────────────────────────────────────────────────────────────┘
+AI USAGE PATTERNS:
+--- Epic Search ------------------------------------------------------------
+searchIssues({
+  projectKey: "PROJ",
+  issueTypes: ["Epic"], // FILTER by Epic type
+  maxResults: 50
+})
+REPLACES: searchEpics({projectKey, maxResults})
+---------------------------------------------------------------------------
 
-┌─ Stories in Epic ───────────────────────────────────────────────┐
-│ searchIssues({                                                  │
-│   projectKey: "PROJ",                                          │
-│   parentEpic: "PROJ-123", // ← FILTER by parent Epic          │
-│   issueTypes: ["Story"]                                       │
-│ })                                                             │
-│ REPLACES: getEpicIssues({epicKey: "PROJ-123"})               │
-│          + searchStories({epicKey: "PROJ-123"})              │
-└─────────────────────────────────────────────────────────────────┘
+--- Stories in Epic -------------------------------------------------------
+searchIssues({
+  projectKey: "PROJ",
+  parentEpic: "PROJ-123", // FILTER by parent Epic
+  issueTypes: ["Story"]
+})
+REPLACES: getEpicIssues({epicKey: "PROJ-123"})
+         + searchStories({epicKey: "PROJ-123"})
+---------------------------------------------------------------------------
 
-┌─ Sub-tasks in Story ────────────────────────────────────────────┐
-│ searchIssues({                                                  │
-│   projectKey: "PROJ",                                          │
-│   parentIssue: "PROJ-124", // ← FILTER by parent Story        │
-│   issueTypes: ["Sub-task"]                                    │
-│ })                                                             │
-│ REPLACES: Custom JQL with parent link                         │
-└─────────────────────────────────────────────────────────────────┘
+--- Sub-tasks in Story ----------------------------------------------------
+searchIssues({
+  projectKey: "PROJ",
+  parentIssue: "PROJ-124", // FILTER by parent Story
+  issueTypes: ["Sub-task"]
+})
+REPLACES: Custom JQL with parent link
+---------------------------------------------------------------------------
 
-┌─ Complex Multi-Type Search ─────────────────────────────────────┐
-│ searchIssues({                                                  │
-│   projectKey: "PROJ",                                          │
-│   issueTypes: ["Epic", "Story", "Bug"],                       │
-│   assignee: "dev-user",                                       │
-│   status: ["Open", "In Progress"],                            │
-│   maxResults: 100                                             │
-│ })                                                             │
-│ REPLACES: Multiple separate tool calls + manual filtering     │
-└─────────────────────────────────────────────────────────────────┘
+--- Complex Multi-Type Search --------------------------------------------
+searchIssues({
+  projectKey: "PROJ",
+  issueTypes: ["Epic", "Story", "Bug"],
+  assignee: "dev-user",
+  status: ["Open", "In Progress"],
+  maxResults: 100
+})
+REPLACES: Multiple separate tool calls + manual filtering
+---------------------------------------------------------------------------
 
-🧠 INTELLIGENT JQL BUILDING:
+INTELLIGENT JQL BUILDING:
 • Automatically constructs optimal JQL from parameters
 • Combines filters efficiently (project + type + status + assignee)
 • Handles parent relationships (Epic → Stories, Story → Sub-tasks)
 • Validates parameter combinations before API call
 
-🔄 MIGRATION PATTERNS:
+MIGRATION PATTERNS:
 OLD: searchEpics({projectKey: "PROJ"})
 NEW: searchIssues({projectKey: "PROJ", issueTypes: ["Epic"]})
 

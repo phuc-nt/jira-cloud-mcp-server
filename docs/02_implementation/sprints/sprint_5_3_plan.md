@@ -26,7 +26,7 @@
 
 ---
 
-## 🤖 AI-Friendly Migration & Documentation Strategy
+## AI-Friendly Migration & Documentation Strategy
 
 ### **Backward Compatibility Tool Descriptions**
 
@@ -34,9 +34,9 @@ All deprecated tools will maintain their original descriptions BUT include clear
 
 ```typescript
 // Example: Deprecated createStory tool
-description: `⚠️ DEPRECATED - Use enhanced 'createIssue' instead
+description: `DEPRECATED - Use enhanced 'createIssue' instead
 
-🔄 MIGRATION:
+MIGRATION:
 OLD: createStory({projectKey, summary, epicKey, storyPoints})
 NEW: createIssue({projectKey, summary, epicKey, storyPoints}) // Auto-detects Story
 
@@ -46,7 +46,7 @@ This tool will be removed in v4.0.0. The enhanced 'createIssue' provides:
 • Consistent parameter patterns
 • Support for additional Story fields
 
-⚡ ENHANCED REPLACEMENT CAPABILITIES:
+ENHANCED REPLACEMENT CAPABILITIES:
 createIssue supports ALL issue types with intelligent detection:
 • Epic: provide 'epicName' → auto-detects Epic
 • Story: provide 'epicKey' or 'storyPoints' → auto-detects Story  
@@ -61,34 +61,34 @@ See createIssue tool for complete usage patterns.`
 Each consolidated tool will include comprehensive migration patterns:
 
 ```typescript
-description: `🎯 ENHANCED UNIVERSAL TOOL - Migration Guide for AI Clients
+description: `ENHANCED UNIVERSAL TOOL - Migration Guide for AI Clients
 
-📋 CONSOLIDATION SUMMARY:
+CONSOLIDATION SUMMARY:
 This tool replaces the following specialized tools:
 • toolA() → Use this tool with parameters X, Y
 • toolB() → Use this tool with parameters Y, Z  
 • toolC() → Use this tool with parameters Z, A
 
-🤖 AI DECISION TREE:
-┌─ User wants Epic creation ──────────────────────────────────────┐
-│ IF: User mentions "epic", "epic creation", "parent epic"       │
-│ THEN: Use createIssue({projectKey, summary, epicName, ...})    │
-│ AUTO-DETECTION: epicName parameter → Epic type                 │
-└─────────────────────────────────────────────────────────────────┘
+AI DECISION TREE:
+--- User wants Epic creation ---------------------------------------------
+IF: User mentions "epic", "epic creation", "parent epic"
+THEN: Use createIssue({projectKey, summary, epicName, ...})
+AUTO-DETECTION: epicName parameter → Epic type
+-------------------------------------------------------------------------
 
-┌─ User wants Story creation ─────────────────────────────────────┐
-│ IF: User mentions "story", "user story", "epic link"           │
-│ THEN: Use createIssue({projectKey, summary, epicKey, ...})     │
-│ AUTO-DETECTION: epicKey parameter → Story type                 │
-└─────────────────────────────────────────────────────────────────┘
+--- User wants Story creation -------------------------------------------
+IF: User mentions "story", "user story", "epic link"
+THEN: Use createIssue({projectKey, summary, epicKey, ...})
+AUTO-DETECTION: epicKey parameter → Story type
+-------------------------------------------------------------------------
 
-┌─ User wants Sub-task creation ──────────────────────────────────┐
-│ IF: User mentions "subtask", "sub-task", "parent issue"        │
-│ THEN: Use createIssue({projectKey, summary, parentKey, ...})   │
-│ AUTO-DETECTION: parentKey parameter → Sub-task type            │
-└─────────────────────────────────────────────────────────────────┘
+--- User wants Sub-task creation ----------------------------------------
+IF: User mentions "subtask", "sub-task", "parent issue"
+THEN: Use createIssue({projectKey, summary, parentKey, ...})
+AUTO-DETECTION: parentKey parameter → Sub-task type
+-------------------------------------------------------------------------
 
-🔄 EXACT MIGRATION MAPPINGS:
+EXACT MIGRATION MAPPINGS:
 OLD createStory({projectKey: "P", summary: "S", epicKey: "E", storyPoints: 5})
 NEW createIssue({projectKey: "P", summary: "S", epicKey: "E", storyPoints: 5})
 
@@ -98,7 +98,7 @@ NEW createIssue({projectKey: "P", summary: "S", parentKey: "P-1", description: "
 OLD createEpic({projectKey: "P", summary: "S", epicName: "EN", epicColor: "Blue"})
 NEW createIssue({projectKey: "P", summary: "S", epicName: "EN", epicColor: "Blue"})
 
-💡 AI CONTEXT UNDERSTANDING:
+AI CONTEXT UNDERSTANDING:
 • "Create an epic for user authentication" → Use epicName parameter
 • "Add story to epic PROJ-123" → Use epicKey parameter  
 • "Break down story PROJ-124 into subtasks" → Use parentKey parameter
@@ -109,12 +109,12 @@ NEW createIssue({projectKey: "P", summary: "S", epicName: "EN", epicColor: "Blue
 
 Every enhanced tool MUST include these sections in their description:
 
-1. **🎯 CONSOLIDATION HEADER**: Which tools it replaces
-2. **🤖 AI USAGE PATTERNS**: Parameter combinations with visual examples
-3. **🧠 INTELLIGENT DETECTION**: Auto-detection rules and logic
-4. **⚡ ENHANCED CAPABILITIES**: What's better than the old tools
-5. **🔄 MIGRATION PATTERNS**: Exact old→new parameter mappings
-6. **💡 AI CONTEXT UNDERSTANDING**: How AI should interpret user intent
+1. **CONSOLIDATION HEADER**: Which tools it replaces
+2. **AI USAGE PATTERNS**: Parameter combinations with visual examples
+3. **INTELLIGENT DETECTION**: Auto-detection rules and logic
+4. **ENHANCED CAPABILITIES**: What's better than the old tools
+5. **MIGRATION PATTERNS**: Exact old→new parameter mappings
+6. **AI CONTEXT UNDERSTANDING**: How AI should interpret user intent
 
 ---
 
