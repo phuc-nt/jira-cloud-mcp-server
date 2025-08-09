@@ -19,6 +19,32 @@ class Sprint51IntegrationTests {
     this.client = client;
   }
 
+  async createTemporaryTestIssue(): Promise<void> {
+    try {
+      const response = await this.client.callTool({
+        name: 'createIssue',
+        arguments: {
+          projectKey: 'XDEMO2',
+          summary: `Temporary Test Issue - ${Date.now()}`,
+          description: 'Temporary issue for testing purposes',
+          issueTypeHint: 'Task',
+          priority: 'Low'
+        }
+      });
+
+      const result = JSON.parse(((response as any).content[0] as any).text);
+      
+      if (result.success) {
+        this.testIssueKey = result.issueKey || result.key || result.issue?.key;
+        console.log(`   ✅ Created temporary test issue: ${this.testIssueKey}`);
+      } else {
+        throw new Error(`Failed to create temporary issue: ${result.error || result.message}`);
+      }
+    } catch (error) {
+      throw new Error(`Could not create temporary test issue: ${error}`);
+    }
+  }
+
   async runAllTests(): Promise<void> {
     console.log('\n=== 🚀 Sprint 5.1 Integration Test Suite ===\n');
 
@@ -60,11 +86,20 @@ class Sprint51IntegrationTests {
 
     const result = JSON.parse(((response as any).content[0] as any).text);
     
+    // Debug output to see what we get
+    console.log(`   🔍 Debug - Full result:`, result);
+    
     if (!result.success) {
       throw new Error(`Create failed: ${result.error || result.message}`);
     }
 
-    this.testIssueKey = result.issueKey;
+    // Try multiple possible fields for issue key
+    this.testIssueKey = result.issueKey || result.key || result.issue?.key;
+    
+    if (!this.testIssueKey) {
+      throw new Error(`Created issue but no key returned. Result: ${JSON.stringify(result)}`);
+    }
+    
     console.log(`   📋 Created Issue: ${this.testIssueKey}`);
     console.log(`   🔍 Auto-detected Type: ${result.detectedIssueType}`);
     console.log(`   🏗️ Project: ${result.projectKey}`);
@@ -100,8 +135,10 @@ class Sprint51IntegrationTests {
   }
 
   async testGetIssueWorkflow(): Promise<void> {
+    // If no test issue from previous test, create one
     if (!this.testIssueKey) {
-      throw new Error('No test issue available');
+      console.log(`   ⚠️ No test issue from previous test, creating a temporary one...`);
+      await this.createTemporaryTestIssue();
     }
 
     // Test enhanced getIssue with context expansion
@@ -126,8 +163,10 @@ class Sprint51IntegrationTests {
   }
 
   async testUpdateIssueWorkflow(): Promise<void> {
+    // If no test issue from previous test, create one
     if (!this.testIssueKey) {
-      throw new Error('No test issue available');
+      console.log(`   ⚠️ No test issue from previous test, creating a temporary one...`);
+      await this.createTemporaryTestIssue();
     }
 
     // Test enhanced updateIssue with type-specific handling

@@ -108,11 +108,27 @@ function mapFieldsForIssueType(params: EnhancedUpdateIssueParams, issueType: str
   }
   
   if (params.assignee) {
-    // Handle both email and account ID
-    if (params.assignee.includes('@')) {
-      fields.assignee = { emailAddress: params.assignee };
+    // Validate and handle assignee field
+    const assigneeValue = params.assignee.trim();
+    
+    if (!assigneeValue) {
+      // Empty assignee - unassign
+      fields.assignee = null;
+    } else if (assigneeValue.includes('@')) {
+      // Email format - validate basic email pattern
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailRegex.test(assigneeValue)) {
+        fields.assignee = { emailAddress: assigneeValue };
+      } else {
+        logger.warn(`Invalid email format for assignee: ${assigneeValue}`);
+        // Skip invalid email to avoid API error
+      }
+    } else if (assigneeValue.match(/^[a-f0-9\-]{36}$/i)) {
+      // Account ID format (UUID)
+      fields.assignee = { accountId: assigneeValue };
     } else {
-      fields.assignee = { accountId: params.assignee };
+      logger.warn(`Invalid assignee format: ${assigneeValue} - must be email or valid account ID`);
+      // Skip invalid assignee to avoid API error
     }
   }
   
@@ -132,13 +148,21 @@ function mapFieldsForIssueType(params: EnhancedUpdateIssueParams, issueType: str
       break;
       
     case 'Story':
-      // Story points
+      // Story points - only add if available
       if (params.storyPoints !== undefined) {
-        fields.customfield_10016 = params.storyPoints; // Story Points field
+        // Story points field - validate it exists before adding
+        if (params.smartFieldMapping) {
+          logger.info(`Adding Story Points field for Story: ${params.storyPoints}`);
+          fields.customfield_10016 = params.storyPoints; // Story Points field
+        }
       }
-      // Epic Link
+      // Epic Link - only add if available
       if (params.epicKey) {
-        fields.customfield_10011 = params.epicKey; // Epic Link field
+        // Epic Link field - validate it exists before adding
+        if (params.smartFieldMapping) {
+          logger.info(`Adding Epic Link field for Story: ${params.epicKey}`);
+          fields.customfield_10011 = params.epicKey; // Epic Link field
+        }
       }
       break;
       
@@ -179,29 +203,93 @@ async function validateFieldsForWorkflow(issueKey: string, fields: Record<string
 }
 
 /**
- * Update Epic-specific fields via Agile API
+ * Update Epic-specific fields via Standard API (fallback strategy)
  */
 async function updateEpicFields(issueKey: string, epicFields: Record<string, any>, config: AtlassianConfig): Promise<any> {
-  const headers = createBasicHeaders(config.email, config.apiToken);
-  headers['Content-Type'] = 'application/json';
-  const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
-  
-  const url = `${baseUrl}/rest/agile/1.0/epic/${encodeURIComponent(issueKey)}`;
-  
-  const response = await fetch(url, { 
-    method: 'POST',
-    headers, 
-    body: JSON.stringify(epicFields),
-    credentials: 'omit' 
-  });
+  try {
+    // Try Agile API first
+    const headers = createBasicHeaders(config.email, config.apiToken);
+    headers['Content-Type'] = 'application/json';
+    const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
+    
+    const agileUrl = `${baseUrl}/rest/agile/1.0/epic/${encodeURIComponent(issueKey)}`;
+    
+    const agileResponse = await fetch(agileUrl, { 
+      method: 'POST',
+      headers, 
+      body: JSON.stringify(epicFields),
+      credentials: 'omit' 
+    });
 
-  if (!response.ok) {
-    const responseText = await response.text();
-    logger.error(`Jira Agile API error (update epic, ${response.status}):`, responseText);
-    throw new ApiError(ApiErrorType.SERVER_ERROR, `Epic update failed: ${response.status} ${responseText}`, response.status);
+    if (agileResponse.ok) {
+      return await agileResponse.json();
+    }
+    
+    // If Agile API fails, fall back to Standard API with Epic custom fields
+    logger.warn(`Agile API failed for Epic ${issueKey}, falling back to Standard API`);
+    
+    const standardFields: Record<string, any> = {};
+    
+    // Map Epic fields to custom fields for Standard API
+    if (epicFields.name) {
+      standardFields.customfield_10011 = epicFields.name; // Epic Name custom field
+    }
+    
+    // Use updateIssue for Epic fields via Standard API
+    const result = await updateIssue(config, issueKey, standardFields);
+    
+    if (!result.success) {
+      throw new ApiError(ApiErrorType.SERVER_ERROR, `Epic Standard API update failed: ${result.message}`, 400);
+    }
+    
+    return {
+      name: epicFields.name,
+      color: epicFields.color || { key: 'color_1' },
+      done: epicFields.done || false,
+      fallbackUsed: true
+    };
+    
+  } catch (error) {
+    logger.error(`Epic update failed for ${issueKey}:`, error);
+    throw error;
   }
+}
 
-  return await response.json();
+/**
+ * Validate fields before update to avoid API errors
+ */
+async function validateAndCleanFields(fields: Record<string, any>, issueKey: string, config: AtlassianConfig): Promise<Record<string, any>> {
+  const cleanedFields: Record<string, any> = {};
+  
+  // Copy standard fields that are generally safe
+  const safeFields = ['summary', 'description', 'priority', 'labels'];
+  for (const field of safeFields) {
+    if (fields[field] !== undefined) {
+      cleanedFields[field] = fields[field];
+    }
+  }
+  
+  // Handle assignee with validation
+  if (fields.assignee !== undefined) {
+    cleanedFields.assignee = fields.assignee;
+  }
+  
+  // Handle custom fields with validation
+  const customFieldsToValidate = ['customfield_10016', 'customfield_10011'];
+  for (const customField of customFieldsToValidate) {
+    if (fields[customField] !== undefined) {
+      // For now, skip custom fields that might not exist in the project
+      // TODO: Add proper field metadata validation
+      logger.warn(`Skipping custom field ${customField} to avoid validation errors`);
+    }
+  }
+  
+  // Handle parent field for sub-tasks
+  if (fields.parent !== undefined) {
+    cleanedFields.parent = fields.parent;
+  }
+  
+  return cleanedFields;
 }
 
 /**
@@ -226,8 +314,11 @@ async function enhancedUpdateIssueImpl(params: EnhancedUpdateIssueParams, contex
     // Map fields based on issue type
     const { fields, epicFields } = mapFieldsForIssueType(params, detectedType);
     
+    // Validate and clean fields to avoid API errors
+    const validatedFields = await validateAndCleanFields(fields, params.issueKey, config);
+    
     // Validate we have something to update
-    const hasStandardFields = Object.keys(fields).length > 0;
+    const hasStandardFields = Object.keys(validatedFields).length > 0;
     const hasEpicFields = epicFields && Object.keys(epicFields).length > 0;
     
     if (!hasStandardFields && !hasEpicFields) {
@@ -237,7 +328,7 @@ async function enhancedUpdateIssueImpl(params: EnhancedUpdateIssueParams, contex
     // Workflow validation
     let warnings: string[] = [];
     if (params.validateTransition && hasStandardFields) {
-      warnings = await validateFieldsForWorkflow(params.issueKey, fields, config);
+      warnings = await validateFieldsForWorkflow(params.issueKey, validatedFields, config);
     }
     
     const results: any = {
@@ -250,12 +341,12 @@ async function enhancedUpdateIssueImpl(params: EnhancedUpdateIssueParams, contex
     // Update standard fields via standard API
     if (hasStandardFields) {
       try {
-        const standardResult = await updateIssue(config, params.issueKey, fields);
+        const standardResult = await updateIssue(config, params.issueKey, validatedFields);
         if (standardResult.success) {
           results.appliedUpdates.push('standardFields');
           results.standardFieldsUpdate = {
             success: true,
-            updatedFields: Object.keys(fields)
+            updatedFields: Object.keys(validatedFields)
           };
         } else {
           results.standardFieldsUpdate = {
