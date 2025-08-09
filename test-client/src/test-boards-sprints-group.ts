@@ -114,7 +114,7 @@ async function testBoardsSprintsTool(client: Client, toolName: string, args: any
 }
 
 async function main() {
-  console.log("🏆 === BOARDS & SPRINTS TOOLS TEST (11 Tools) ===");
+  console.log("🏆 === BOARDS & SPRINTS TOOLS TEST (12 Tools) ===");
   
   try {
     // Setup client
@@ -180,10 +180,16 @@ async function main() {
       "Get sprints from configured board"
     );
 
+    // 6. List Backlog Issues (Read) - new tool
+    await testBoardsSprintsTool(client, "listBacklogIssues", 
+      { boardId: testBoardId, maxResults: Math.min(5, CONFIG.MAX_RESULTS) }, 
+      "List issues in board backlog"
+    );
+
     // === SPRINTS TESTING ===
     console.log("\n🏃 === SPRINTS OPERATIONS ===");
 
-    // 6. List Sprints (Read) - using configured limits
+    // 7. List Sprints (Read) - using configured limits
     const sprintsResult = await testBoardsSprintsTool(client, "listSprints", 
       { maxResults: CONFIG.MAX_RESULTS }, 
       "List all accessible sprints with configured limits"
@@ -193,13 +199,13 @@ async function main() {
     if (sprintsResult?.sprints?.length > 0) {
       testSprintId = sprintsResult.sprints[0].id;
       
-      // 7. Get Sprint (Read)
+      // 8. Get Sprint (Read)
       await testBoardsSprintsTool(client, "getSprint", 
         { sprintId: testSprintId }, 
         "Get detailed sprint information"
       );
 
-      // 8. Get Sprint Issues (Read) - using configured limits
+      // 9. Get Sprint Issues (Read) - using configured limits
       await testBoardsSprintsTool(client, "getSprintIssues", 
         { sprintId: testSprintId, maxResults: Math.min(5, CONFIG.MAX_RESULTS) }, 
         "Get issues from sprint with statistics and configured limits"
@@ -209,13 +215,13 @@ async function main() {
     // === SPRINT MANAGEMENT TESTING ===
     console.log("\n⚙️ === SPRINT MANAGEMENT ===");
 
-    // 9. Create Sprint (Write) - using configured data
+    // 10. Create Sprint (Write) - using configured data
     let createdSprintId = null;
     if (CONFIG.USE_REAL_DATA) {
       const createResult = await testBoardsSprintsTool(client, "createSprint", 
         {
           name: testConfig.generateTestName("Sprint"),
-          originBoardId: testBoardId,
+          boardId: testBoardId.toString(),
           goal: testConfig.generateTestDescription("sprint for Boards & Sprints testing")
         }, 
         `Create new sprint on configured board (${CONFIG.BOARD_NAME})`
@@ -229,7 +235,7 @@ async function main() {
       console.log("⚠️  Sprint creation skipped - real data mode disabled");
     }
 
-    // 10. Add Issue to Sprint (Write) - only if we have sprint and issues
+    // 11. Add Issue to Sprint (Write) - only if we have sprint and issues
     if (createdSprintId || testSprintId) {
       try {
         // Get some issues to work with
@@ -240,13 +246,13 @@ async function main() {
         const issuesData = extractResponseData(issuesResult);
         
         if (issuesData?.issues?.length > 0) {
-          const issueId = issuesData.issues[0].id;
-          const sprintToUse = createdSprintId || testSprintId;
+          const issueKey = issuesData.issues[0].key;
+          const sprintToUse = (createdSprintId || testSprintId).toString();
           
           await testBoardsSprintsTool(client, "addIssueToSprint", 
             {
               sprintId: sprintToUse,
-              issues: [issueId]
+              issueKeys: [issueKey]
             }, 
             "Add issue to sprint"
           );
@@ -259,7 +265,7 @@ async function main() {
     // === BACKLOG MANAGEMENT TESTING ===
     console.log("\n📚 === BACKLOG MANAGEMENT ===");
 
-    // 11. Add Issues to Backlog (Write)
+    // 12. Add Issues to Backlog (Write)
     try {
       // Get some issues to work with
       const issuesResult = await client.callTool({
@@ -269,10 +275,10 @@ async function main() {
       const issuesData = extractResponseData(issuesResult);
       
       if (issuesData?.issues?.length > 0) {
-        const issueId = issuesData.issues[0].id;
+        const issueKey = issuesData.issues[0].key;
         
         await testBoardsSprintsTool(client, "addIssuesToBacklog", 
-          { issues: [issueId] }, 
+          { issueKeys: [issueKey] }, 
           "Add issues to backlog"
         );
 
@@ -280,8 +286,9 @@ async function main() {
         try {
           await testBoardsSprintsTool(client, "rankBacklogIssues", 
             {
-              issues: [issueId],
-              rankBeforeIssue: issueId // Self-reference for demonstration
+              boardId: testBoardId.toString(),
+              issueKeys: [issueKey],
+              rankBeforeIssue: issueKey // Self-reference for demonstration
             }, 
             "Rank backlog issues"
           );
@@ -295,11 +302,11 @@ async function main() {
 
     // Summary with configuration details
     console.log("\n📊 === BOARDS & SPRINTS TEST SUMMARY ===");
-    console.log("✅ Boards Operations: listBoards, getBoard, getBoardConfiguration, getBoardIssues, getBoardSprints");
+    console.log("✅ Boards Operations: listBoards, getBoard, getBoardConfiguration, getBoardIssues, getBoardSprints, listBacklogIssues");
     console.log("✅ Sprints Operations: listSprints, getSprint, getSprintIssues");
     console.log("✅ Sprint Management: createSprint, addIssueToSprint");
     console.log("✅ Backlog Management: addIssuesToBacklog, rankBacklogIssues");
-    console.log(`✅ Total tools tested: 11/11`);
+    console.log(`✅ Total tools tested: 12/12`);
     console.log(`✅ Configured board: ${CONFIG.BOARD_NAME} (ID: ${CONFIG.BOARD_ID})`);
     console.log(`✅ Board type: ${CONFIG.BOARD_TYPE}`);
     console.log(`✅ Project: ${CONFIG.PROJECT_KEY}`);

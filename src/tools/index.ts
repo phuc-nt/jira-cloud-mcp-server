@@ -45,6 +45,8 @@ import { registerGetDashboardTool } from './jira/get-dashboard.js';
 import { registerGetDashboardGadgetsTool } from './jira/get-dashboard-gadgets.js';
 import { registerListUsersTool } from './jira/list-users.js';
 import { registerGetAssignableUsersTool } from './jira/get-assignable-users.js';
+import { registerDeleteIssueTool } from './jira/delete-issue.js';
+import { registerListBacklogIssuesTool } from './jira/list-backlog-issues.js';
 
 /**
  * Register all tools with MCP Server
@@ -67,6 +69,7 @@ export function registerAllTools(server: any) {
   registerAssignIssueTool(server);
   registerAddIssueCommentTool(server);
   registerUpdateIssueCommentTool(server);
+  registerDeleteIssueTool(server);  // Added: Delete issue functionality
   
   // Project management tools
   registerListProjectsTool(server);
@@ -84,6 +87,7 @@ export function registerAllTools(server: any) {
   registerGetBoardIssuesTool(server);
   registerGetBoardConfigurationTool(server);
   registerGetBoardSprintsTool(server);
+  registerListBacklogIssuesTool(server);  // Added: List backlog issues functionality
   
   // Sprint management tools (read operations)
   registerListSprintsTool(server);

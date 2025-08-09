@@ -83,6 +83,8 @@ async function testIssuesTool(client: Client, toolName: string, args: any, descr
         console.log(`  💬 Comment added: ID ${data.data.id}`);
       } else if (toolName === 'updateIssueComment' && data.data) {
         console.log(`  ✏️  Comment updated: ID ${data.data.id}`);
+      } else if (toolName === 'deleteIssue' && data.data) {
+        console.log(`  🗑️  Issue deleted successfully`);
       } else if (toolName === 'searchIssues' && data.issues) {
         console.log(`  🔍 Search results: ${data.issues.length} issues`);
       } else if ((toolName === 'updateIssue' || toolName === 'assignIssue' || toolName === 'transitionIssue') && data.data) {
@@ -101,7 +103,7 @@ async function testIssuesTool(client: Client, toolName: string, args: any, descr
 }
 
 async function main() {
-  console.log("🎯 === ISSUES MANAGEMENT TOOLS TEST (11 Tools) ===");
+  console.log("🎯 === ISSUES MANAGEMENT TOOLS TEST (12 Tools) ===");
   
   try {
     // Setup client
@@ -186,7 +188,7 @@ async function main() {
 
       // 6. Get Issue Transitions (Read)
       const transitionsResult = await testIssuesTool(client, "getIssueTransitions", 
-        { issueIdOrKey: testIssueKey }, 
+        { issueKey: testIssueKey }, 
         "Get available issue transitions"
       );
 
@@ -214,14 +216,14 @@ async function main() {
 
       // 9. Get Issue Comments (Read)
       await testIssuesTool(client, "getIssueComments", 
-        { issueIdOrKey: testIssueKey }, 
+        { issueKey: testIssueKey }, 
         "Get issue comments"
       );
 
       // 10. Add Issue Comment (Write) - using configured data
       const commentResult = await testIssuesTool(client, "addIssueComment", 
         {
-          issueIdOrKey: testIssueKey,
+          issueKey: testIssueKey,
           body: testConfig.generateTestDescription("comment added")
         }, 
         "Add comment to issue"
@@ -231,7 +233,7 @@ async function main() {
       if (commentResult?.data?.id) {
         await testIssuesTool(client, "updateIssueComment", 
           {
-            issueIdOrKey: testIssueKey,
+            issueKey: testIssueKey,
             commentId: commentResult.data.id,
             body: testConfig.generateTestDescription("updated comment")
           }, 
@@ -239,14 +241,28 @@ async function main() {
         );
       }
 
-      console.log(`\n📝 Test issue created: ${testIssueKey} (can be used for further testing)`);
+      // 12. Delete Issue (Write) - test deletion as final step
+      console.log(`\n�️  Testing deleteIssue as final cleanup step...`);
+      const deleteResult = await testIssuesTool(client, "deleteIssue", 
+        { issueKey: testIssueKey }, 
+        "Delete test issue (cleanup)"
+      );
+      
+      if (deleteResult) {
+        console.log(`✅ Test issue ${testIssueKey} was successfully deleted`);
+        testIssueKey = null; // Mark as deleted
+      }
+
+      console.log(`\n📝 Test issue lifecycle: Created → Updated → Commented → Deleted ✅`);
+    } else {
+      console.log(`\n⚠️  No test issue available for deletion test`);
     }
 
     // Summary with configuration details
     console.log("\n📊 === ISSUES MANAGEMENT TEST SUMMARY ===");
     console.log("✅ Read Operations: listIssues, getIssue, searchIssues, getIssueTransitions, getIssueComments");
-    console.log("✅ Write Operations: createIssue, updateIssue, transitionIssue, assignIssue, addIssueComment, updateIssueComment");
-    console.log(`✅ Total tools tested: 11/11`);
+    console.log("✅ Write Operations: createIssue, updateIssue, transitionIssue, assignIssue, addIssueComment, updateIssueComment, deleteIssue");
+    console.log(`✅ Total tools tested: 12/12`);
     console.log(`✅ Configured project: ${CONFIG.PROJECT_KEY}`);
     console.log(`✅ Configured issue type: ${CONFIG.ISSUE_TYPE}`);
     console.log(`✅ Configured admin user: ${CONFIG.ADMIN_USER.displayName}`);

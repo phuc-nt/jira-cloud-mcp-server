@@ -34,9 +34,23 @@ async function updateIssueCommentImpl(params: UpdateIssueCommentParams, context:
     const headers = createBasicHeaders(config.email, config.apiToken);
     const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
 
-    // Build comment payload
+    // Build comment payload with ADF format for API v3
     const commentPayload: any = {
-      body: params.body
+      body: {
+        type: "doc",
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: params.body
+              }
+            ]
+          }
+        ]
+      }
     };
 
     // Add optional fields

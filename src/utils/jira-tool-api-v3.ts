@@ -434,9 +434,22 @@ export async function assignIssue(
           new Error(responseText)
         );
       } else if (statusCode === 404) {
+        // Parse response to determine if it's user not found or issue not found
+        let errorMessage = `Issue ${issueIdOrKey} does not exist`;
+        try {
+          const errorData = JSON.parse(responseText);
+          if (errorData.errorMessages && errorData.errorMessages.length > 0) {
+            const firstError = errorData.errorMessages[0];
+            if (firstError.includes("Specified user does not exist") || firstError.includes("required permissions")) {
+              errorMessage = `User with account ID '${accountId}' does not exist or you don't have permission to assign to this user`;
+            }
+          }
+        } catch (e) {
+          // Use default message if parsing fails
+        }
         throw new ApiError(
           ApiErrorType.NOT_FOUND_ERROR,
-          `Issue ${issueIdOrKey} does not exist`,
+          errorMessage,
           statusCode,
           new Error(responseText)
         );

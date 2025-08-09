@@ -8,9 +8,14 @@ import fs from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load test configuration
+const testConfigPath = path.resolve(__dirname, '../test-data-config.json');
+const testConfig = JSON.parse(fs.readFileSync(testConfigPath, 'utf8'));
+
 // Configuration
 const CONFIG = {
-  PROJECT_KEY: "XDEMO2", // Real Jira project for testing
+  PROJECT_KEY: testConfig.jira.testProject.key, // Use config
+  TEST_BOARD_ID: testConfig.jira.testBoard.id.toString(), // Use config board ID
   MAX_ISSUES_TO_TEST: 3,
   MAX_USERS_TO_TEST: 3,
   SERVER_PATH: "/Users/phucnt/Workspace/mcp-atlassian-server/dist/index.js",
@@ -189,25 +194,24 @@ class ToolTestGroups {
     }
     
     // Sprint write operations (create new sprint for testing)
-    if (testBoardId) {
-      const sprintResult = await this.testTool("createSprint", {
-        name: `Test Sprint ${new Date().toISOString()}`,
-        originBoardId: testBoardId,
-        goal: "Comprehensive testing sprint"
-      }, "data");
+    console.log(`  🔍 Debug: Using configured boardId = ${CONFIG.TEST_BOARD_ID}`);
+    const sprintResult = await this.testTool("createSprint", {
+      boardId: CONFIG.TEST_BOARD_ID,  // Use config board ID
+      name: `Test Sprint ${Date.now()}`,  // Short name < 30 chars
+      goal: "Comprehensive testing sprint"
+    }, "data");
       
-      const newSprintId = sprintResult?.data?.id;
-      if (newSprintId) {
-        console.log(`  📝 Created sprint: ${newSprintId}`);
-        
-        // Test adding issues to sprint
-        const issuesResult = await this.callToolSafely("listIssues", { projectKey: CONFIG.PROJECT_KEY, limit: 1 });
-        if (issuesResult?.issues?.[0]?.id) {
-          await this.testTool("addIssueToSprint", {
-            sprintId: newSprintId,
-            issues: [issuesResult.issues[0].id]
-          }, "data");
-        }
+    const newSprintId = sprintResult?.data?.id;
+    if (newSprintId) {
+      console.log(`  📝 Created sprint: ${newSprintId}`);
+      
+      // Test adding issues to sprint
+      const issuesResult = await this.callToolSafely("listIssues", { projectKey: CONFIG.PROJECT_KEY, limit: 1 });
+      if (issuesResult?.issues?.[0]?.id) {
+        await this.testTool("addIssueToSprint", {
+          sprintId: newSprintId,
+          issues: [issuesResult.issues[0].id]
+        }, "data");
       }
     }
   }
