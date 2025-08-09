@@ -341,7 +341,7 @@ async function main() {
 
     // List all available tools
     const toolsList = await client.listTools();
-    console.log(`\n📋 Total tools available: ${toolsList.tools.length}/45 expected`);
+    console.log(`\n📋 Total tools available: ${toolsList.tools.length}/51 expected (Sprint 4.4: Fix Version Management)`);
     
     if (CONFIG.VERBOSE) {
       console.log("\n📝 Available tools:");

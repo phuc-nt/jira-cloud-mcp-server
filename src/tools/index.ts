@@ -47,6 +47,11 @@ import { registerListUsersTool } from './jira/list-users.js';
 import { registerGetAssignableUsersTool } from './jira/get-assignable-users.js';
 import { registerDeleteIssueTool } from './jira/delete-issue.js';
 import { registerListBacklogIssuesTool } from './jira/list-backlog-issues.js';
+// Fix Version Management Tools (Sprint 4.4)
+import { registerCreateFixVersionTool } from './jira/create-fix-version.js';
+import { registerListProjectVersionsTool } from './jira/list-project-versions.js';
+import { registerGetProjectVersionTool } from './jira/get-project-version.js';
+import { registerUpdateFixVersionTool } from './jira/update-fix-version.js';
 
 /**
  * Register all tools with MCP Server
@@ -121,4 +126,10 @@ export function registerAllTools(server: any) {
   registerAddGadgetToDashboardTool(server);
   registerRemoveGadgetFromDashboardTool(server);
   registerGetJiraGadgetsTool(server);
+
+  // Fix Version Management Tools (Sprint 4.4)
+  registerCreateFixVersionTool(server);
+  registerListProjectVersionsTool(server);
+  registerGetProjectVersionTool(server);
+  registerUpdateFixVersionTool(server);
 }

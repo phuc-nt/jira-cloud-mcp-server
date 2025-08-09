@@ -14,12 +14,14 @@ export const searchIssuesSchema = z.object({
   maxResults: z.number().default(50).describe('Maximum number of results to return (default: 50)'),
   startAt: z.number().default(0).describe('Starting index for pagination (default: 0)'),
   fields: z.string().optional().describe('Comma-separated list of fields to include (optional)')
+  // Note: Fix Version filtering temporarily disabled due to screen configuration issues
 });
 
 type SearchIssuesParams = z.infer<typeof searchIssuesSchema>;
 
 async function searchIssuesImpl(params: SearchIssuesParams, context: any) {
   const config: AtlassianConfig = Config.getConfigFromContextOrEnv(context);
+  
   logger.info(`Searching issues with JQL: ${params.jql}`);
 
   try {

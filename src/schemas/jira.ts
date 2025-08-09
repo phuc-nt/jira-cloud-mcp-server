@@ -378,3 +378,38 @@ export const gadgetListSchema = {
   },
   required: ["gadgets"]
 }; 
+
+// Fix Version schemas (Sprint 4.4)
+export const fixVersionSchema = {
+  type: "object",
+  properties: {
+    id: { type: "string", description: "Version ID" },
+    name: { type: "string", description: "Version name" },
+    description: { type: "string", description: "Version description", nullable: true },
+    archived: { type: "boolean", description: "Whether version is archived" },
+    released: { type: "boolean", description: "Whether version is released" },
+    releaseDate: { type: "string", description: "Release date (YYYY-MM-DD)", nullable: true },
+    startDate: { type: "string", description: "Start date (YYYY-MM-DD)", nullable: true },
+    projectId: { type: "string", description: "Project ID" },
+    self: { type: "string", description: "Version URL" },
+    issuesFixedCount: { type: "number", description: "Number of issues fixed" },
+    issuesToDoCount: { type: "number", description: "Number of issues to do" },
+    issuesInProgressCount: { type: "number", description: "Number of issues in progress" },
+    operations: { type: "array", description: "Available operations" }
+  },
+  required: ["id", "name", "archived", "released"]
+};
+
+export const projectVersionsListSchema = {
+  type: "object",
+  properties: {
+    projectKey: { type: "string", description: "Project key" },
+    totalVersions: { type: "number", description: "Total number of versions" },
+    releasedVersions: { type: "number", description: "Number of released versions" },
+    unreleasedVersions: { type: "number", description: "Number of unreleased versions" },
+    archivedVersions: { type: "number", description: "Number of archived versions" },
+    versions: { type: "array", items: fixVersionSchema },
+    metadata: standardMetadataSchema
+  },
+  required: ["projectKey", "totalVersions", "versions"]
+};

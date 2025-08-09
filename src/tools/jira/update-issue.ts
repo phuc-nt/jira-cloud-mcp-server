@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { AtlassianConfig } from '../../utils/atlassian-api-base.js';
+import { AtlassianConfig, createBasicHeaders, normalizeAtlassianBaseUrl } from '../../utils/atlassian-api-base.js';
 import { updateIssue } from '../../utils/jira-tool-api-v3.js';
-import { ApiError } from '../../utils/error-handler.js';
+import { ApiError, ApiErrorType } from '../../utils/error-handler.js';
 import { Logger } from '../../utils/logger.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Tools, Config } from '../../utils/mcp-helpers.js';
@@ -17,6 +17,7 @@ export const updateIssueSchema = z.object({
   priority: z.string().optional().describe('New priority (e.g., High, Medium, Low)'),
   labels: z.array(z.string()).optional().describe('New labels for the issue'),
   customFields: z.record(z.any()).optional().describe('Custom fields to update')
+  // Note: Fix Version assignment temporarily disabled due to screen configuration issues
 });
 
 type UpdateIssueParams = z.infer<typeof updateIssueSchema>;
@@ -56,13 +57,19 @@ async function updateIssueToolImpl(params: UpdateIssueParams, context: any) {
       fields[key] = value;
     });
   }
-  if (Object.keys(fields).length === 0) {
+  
+  // Check if we have fields to update
+  const hasFieldsToUpdate = Object.keys(fields).length > 0;
+  
+  if (!hasFieldsToUpdate) {
     return {
       issueIdOrKey: params.issueIdOrKey,
       success: false,
       message: 'No fields provided to update'
     };
   }
+  
+  // Use the existing updateIssue function for field updates
   const result = await updateIssue(
     config,
     params.issueIdOrKey,
