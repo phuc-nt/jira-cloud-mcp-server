@@ -26,6 +26,147 @@
 
 ---
 
+## 🤖 AI-Friendly Tool Descriptions & Usage Patterns
+
+### **Enhanced `searchUsers` Tool Description Template**
+
+```typescript
+description: `👥 UNIVERSAL USER SEARCH - Replaces 3 specialized user tools
+
+CONSOLIDATES: searchUsers, listUsers, getAssignableUsers
+
+🤖 AI USAGE PATTERNS:
+┌─ General User Search ───────────────────────────────────────────┐
+│ searchUsers({                                                   │
+│   query: "john",                                               │
+│   mode: "all", // ← Search all users in Jira                  │
+│   maxResults: 50                                              │
+│ })                                                             │
+│ REPLACES: listUsers({query: "john"}) or searchUsers()         │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ Project-Assignable Users ──────────────────────────────────────┐
+│ searchUsers({                                                   │
+│   query: "dev",                                               │
+│   mode: "assignable", // ← Only users who can be assigned     │
+│   projectKey: "PROJ", // ← Within specific project            │
+│   maxResults: 20                                              │
+│ })                                                             │
+│ REPLACES: getAssignableUsers({projectKey, query})             │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ Issue-Assignable Users ────────────────────────────────────────┐
+│ searchUsers({                                                   │
+│   query: "qa",                                                │
+│   mode: "assignable",                                         │
+│   issueKey: "PROJ-123", // ← Users assignable to specific issue │
+│   maxResults: 10                                              │
+│ })                                                             │
+│ REPLACES: getAssignableUsers({issueKey, query})               │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ Project Members Only ──────────────────────────────────────────┐
+│ searchUsers({                                                   │
+│   query: "",                                                  │
+│   mode: "project-members", // ← Project team members only     │
+│   projectKey: "PROJ",                                         │
+│   maxResults: 100                                             │
+│ })                                                             │
+│ REPLACES: Custom API calls + permission filtering             │
+└─────────────────────────────────────────────────────────────────┘
+
+🧠 INTELLIGENT MODE DETECTION:
+• projectKey + no issueKey → "assignable" mode for project
+• issueKey provided → "assignable" mode for specific issue  
+• no context → "all" mode for general search
+• mode explicitly set → use specified mode
+
+⚡ ENHANCED CAPABILITIES:
+• Single tool handles all user search scenarios
+• Context-aware permission filtering
+• Consistent pagination across all modes
+• Smart caching for repeated queries
+• Better error handling with permission context
+
+🔄 MIGRATION PATTERNS:
+OLD: listUsers({query: "john", maxResults: 50})
+NEW: searchUsers({query: "john", mode: "all", maxResults: 50})
+
+OLD: getAssignableUsers({projectKey: "PROJ", query: "dev"})
+NEW: searchUsers({query: "dev", mode: "assignable", projectKey: "PROJ"})
+
+OLD: getAssignableUsers({issueKey: "PROJ-123"})
+NEW: searchUsers({mode: "assignable", issueKey: "PROJ-123"})`
+```
+
+### **Enhanced `getBoardIssues` Tool Description Template**
+
+```typescript
+description: `📋 UNIVERSAL BOARD ISSUES - Replaces 2 specialized board tools
+
+CONSOLIDATES: getBoardIssues, listBacklogIssues
+
+🤖 AI USAGE PATTERNS:
+┌─ All Board Issues ──────────────────────────────────────────────┐
+│ getBoardIssues({                                                │
+│   boardId: 123,                                               │
+│   scope: "all", // ← All issues on board                      │
+│   maxResults: 100                                             │
+│ })                                                             │
+│ REPLACES: getBoardIssues({boardId}) with full scope           │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ Backlog Issues Only ───────────────────────────────────────────┐
+│ getBoardIssues({                                                │
+│   boardId: 123,                                               │
+│   scope: "backlog", // ← Backlog issues only                  │
+│   jql: "assignee = currentUser()"                             │
+│ })                                                             │
+│ REPLACES: listBacklogIssues({boardId, jql})                  │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ Active Sprint Issues ──────────────────────────────────────────┐
+│ getBoardIssues({                                                │
+│   boardId: 123,                                               │
+│   scope: "active-sprints", // ← Issues in active sprints      │
+│   fields: ["summary", "status", "assignee"]                   │
+│ })                                                             │
+│ REPLACES: getBoardIssues() + sprint filtering                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ Completed Sprint Issues ───────────────────────────────────────┐
+│ getBoardIssues({                                                │
+│   boardId: 123,                                               │
+│   scope: "done-sprints", // ← Issues in completed sprints     │
+│   sprintId: 456, // ← Specific completed sprint                │
+│   maxResults: 50                                              │
+│ })                                                             │
+│ REPLACES: Custom sprint issue queries                         │
+└─────────────────────────────────────────────────────────────────┘
+
+🧠 INTELLIGENT SCOPE DETECTION:
+• No scope → "all" (backward compatibility)
+• Backlog context → "backlog" mode with backlog-specific API
+• Sprint context → "active-sprints" or "done-sprints"
+• JQL provided → Apply additional filtering within scope
+
+⚡ ENHANCED CAPABILITIES:
+• Unified interface for all board issue scenarios
+• Scope-based API optimization (uses most efficient endpoint)
+• Consistent pagination and field selection
+• Smart caching based on scope and filters
+• Better error handling for board permissions
+
+🔄 MIGRATION PATTERNS:
+OLD: listBacklogIssues({boardId: 123, jql: "assignee = currentUser()"})
+NEW: getBoardIssues({boardId: 123, scope: "backlog", jql: "assignee = currentUser()"})
+
+OLD: getBoardIssues({boardId: 123}) // All issues
+NEW: getBoardIssues({boardId: 123, scope: "all"}) // Explicit scope`
+```
+
+---
+
 ## 📋 Day-by-Day Breakdown
 
 ### **Day 1-3: Universal `searchUsers` Tool**

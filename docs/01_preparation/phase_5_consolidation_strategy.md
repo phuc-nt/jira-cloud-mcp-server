@@ -434,6 +434,79 @@ CONTEXT INTELLIGENCE:
 
 ---
 
+## 🤖 AI-Friendly Tool Design Patterns
+
+### **Critical Success Factor: AI Pattern Recognition**
+
+The enhanced tools must provide **clear, predictable patterns** that AI can understand and use correctly. Each tool must include:
+
+1. **Intent Recognition**: How AI determines which tool to use
+2. **Parameter Mapping**: Clear relationships between user requests and parameters  
+3. **Context Awareness**: How tools adapt to different scenarios
+4. **Error Recovery**: Helpful suggestions when things go wrong
+
+### **AI Decision Tree for Enhanced Tools**
+
+```
+User Request: "Create an epic for user authentication"
+│
+├─ Keywords: "epic", "create" 
+├─ Tool Selection: createIssue
+├─ Parameter Detection: {epicName: "user authentication"}
+└─ Auto-Detection: issueType="Epic"
+
+User Request: "Add story to epic PROJ-123 with 5 points"
+│
+├─ Keywords: "story", "epic", "points"
+├─ Tool Selection: createIssue  
+├─ Parameter Detection: {epicKey: "PROJ-123", storyPoints: 5}
+└─ Auto-Detection: issueType="Story"
+
+User Request: "Break down story PROJ-124 into subtasks"
+│
+├─ Keywords: "subtask", "break down", "story"
+├─ Tool Selection: createIssue (multiple calls)
+├─ Parameter Detection: {parentKey: "PROJ-124"}  
+└─ Auto-Detection: issueType="Sub-task"
+
+User Request: "Find all epics in DEMO project"
+│
+├─ Keywords: "find", "epics", "project"
+├─ Tool Selection: searchIssues
+├─ Parameter Detection: {projectKey: "DEMO", issueTypes: ["Epic"]}
+└─ Optimized Query: JQL with Epic filter
+```
+
+### **Enhanced Tool Description Template**
+
+Every enhanced tool MUST follow this description pattern:
+
+```typescript
+`🎯 [TOOL PURPOSE] - Replaces N specialized tools
+
+CONSOLIDATES: [list of old tools this replaces]
+
+🤖 AI DECISION TRIGGERS:
+User says: "[trigger phrase]" → Use this tool with [specific parameters]
+
+🎲 USAGE PATTERNS:
+[Visual parameter combinations with clear outcomes]
+
+🧠 INTELLIGENT DETECTION:
+[Auto-detection rules and parameter relationships]
+
+⚡ ENHANCED CAPABILITIES:
+[What this tool does better than the old ones]
+
+🔄 EXACT MIGRATION MAPPINGS:
+[Old tool calls → New tool calls with same results]
+
+💡 AI CONTEXT UNDERSTANDING:
+[How AI should interpret user intent and map to parameters]`
+```
+
+---
+
 ## 📊 Consolidation Impact Analysis
 
 ### **Quantitative Reduction**
