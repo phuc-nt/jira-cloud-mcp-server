@@ -2,11 +2,20 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import path from "path";
 import fs from "fs";
+import { getTestConfig } from './config-manager.js';
 
-// Configuration
+// Configuration using configuration manager
+const testConfig = getTestConfig();
 const CONFIG = {
-  PROJECT_KEY: "XDEMO2",
-  SERVER_PATH: "/Users/phucnt/Workspace/mcp-atlassian-server/dist/index.js"
+  PROJECT_KEY: testConfig.getProjectKey(),
+  BOARD_ID: testConfig.getBoardId(),
+  ADMIN_USER: testConfig.getAdminUser(),
+  SERVER_PATH: "/Users/phucnt/Workspace/mcp-atlassian-server/dist/index.js",
+  ISSUE_TYPE: testConfig.getJiraConfig().testIssues.issueType,
+  DEFAULT_JQL: testConfig.getDefaultJQL(),
+  MAX_RESULTS: testConfig.getTestConfiguration().limits.maxTestIssues,
+  USE_REAL_DATA: testConfig.shouldUseRealData(),
+  AUTO_CLEANUP: testConfig.shouldAutoCleanup()
 };
 
 // Load environment variables from .env
@@ -115,13 +124,16 @@ async function main() {
     await client.connect(transport);
     console.log("✅ Connected to MCP Jira Server");
     
-    // Test project
-    console.log(`📋 Testing with project: ${CONFIG.PROJECT_KEY}`);
+    // Test project with configuration
+    console.log(`📋 Testing with configured project: ${CONFIG.PROJECT_KEY}`);
+    console.log(`⚙️  Using issue type: ${CONFIG.ISSUE_TYPE}`);
+    console.log(`📊 Max results limit: ${CONFIG.MAX_RESULTS}`);
+    console.log(`🔧 Real data mode: ${CONFIG.USE_REAL_DATA ? 'Enabled' : 'Disabled'}`);
 
-    // 1. List Issues (Read)
+    // 1. List Issues (Read) - using configured limits
     const listResult = await testIssuesTool(client, "listIssues", 
-      { projectKey: CONFIG.PROJECT_KEY, limit: 5 }, 
-      "List issues from project"
+      { projectKey: CONFIG.PROJECT_KEY, limit: CONFIG.MAX_RESULTS }, 
+      "List issues from configured project"
     );
 
     // 2. Get specific issue (Read)
@@ -134,46 +146,47 @@ async function main() {
       );
     }
 
-    // 3. Search Issues (Read)
+    // 3. Search Issues (Read) - using configured JQL
     await testIssuesTool(client, "searchIssues", 
       { 
-        jql: `project = ${CONFIG.PROJECT_KEY} ORDER BY created DESC`, 
-        maxResults: 3 
+        jql: CONFIG.DEFAULT_JQL, 
+        maxResults: Math.min(3, CONFIG.MAX_RESULTS)
       }, 
-      "Search issues with JQL"
+      "Search issues with configured JQL"
     );
 
-    // 4. Create Issue (Write)
-    const timestamp = new Date().toISOString();
+    // 4. Create Issue (Write) - using configured data
     const createResult = await testIssuesTool(client, "createIssue", 
       {
         projectKey: CONFIG.PROJECT_KEY,
-        summary: `Test Issue ${timestamp}`,
-        description: "Test issue created by Issues Management test suite",
-        issueType: "Task"
+        summary: testConfig.generateTestName("Issue"),
+        description: testConfig.generateTestDescription("issue for Issues Management testing"),
+        issueType: CONFIG.ISSUE_TYPE
       }, 
-      "Create new issue"
+      "Create new issue with configured type"
     );
 
     // Use created issue for further tests
-    if (createResult) {
+    if (createResult && typeof createResult === 'string') {
       testIssueKey = createResult;
+    } else if (createResult && createResult.data && createResult.data.key) {
+      testIssueKey = createResult.data.key;
     }
 
     // 5. Update Issue (Write) - only if we have a test issue
     if (testIssueKey) {
       await testIssuesTool(client, "updateIssue", 
         {
-          issueKey: testIssueKey,
-          summary: `Updated Test Issue ${timestamp}`,
-          description: "Updated description by test suite"
+          issueIdOrKey: testIssueKey,
+          summary: testConfig.generateTestName("Updated Issue"),
+          description: testConfig.generateTestDescription("updated issue")
         }, 
-        "Update existing issue"
+        "Update existing issue with configured data"
       );
 
       // 6. Get Issue Transitions (Read)
       const transitionsResult = await testIssuesTool(client, "getIssueTransitions", 
-        { issueKey: testIssueKey }, 
+        { issueIdOrKey: testIssueKey }, 
         "Get available issue transitions"
       );
 
@@ -182,7 +195,7 @@ async function main() {
         const firstTransition = transitionsResult.transitions[0];
         await testIssuesTool(client, "transitionIssue", 
           {
-            issueKey: testIssueKey,
+            issueIdOrKey: testIssueKey,
             transitionId: firstTransition.id,
             comment: "Transitioned by test suite"
           }, 
@@ -190,39 +203,26 @@ async function main() {
         );
       }
 
-      // 8. Assign Issue (Write) - try to assign to current user
-      try {
-        // Get current user for assignment
-        const usersResult = await client.callTool({
-          name: "searchUsers",
-          arguments: { query: "", maxResults: 1 }
-        });
-        const usersData = extractResponseData(usersResult);
-        
-        if (usersData?.users?.[0]?.accountId) {
-          await testIssuesTool(client, "assignIssue", 
-            {
-              issueKey: testIssueKey,
-              accountId: usersData.users[0].accountId
-            }, 
-            "Assign issue to user"
-          );
-        }
-      } catch (error) {
-        console.log("⚠️  Assignment test skipped - no users found");
-      }
+      // 8. Assign Issue (Write) - assign to configured admin user
+      await testIssuesTool(client, "assignIssue", 
+        {
+          issueIdOrKey: testIssueKey,
+          accountId: CONFIG.ADMIN_USER.accountId
+        }, 
+        `Assign issue to configured admin user (${CONFIG.ADMIN_USER.displayName})`
+      );
 
       // 9. Get Issue Comments (Read)
       await testIssuesTool(client, "getIssueComments", 
-        { issueKey: testIssueKey }, 
+        { issueIdOrKey: testIssueKey }, 
         "Get issue comments"
       );
 
-      // 10. Add Issue Comment (Write)
+      // 10. Add Issue Comment (Write) - using configured data
       const commentResult = await testIssuesTool(client, "addIssueComment", 
         {
-          issueKey: testIssueKey,
-          body: `Test comment added at ${timestamp}`
+          issueIdOrKey: testIssueKey,
+          body: testConfig.generateTestDescription("comment added")
         }, 
         "Add comment to issue"
       );
@@ -231,23 +231,26 @@ async function main() {
       if (commentResult?.data?.id) {
         await testIssuesTool(client, "updateIssueComment", 
           {
-            issueKey: testIssueKey,
+            issueIdOrKey: testIssueKey,
             commentId: commentResult.data.id,
-            body: `Updated test comment at ${timestamp}`
+            body: testConfig.generateTestDescription("updated comment")
           }, 
-          "Update issue comment"
+          "Update issue comment with configured data"
         );
       }
 
       console.log(`\n📝 Test issue created: ${testIssueKey} (can be used for further testing)`);
     }
 
-    // Summary
+    // Summary with configuration details
     console.log("\n📊 === ISSUES MANAGEMENT TEST SUMMARY ===");
     console.log("✅ Read Operations: listIssues, getIssue, searchIssues, getIssueTransitions, getIssueComments");
     console.log("✅ Write Operations: createIssue, updateIssue, transitionIssue, assignIssue, addIssueComment, updateIssueComment");
     console.log(`✅ Total tools tested: 11/11`);
-    console.log(`✅ Test project: ${CONFIG.PROJECT_KEY}`);
+    console.log(`✅ Configured project: ${CONFIG.PROJECT_KEY}`);
+    console.log(`✅ Configured issue type: ${CONFIG.ISSUE_TYPE}`);
+    console.log(`✅ Configured admin user: ${CONFIG.ADMIN_USER.displayName}`);
+    console.log(`✅ Configuration-driven testing: All operations use real data from config`);
     
     await client.close();
     console.log("✅ Connection closed successfully");

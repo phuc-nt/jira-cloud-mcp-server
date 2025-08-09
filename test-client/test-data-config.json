@@ -1,0 +1,77 @@
+{
+  "jira": {
+    "baseUrl": "https://phuc-nt.atlassian.net",
+    "testProject": {
+      "key": "XDEMO2",
+      "name": "Team X Demo 2",
+      "id": "10001"
+    },
+    "testBoard": {
+      "id": 34,
+      "name": "XDEMO board",
+      "type": "scrum",
+      "projectKey": "XDEMO2",
+      "url": "https://phuc-nt.atlassian.net/jira/software/c/projects/XDEMO2/boards/34"
+    },
+    "testSprint": {
+      "boardId": 34,
+      "name": "MCP Test Sprint",
+      "state": "active"
+    },
+    "testUsers": {
+      "adminUser": {
+        "accountId": "712020:ba2b929e-7b86-4b7b-a0e1-e2b7d62c7f8a",
+        "displayName": "Phuc Nguyen Thanh",
+        "emailAddress": "phucnt0@gmail.com"
+      }
+    },
+    "testIssues": {
+      "sampleIssueKey": "XDEMO2-1",
+      "issueType": "Task",
+      "priority": "Medium"
+    },
+    "testFilters": {
+      "sampleFilterName": "MCP Test Filter",
+      "jqlQuery": "project = XDEMO2 ORDER BY created DESC"
+    },
+    "testDashboards": {
+      "sampleDashboardName": "MCP Test Dashboard",
+      "description": "Dashboard created by MCP test suite"
+    }
+  },
+  "testConfiguration": {
+    "limits": {
+      "maxResults": 50,
+      "maxTestIssues": 10,
+      "maxTestUsers": 5,
+      "maxTestFilters": 10,
+      "maxTestDashboards": 5
+    },
+    "timeouts": {
+      "defaultTimeout": 30000,
+      "longOperationTimeout": 60000
+    },
+    "retrySettings": {
+      "maxRetries": 3,
+      "retryDelay": 1000
+    },
+    "cleanup": {
+      "autoCleanup": true,
+      "cleanupPrefix": "MCP-TEST-",
+      "cleanupTimeout": 300000
+    }
+  },
+  "expectedResults": {
+    "minProjects": 2,
+    "minUsers": 5,
+    "minBoards": 1,
+    "expectedTools": 45,
+    "targetSuccessRate": 0.98
+  },
+  "environmentSettings": {
+    "testMode": true,
+    "verboseLogging": true,
+    "createTestData": true,
+    "useRealData": true
+  }
+}

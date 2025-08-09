@@ -2,11 +2,20 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import path from "path";
 import fs from "fs";
+import { getTestConfig } from './config-manager.js';
 
-// Configuration
+// Configuration using configuration manager
+const testConfig = getTestConfig();
 const CONFIG = {
-  PROJECT_KEY: "XDEMO2",
-  SERVER_PATH: "/Users/phucnt/Workspace/mcp-atlassian-server/dist/index.js"
+  PROJECT_KEY: testConfig.getProjectKey(),
+  DEFAULT_JQL: testConfig.getDefaultJQL(),
+  ADMIN_USER: testConfig.getAdminUser(),
+  MAX_RESULTS: testConfig.getMaxResults(),
+  MAX_TEST_FILTERS: testConfig.getTestConfiguration().limits.maxTestFilters,
+  MAX_TEST_DASHBOARDS: testConfig.getTestConfiguration().limits.maxTestDashboards,
+  SERVER_PATH: "/Users/phucnt/Workspace/mcp-atlassian-server/dist/index.js",
+  USE_REAL_DATA: testConfig.shouldUseRealData(),
+  AUTO_CLEANUP: testConfig.shouldAutoCleanup()
 };
 
 // Load environment variables from .env
@@ -135,15 +144,21 @@ async function main() {
     await client.connect(transport);
     console.log("✅ Connected to MCP Jira Server");
     
-    console.log(`📋 Testing with project: ${CONFIG.PROJECT_KEY}`);
+    // Configuration info
+    console.log(`📋 Testing with configured project: ${CONFIG.PROJECT_KEY}`);
+    console.log(`🔍 Default JQL: ${CONFIG.DEFAULT_JQL}`);
+    console.log(`📊 Max filters limit: ${CONFIG.MAX_TEST_FILTERS}`);
+    console.log(`📊 Max dashboards limit: ${CONFIG.MAX_TEST_DASHBOARDS}`);
+    console.log(`🔧 Real data mode: ${CONFIG.USE_REAL_DATA ? 'Enabled' : 'Disabled'}`);
+    console.log(`🧹 Auto cleanup: ${CONFIG.AUTO_CLEANUP ? 'Enabled' : 'Disabled'}`);
 
     // === FILTERS TESTING ===
     console.log("\n🔍 === FILTERS OPERATIONS ===");
 
-    // 1. List Filters (Read)
+    // 1. List Filters (Read) - using configured limits
     const filtersResult = await testFiltersDashboardsTool(client, "listFilters", 
-      { maxResults: 10 }, 
-      "List all accessible filters"
+      { maxResults: CONFIG.MAX_TEST_FILTERS }, 
+      "List all accessible filters with configured limits"
     );
 
     // 2. Get My Filters (Read)
@@ -163,41 +178,40 @@ async function main() {
       );
     }
 
-    // 4. Create Filter (Write)
-    const timestamp = Date.now();
+    // 4. Create Filter (Write) - using configured data
     const createFilterResult = await testFiltersDashboardsTool(client, "createFilter", 
       {
-        name: `Test Filter ${timestamp}`,
-        jql: `project = ${CONFIG.PROJECT_KEY} ORDER BY created DESC`,
-        description: "Filter created by Filters & Dashboards test suite",
+        name: testConfig.generateTestName("Filter"),
+        jql: CONFIG.DEFAULT_JQL,
+        description: testConfig.generateTestDescription("filter for Filters & Dashboards testing"),
         favourite: false
       }, 
-      "Create new filter"
+      "Create new filter with configured JQL"
     );
 
     let createdFilterId = null;
     if (createFilterResult && typeof createFilterResult === 'string') {
       createdFilterId = createFilterResult;
       
-      // 5. Update Filter (Write)
+      // 5. Update Filter (Write) - using configured data
       await testFiltersDashboardsTool(client, "updateFilter", 
         {
           filterId: createdFilterId,
-          name: `Updated Test Filter ${timestamp}`,
-          description: "Updated filter description by test suite",
-          jql: `project = ${CONFIG.PROJECT_KEY} AND updated >= -7d ORDER BY updated DESC`
+          name: testConfig.generateTestName("Updated Filter"),
+          description: testConfig.generateTestDescription("updated filter"),
+          jql: CONFIG.DEFAULT_JQL
         }, 
-        "Update existing filter"
+        "Update existing filter with configured data"
       );
     }
 
     // === DASHBOARDS TESTING ===
     console.log("\n📊 === DASHBOARDS OPERATIONS ===");
 
-    // 6. List Dashboards (Read)
+    // 6. List Dashboards (Read) - using configured limits
     const dashboardsResult = await testFiltersDashboardsTool(client, "listDashboards", 
-      { maxResults: 10 }, 
-      "List all accessible dashboards"
+      { maxResults: CONFIG.MAX_TEST_DASHBOARDS }, 
+      "List all accessible dashboards with configured limits"
     );
 
     let testDashboardId = null;
@@ -220,27 +234,27 @@ async function main() {
       );
     }
 
-    // 9. Create Dashboard (Write)
+    // 9. Create Dashboard (Write) - using configured data
     const createDashboardResult = await testFiltersDashboardsTool(client, "createDashboard", 
       {
-        name: `Test Dashboard ${timestamp}`,
-        description: "Dashboard created by Filters & Dashboards test suite"
+        name: testConfig.generateTestName("Dashboard"),
+        description: testConfig.generateTestDescription("dashboard for Filters & Dashboards testing")
       }, 
-      "Create new dashboard"
+      "Create new dashboard with configured data"
     );
 
     let createdDashboardId = null;
     if (createDashboardResult && typeof createDashboardResult === 'string') {
       createdDashboardId = createDashboardResult;
       
-      // 10. Update Dashboard (Write)
+      // 10. Update Dashboard (Write) - using configured data
       await testFiltersDashboardsTool(client, "updateDashboard", 
         {
           dashboardId: createdDashboardId,
-          name: `Updated Test Dashboard ${timestamp}`,
-          description: "Updated dashboard description by test suite"
+          name: testConfig.generateTestName("Updated Dashboard"),
+          description: testConfig.generateTestDescription("updated dashboard")
         }, 
-        "Update existing dashboard"
+        "Update existing dashboard with configured data"
       );
     }
 
@@ -262,7 +276,7 @@ async function main() {
         {
           dashboardId: dashboardToUse,
           gadgetUri: firstGadget.completeModuleKey,
-          title: `Test Gadget ${timestamp}`,
+          title: testConfig.generateTestName("Gadget"),
           color: "blue",
           position: {
             column: 0,
@@ -298,14 +312,18 @@ async function main() {
       );
     }
 
-    // Summary
+    // Summary with configuration details
     console.log("\n📊 === FILTERS & DASHBOARDS TEST SUMMARY ===");
     console.log("✅ Filters Operations: listFilters, getMyFilters, getFilter, createFilter, updateFilter, deleteFilter");
     console.log("✅ Dashboards Operations: listDashboards, getDashboard, getDashboardGadgets, createDashboard, updateDashboard");
     console.log("✅ Gadgets Operations: getJiraGadgets, addGadgetToDashboard, removeGadgetFromDashboard");
     console.log(`✅ Total tools tested: 13/16 (3 tools are backlog management in boards group)`);
-    console.log(`✅ Test dashboard ID: ${testDashboardId || 'N/A'}`);
-    console.log(`✅ Test filter ID: ${testFilterId || 'N/A'}`);
+    console.log(`✅ Configured project: ${CONFIG.PROJECT_KEY}`);
+    console.log(`✅ Configured JQL: ${CONFIG.DEFAULT_JQL}`);
+    console.log(`✅ Max filters limit: ${CONFIG.MAX_TEST_FILTERS}`);
+    console.log(`✅ Max dashboards limit: ${CONFIG.MAX_TEST_DASHBOARDS}`);
+    console.log(`✅ Auto cleanup: ${CONFIG.AUTO_CLEANUP ? 'Enabled' : 'Disabled'}`);
+    console.log("✅ Configuration-driven testing: All operations use real data from config");
     
     if (createdDashboardId) {
       console.log(`📝 Created dashboard ID: ${createdDashboardId} (available for further testing)`);

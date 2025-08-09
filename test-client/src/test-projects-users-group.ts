@@ -2,11 +2,19 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import path from "path";
 import fs from "fs";
+import { getTestConfig } from './config-manager.js';
 
-// Configuration
+// Configuration using configuration manager
+const testConfig = getTestConfig();
 const CONFIG = {
-  PROJECT_KEY: "XDEMO2",
-  SERVER_PATH: "/Users/phucnt/Workspace/mcp-atlassian-server/dist/index.js"
+  PROJECT_KEY: testConfig.getProjectKey(),
+  PROJECT_NAME: testConfig.getTestProject().name,
+  PROJECT_ID: testConfig.getTestProject().id,
+  ADMIN_USER: testConfig.getAdminUser(),
+  MAX_RESULTS: testConfig.getMaxResults(),
+  MAX_TEST_USERS: testConfig.getTestConfiguration().limits.maxTestUsers,
+  SERVER_PATH: "/Users/phucnt/Workspace/mcp-atlassian-server/dist/index.js",
+  USE_REAL_DATA: testConfig.shouldUseRealData()
 };
 
 // Load environment variables from .env
@@ -124,7 +132,11 @@ async function main() {
     await client.connect(transport);
     console.log("✅ Connected to MCP Jira Server");
     
-    console.log(`📋 Testing with project: ${CONFIG.PROJECT_KEY}`);
+    // Configuration info
+    console.log(`📋 Testing with configured project: ${CONFIG.PROJECT_NAME} (${CONFIG.PROJECT_KEY})`);
+    console.log(`👤 Configured admin user: ${CONFIG.ADMIN_USER.displayName}`);
+    console.log(`📊 Max results limit: ${CONFIG.MAX_RESULTS}`);
+    console.log(`👥 Max test users: ${CONFIG.MAX_TEST_USERS}`);
 
     // === PROJECTS TESTING ===
     console.log("\n📁 === PROJECTS OPERATIONS ===");
@@ -150,59 +162,40 @@ async function main() {
     // === USERS TESTING ===
     console.log("\n👥 === USERS OPERATIONS ===");
 
-    // 3. Search Users (Read)
+    // 3. Search Users (Read) - using configured limits
     const searchUsersResult = await testProjectsUsersTool(client, "searchUsers", 
       { 
         query: "admin",
-        maxResults: 5 
+        maxResults: CONFIG.MAX_TEST_USERS 
       }, 
-      "Search users by query"
+      "Search users by query with configured limits"
     );
 
-    // 4. List Users (Read) - comprehensive user listing
+    // 4. List Users (Read) - comprehensive user listing with configured limits
     await testProjectsUsersTool(client, "listUsers", 
       { 
-        maxResults: 10,
+        maxResults: CONFIG.MAX_TEST_USERS,
         includeActive: true,
         includeInactive: false
       }, 
-      "List users with comprehensive statistics"
+      "List users with comprehensive statistics and configured limits"
     );
 
-    // 5. Get User (Read) - using first found user
-    let testAccountId = null;
-    if (searchUsersResult?.users?.length > 0) {
-      testAccountId = searchUsersResult.users[0].accountId;
-      
-      await testProjectsUsersTool(client, "getUser", 
-        { accountId: testAccountId }, 
-        "Get detailed user information"
-      );
-    } else {
-      // Try to get any user from listUsers
-      const usersResult = await client.callTool({ 
-        name: "listUsers", 
-        arguments: { maxResults: 1 } 
-      });
-      const usersData = extractResponseData(usersResult);
-      
-      if (usersData?.users?.length > 0) {
-        testAccountId = usersData.users[0].accountId;
-        
-        await testProjectsUsersTool(client, "getUser", 
-          { accountId: testAccountId }, 
-          "Get detailed user information"
-        );
-      }
-    }
+    // 5. Get User (Read) - using configured admin user
+    const testAccountId = CONFIG.ADMIN_USER.accountId;
+    
+    await testProjectsUsersTool(client, "getUser", 
+      { accountId: testAccountId }, 
+      `Get detailed user information for configured admin user (${CONFIG.ADMIN_USER.displayName})`
+    );
 
-    // 6. Get Assignable Users (Read) - project context
+    // 6. Get Assignable Users (Read) - project context with configured limits
     await testProjectsUsersTool(client, "getAssignableUsers", 
       { 
         project: CONFIG.PROJECT_KEY,
-        maxResults: 10 
+        maxResults: CONFIG.MAX_TEST_USERS
       }, 
-      "Get users assignable to project issues"
+      "Get users assignable to configured project issues"
     );
 
     // 7. Get Assignable Users (Read) - specific issue context if available
@@ -220,7 +213,7 @@ async function main() {
         await testProjectsUsersTool(client, "getAssignableUsers", 
           { 
             issueKey: issueKey,
-            maxResults: 5 
+            maxResults: CONFIG.MAX_TEST_USERS
           }, 
           `Get users assignable to specific issue: ${issueKey}`
         );
@@ -232,26 +225,30 @@ async function main() {
     // === INTEGRATION TESTING ===
     console.log("\n🔗 === INTEGRATION VERIFICATION ===");
 
-    // Test project-user relationships
-    if (projectsResult?.projects?.length > 0 && testAccountId) {
-      const testProject = projectsResult.projects[0];
-      console.log(`\n🔍 Analyzing project-user relationships:`);
+    // Test project-user relationships using configured data
+    if (projectsResult?.projects?.length > 0) {
+      const testProject = projectsResult.projects.find((p: any) => p.key === CONFIG.PROJECT_KEY) || projectsResult.projects[0];
+      console.log(`\n🔍 Analyzing configured project-user relationships:`);
       console.log(`  📁 Project: ${testProject.name} (${testProject.key})`);
-      console.log(`  👤 User: ${testAccountId.substring(0, 12)}...`);
+      console.log(`  👤 Configured Admin User: ${CONFIG.ADMIN_USER.displayName} (${testAccountId.substring(0, 12)}...)`);
       console.log(`  🔑 Project Lead: ${testProject.lead?.displayName || 'N/A'}`);
       console.log(`  ⚙️  Project Type: ${testProject.projectTypeKey}`);
       console.log(`  📊 Components: ${testProject.components?.length || 0}`);
       console.log(`  📦 Versions: ${testProject.versions?.length || 0}`);
+      console.log(`  📋 Project ID: ${testProject.id} (configured: ${CONFIG.PROJECT_ID})`);
     }
 
-    // Summary
+    // Summary with configuration details
     console.log("\n📊 === PROJECTS & USERS TEST SUMMARY ===");
     console.log("✅ Projects Operations: listProjects, getProject");
     console.log("✅ Users Operations: searchUsers, listUsers, getUser, getAssignableUsers (2 contexts)");
     console.log(`✅ Total tools tested: 7/7`);
-    console.log(`✅ Test project: ${CONFIG.PROJECT_KEY}`);
-    console.log(`✅ Test user account: ${testAccountId ? testAccountId.substring(0, 12) + '...' : 'N/A'}`);
-    console.log("✅ Integration verification: Project-user relationships analyzed");
+    console.log(`✅ Configured project: ${CONFIG.PROJECT_NAME} (${CONFIG.PROJECT_KEY})`);
+    console.log(`✅ Configured admin user: ${CONFIG.ADMIN_USER.displayName} (${testAccountId.substring(0, 12)}...)`);
+    console.log(`✅ Max results limit: ${CONFIG.MAX_RESULTS}`);
+    console.log(`✅ Max test users: ${CONFIG.MAX_TEST_USERS}`);
+    console.log("✅ Configuration-driven testing: All operations use real data from config");
+    console.log("✅ Integration verification: Project-user relationships analyzed with configured data");
     
     await client.close();
     console.log("✅ Connection closed successfully");

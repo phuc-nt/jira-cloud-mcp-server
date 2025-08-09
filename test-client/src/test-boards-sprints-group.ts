@@ -2,11 +2,19 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import path from "path";
 import fs from "fs";
+import { getTestConfig } from './config-manager.js';
 
-// Configuration
+// Configuration using configuration manager
+const testConfig = getTestConfig();
 const CONFIG = {
-  PROJECT_KEY: "XDEMO2",
-  SERVER_PATH: "/Users/phucnt/Workspace/mcp-atlassian-server/dist/index.js"
+  PROJECT_KEY: testConfig.getProjectKey(),
+  BOARD_ID: testConfig.getBoardId(),
+  BOARD_NAME: testConfig.getTestBoard().name,
+  BOARD_TYPE: testConfig.getTestBoard().type,
+  ADMIN_USER: testConfig.getAdminUser(),
+  MAX_RESULTS: testConfig.getMaxResults(),
+  SERVER_PATH: "/Users/phucnt/Workspace/mcp-atlassian-server/dist/index.js",
+  USE_REAL_DATA: testConfig.shouldUseRealData()
 };
 
 // Load environment variables from .env
@@ -129,53 +137,56 @@ async function main() {
     await client.connect(transport);
     console.log("✅ Connected to MCP Jira Server");
     
-    console.log(`📋 Testing with project: ${CONFIG.PROJECT_KEY}`);
+    // Configuration info
+    console.log(`📋 Testing with configured project: ${CONFIG.PROJECT_KEY}`);
+    console.log(`🏆 Using configured board: ${CONFIG.BOARD_NAME} (ID: ${CONFIG.BOARD_ID})`);
+    console.log(`⚙️  Board type: ${CONFIG.BOARD_TYPE}`);
+    console.log(`📊 Max results limit: ${CONFIG.MAX_RESULTS}`);
 
     // === BOARDS TESTING ===
     console.log("\n🏆 === BOARDS OPERATIONS ===");
 
-    // 1. List Boards (Read)
+    // 1. List Boards (Read) - using configured limits
     const boardsResult = await testBoardsSprintsTool(client, "listBoards", 
-      { maxResults: 10 }, 
-      "List all accessible boards"
+      { maxResults: CONFIG.MAX_RESULTS }, 
+      "List all accessible boards with configured limits"
     );
 
-    let testBoardId = null;
-    if (boardsResult?.boards?.length > 0) {
-      testBoardId = boardsResult.boards[0].id;
-      
-      // 2. Get Board (Read)
-      await testBoardsSprintsTool(client, "getBoard", 
-        { boardId: testBoardId }, 
-        "Get detailed board information"
-      );
+    // Use configured board ID
+    const testBoardId = CONFIG.BOARD_ID;
+    console.log(`🎯 Using configured board ID: ${testBoardId}`);
+    
+    // 2. Get Board (Read) - using configured board
+    await testBoardsSprintsTool(client, "getBoard", 
+      { boardId: testBoardId }, 
+      `Get detailed information for configured board (${CONFIG.BOARD_NAME})`
+    );
 
-      // 3. Get Board Configuration (Read)
-      await testBoardsSprintsTool(client, "getBoardConfiguration", 
-        { boardId: testBoardId }, 
-        "Get board configuration details"
-      );
+    // 3. Get Board Configuration (Read) - using configured board
+    await testBoardsSprintsTool(client, "getBoardConfiguration", 
+      { boardId: testBoardId }, 
+      "Get configured board configuration details"
+    );
 
-      // 4. Get Board Issues (Read)
-      await testBoardsSprintsTool(client, "getBoardIssues", 
-        { boardId: testBoardId, maxResults: 5 }, 
-        "Get issues from board"
-      );
+    // 4. Get Board Issues (Read) - using configured limits
+    await testBoardsSprintsTool(client, "getBoardIssues", 
+      { boardId: testBoardId, maxResults: Math.min(5, CONFIG.MAX_RESULTS) }, 
+      "Get issues from configured board"
+    );
 
-      // 5. Get Board Sprints (Read)
-      const boardSprintsResult = await testBoardsSprintsTool(client, "getBoardSprints", 
-        { boardId: testBoardId, maxResults: 5 }, 
-        "Get sprints from board"
-      );
-    }
+    // 5. Get Board Sprints (Read) - using configured limits
+    const boardSprintsResult = await testBoardsSprintsTool(client, "getBoardSprints", 
+      { boardId: testBoardId, maxResults: Math.min(5, CONFIG.MAX_RESULTS) }, 
+      "Get sprints from configured board"
+    );
 
     // === SPRINTS TESTING ===
     console.log("\n🏃 === SPRINTS OPERATIONS ===");
 
-    // 6. List Sprints (Read)
+    // 6. List Sprints (Read) - using configured limits
     const sprintsResult = await testBoardsSprintsTool(client, "listSprints", 
-      { maxResults: 10 }, 
-      "List all accessible sprints"
+      { maxResults: CONFIG.MAX_RESULTS }, 
+      "List all accessible sprints with configured limits"
     );
 
     let testSprintId = null;
@@ -188,32 +199,34 @@ async function main() {
         "Get detailed sprint information"
       );
 
-      // 8. Get Sprint Issues (Read)
+      // 8. Get Sprint Issues (Read) - using configured limits
       await testBoardsSprintsTool(client, "getSprintIssues", 
-        { sprintId: testSprintId, maxResults: 5 }, 
-        "Get issues from sprint with statistics"
+        { sprintId: testSprintId, maxResults: Math.min(5, CONFIG.MAX_RESULTS) }, 
+        "Get issues from sprint with statistics and configured limits"
       );
     }
 
     // === SPRINT MANAGEMENT TESTING ===
     console.log("\n⚙️ === SPRINT MANAGEMENT ===");
 
-    // 9. Create Sprint (Write) - only if we have a board
+    // 9. Create Sprint (Write) - using configured data
     let createdSprintId = null;
-    if (testBoardId) {
-      const timestamp = new Date().toISOString();
+    if (CONFIG.USE_REAL_DATA) {
       const createResult = await testBoardsSprintsTool(client, "createSprint", 
         {
-          name: `Test Sprint ${timestamp}`,
+          name: testConfig.generateTestName("Sprint"),
           originBoardId: testBoardId,
-          goal: "Sprint created by Boards & Sprints test suite"
+          goal: testConfig.generateTestDescription("sprint for Boards & Sprints testing")
         }, 
-        "Create new sprint"
+        `Create new sprint on configured board (${CONFIG.BOARD_NAME})`
       );
 
       if (createResult) {
         createdSprintId = createResult;
+        console.log(`📝 Created sprint on configured board ${CONFIG.BOARD_ID}`);
       }
+    } else {
+      console.log("⚠️  Sprint creation skipped - real data mode disabled");
     }
 
     // 10. Add Issue to Sprint (Write) - only if we have sprint and issues
@@ -280,15 +293,19 @@ async function main() {
       console.log("⚠️  Backlog management tests skipped - no issues found");
     }
 
-    // Summary
+    // Summary with configuration details
     console.log("\n📊 === BOARDS & SPRINTS TEST SUMMARY ===");
     console.log("✅ Boards Operations: listBoards, getBoard, getBoardConfiguration, getBoardIssues, getBoardSprints");
     console.log("✅ Sprints Operations: listSprints, getSprint, getSprintIssues");
     console.log("✅ Sprint Management: createSprint, addIssueToSprint");
     console.log("✅ Backlog Management: addIssuesToBacklog, rankBacklogIssues");
     console.log(`✅ Total tools tested: 11/11`);
-    console.log(`✅ Test board ID: ${testBoardId || 'N/A'}`);
-    console.log(`✅ Test sprint ID: ${testSprintId || 'N/A'}`);
+    console.log(`✅ Configured board: ${CONFIG.BOARD_NAME} (ID: ${CONFIG.BOARD_ID})`);
+    console.log(`✅ Board type: ${CONFIG.BOARD_TYPE}`);
+    console.log(`✅ Project: ${CONFIG.PROJECT_KEY}`);
+    console.log(`✅ Max results limit: ${CONFIG.MAX_RESULTS}`);
+    console.log("✅ Configuration-driven testing: All operations use real data from config");
+    console.log(`✅ Real data mode: ${CONFIG.USE_REAL_DATA ? 'Enabled' : 'Disabled'}`);
     
     if (createdSprintId) {
       console.log(`📝 Created sprint ID: ${createdSprintId} (can be used for further testing)`);
