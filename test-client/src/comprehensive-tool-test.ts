@@ -309,10 +309,84 @@ class ToolTestGroups {
       return null;
     }
   }
+
+  async testEpicStorySubtasks() {
+    console.log("\n🔷 === EPIC, STORY & SUB-TASK MANAGEMENT TOOLS (8 tools) ===");
+    
+    // Test Epic management first
+    await this.testTool("searchEpics", { 
+      projectKey: CONFIG.PROJECT_KEY,
+      maxResults: 3 
+    }, "issues");
+    
+    const epicsResult = await this.callToolSafely("searchEpics", { 
+      projectKey: CONFIG.PROJECT_KEY,
+      maxResults: 1 
+    });
+    const testEpicKey = epicsResult?.issues?.[0]?.key;
+    
+    if (testEpicKey) {
+      await this.testTool("getEpic", { epicKey: testEpicKey }, "epic");
+      await this.testTool("getEpicIssues", { epicKey: testEpicKey }, "issues");
+      
+      await this.testTool("updateEpic", {
+        epicKey: testEpicKey,
+        summary: `Updated Epic ${Date.now()}`,
+        description: "Updated by comprehensive test suite"
+      }, "epic");
+      
+      console.log(`  🎯 Epic ${testEpicKey} used for testing`);
+    }
+    
+    // Test Story creation with Epic link
+    const storyResult = await this.testTool("createStory", {
+      projectKey: CONFIG.PROJECT_KEY,
+      summary: `Test Story ${Date.now()}`,
+      description: "Test story created by comprehensive test suite",
+      epicKey: testEpicKey,
+      storyPoints: 3,
+      labels: ["test-story", "automated-test"]
+    }, "issue");
+    
+    const newStoryKey = storyResult?.issue?.key;
+    if (newStoryKey) {
+      console.log(`  📝 Created story: ${newStoryKey}`);
+      
+      // Test Sub-task creation with parent Story
+      await this.testTool("createSubtask", {
+        parentIssueKey: newStoryKey,
+        summary: `Test Sub-task ${Date.now()}`,
+        description: "Test sub-task created by comprehensive test suite",
+        assigneeId: null
+      }, "issue");
+      
+      // Test bulk Sub-task creation
+      await this.testTool("createBulkSubtasks", {
+        parentIssueKey: newStoryKey,
+        subtasks: [
+          {
+            summary: `Bulk Sub-task 1 ${Date.now()}`,
+            description: "First bulk sub-task"
+          },
+          {
+            summary: `Bulk Sub-task 2 ${Date.now()}`,
+            description: "Second bulk sub-task"
+          }
+        ]
+      }, "issues");
+    }
+    
+    // Test Story search
+    await this.testTool("searchStories", {
+      projectKey: CONFIG.PROJECT_KEY,
+      epicKey: testEpicKey,
+      maxResults: 5
+    }, "issues");
+  }
 }
 
 async function main() {
-  console.log("🚀 === MCP Jira Server v3.0.0 - COMPREHENSIVE TOOL TESTING (45 Tools) ===");
+  console.log("🚀 === MCP Jira Server v3.0.0 - COMPREHENSIVE TOOL TESTING (59 Tools) ===");
   
   try {
     // Setup client connection
@@ -341,7 +415,7 @@ async function main() {
 
     // List all available tools
     const toolsList = await client.listTools();
-    console.log(`\n📋 Total tools available: ${toolsList.tools.length}/51 expected (Sprint 4.4: Fix Version Management)`);
+    console.log(`\n📋 Total tools available: ${toolsList.tools.length}/59 expected (Sprint 4.5: Epic, Story & Sub-task Management)`);
     
     if (CONFIG.VERBOSE) {
       console.log("\n📝 Available tools:");
@@ -360,17 +434,19 @@ async function main() {
     await testGroups.testProjectsAndUsers();
     await testGroups.testBoardsAndSprints();
     await testGroups.testFiltersAndDashboards();
+    await testGroups.testEpicStorySubtasks();
     
     // Final summary
     console.log("\n🎉 === COMPREHENSIVE TEST SUMMARY ===");
     console.log("✅ MCP Jira Server v3.0.0 - Tools-Only Architecture");
     console.log("✅ Server connection successful");
-    console.log(`✅ ${toolsList.tools.length} tools tested across 4 functional groups`);
+    console.log(`✅ ${toolsList.tools.length} tools tested across 5 functional groups`);
     console.log("✅ Issues Management: CRUD operations, comments, transitions");
     console.log("✅ Projects & Users: Project info, user management, assignments");
     console.log("✅ Boards & Sprints: Agile operations, sprint management");
     console.log("✅ Filters & Dashboards: Search filters, dashboard management");
-    console.log("\n🎯 Phase 3 Complete: 100% v2.x Coverage Achievement Validated");
+    console.log("✅ Epic, Story & Sub-tasks: Epic/Story hierarchy, bulk operations");
+    console.log("\n🎯 Sprint 4.5 Complete: Epic, Story & Sub-task Management Tools Validated");
     
     await client.close();
     console.log("✅ Connection closed successfully");

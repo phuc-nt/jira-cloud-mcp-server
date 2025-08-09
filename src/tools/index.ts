@@ -52,6 +52,15 @@ import { registerCreateFixVersionTool } from './jira/create-fix-version.js';
 import { registerListProjectVersionsTool } from './jira/list-project-versions.js';
 import { registerGetProjectVersionTool } from './jira/get-project-version.js';
 import { registerUpdateFixVersionTool } from './jira/update-fix-version.js';
+// Epic, Story & Sub-task Management Tools (Sprint 4.5)
+import { registerGetEpicTool } from './jira/get-epic.js';
+import { registerUpdateEpicTool } from './jira/update-epic.js';
+import { registerGetEpicIssuesTool } from './jira/get-epic-issues.js';
+import { registerSearchEpicsTool } from './jira/search-epics.js';
+import { registerCreateStoryTool } from './jira/create-story.js';
+import { registerSearchStoriesTool } from './jira/search-stories.js';
+import { registerCreateSubtaskTool } from './jira/create-subtask.js';
+import { registerCreateBulkSubtasksTool } from './jira/create-bulk-subtasks.js';
 
 /**
  * Register all tools with MCP Server
@@ -132,4 +141,14 @@ export function registerAllTools(server: any) {
   registerListProjectVersionsTool(server);
   registerGetProjectVersionTool(server);
   registerUpdateFixVersionTool(server);
+
+  // Epic, Story & Sub-task Management Tools (Sprint 4.5)
+  registerGetEpicTool(server);
+  registerUpdateEpicTool(server);
+  registerGetEpicIssuesTool(server);
+  registerSearchEpicsTool(server);
+  registerCreateStoryTool(server);
+  registerSearchStoriesTool(server);
+  registerCreateSubtaskTool(server);
+  registerCreateBulkSubtasksTool(server);
 }

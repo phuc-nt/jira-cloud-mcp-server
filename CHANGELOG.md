@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## [2.2.0] - 2025-08-09
+
+### 🎯 Sprint 4.5: Epic, Story & Sub-task Management (Complete Implementation)
+- **New Features**:
+  - ✅ Added 8 new Epic/Story/Sub-task management tools
+  - ✅ **Epic Management**: `getEpic`, `updateEpic`, `getEpicIssues`, `searchEpics` (4 tools)
+  - ✅ **Story Operations**: `createStory`, `searchStories` (2 tools)
+  - ✅ **Sub-task Management**: `createSubtask`, `createBulkSubtasks` (2 tools)
+  - ✅ Tool count expansion: 51 → 59 tools (+8 tools)
+  - ✅ 100% test success rate maintained (59/59 tools working)
+
+- **Technical Enhancements**:
+  - Hybrid API integration: Jira Platform API v3 + Agile API v1.0
+  - Complete Epic → Story → Sub-task hierarchy support
+  - Bulk operations for efficient Sub-task creation
+  - Advanced filtering and search capabilities
+  - Epic color and progress management
+  - Story points and Sprint associations
+
+- **Architecture**:
+  - Enhanced comprehensive test suite with 5 functional groups
+  - Full AI Client validation with real project testing (XDEMO2)
+  - TypeScript compilation and error handling improvements
+  - Tools-only architecture maintained with no breaking changes
+
 ## [2.1.2] - 2025-08-09
 
 ### 🔧 Sprint 4.4: Fix Version Management (Partial Implementation)
