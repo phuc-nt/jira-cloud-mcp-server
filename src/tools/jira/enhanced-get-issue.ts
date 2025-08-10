@@ -311,7 +311,7 @@ async function getAdditionalContext(issueKey: string, params: EnhancedGetIssuePa
   }
 }
 
-async function enhancedGetIssueImpl(params: EnhancedGetIssueParams, context: any) {
+export async function enhancedGetIssueImpl(params: EnhancedGetIssueParams, context: any) {
   const config: AtlassianConfig = Config.getConfigFromContextOrEnv(context);
   logger.info(`Enhanced get issue: ${params.issueKey} with expansions`);
 

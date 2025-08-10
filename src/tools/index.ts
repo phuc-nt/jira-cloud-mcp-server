@@ -53,15 +53,17 @@ import { registerCreateFixVersionTool } from './jira/create-fix-version.js';
 import { registerListProjectVersionsTool } from './jira/list-project-versions.js';
 import { registerGetProjectVersionTool } from './jira/get-project-version.js';
 import { registerUpdateFixVersionTool } from './jira/update-fix-version.js';
-// Epic, Story & Sub-task Management Tools (Sprint 4.5)
-import { registerGetEpicTool } from './jira/get-epic.js';
-import { registerUpdateEpicTool } from './jira/update-epic.js';
-import { registerGetEpicIssuesTool } from './jira/get-epic-issues.js';
-import { registerSearchEpicsTool } from './jira/search-epics.js';
-import { registerCreateStoryTool } from './jira/create-story.js';
-import { registerSearchStoriesTool } from './jira/search-stories.js';
-import { registerCreateSubtaskTool } from './jira/create-subtask.js';
-import { registerCreateBulkSubtasksTool } from './jira/create-bulk-subtasks.js';
+// Deprecated Tools - Backward Compatibility Facades (Sprint 5.3)
+import { 
+  registerCreateStoryTool,
+  registerCreateSubtaskTool, 
+  registerCreateBulkSubtasksTool,
+  registerGetEpicTool,
+  registerUpdateEpicTool,
+  registerGetEpicIssuesTool,
+  registerSearchEpicsTool,
+  registerSearchStoriesTool
+} from './jira/deprecated-tools-facade.js';
 // Enhanced consolidated tools (Sprint 5.1)
 import { registerEnhancedUpdateIssueTool } from './jira/enhanced-update-issue.js';
 
@@ -145,13 +147,14 @@ export function registerAllTools(server: any) {
   registerGetProjectVersionTool(server);
   registerUpdateFixVersionTool(server);
 
-  // Epic, Story & Sub-task Management Tools (Sprint 4.5)
-  // registerGetEpicTool(server); // Replaced by enhanced getIssue
-  // registerUpdateEpicTool(server); // Replaced by enhanced updateIssue
-  registerGetEpicIssuesTool(server);
-  // registerSearchEpicsTool(server); // Replaced by enhanced searchIssues
-  registerCreateStoryTool(server);
-  // registerSearchStoriesTool(server); // Replaced by enhanced searchIssues
-  registerCreateSubtaskTool(server);
-  registerCreateBulkSubtasksTool(server);
+  // DEPRECATED TOOLS - Backward Compatibility Facades (Sprint 5.3)
+  // These tools will be removed in v4.0.0, use enhanced versions instead
+  registerCreateStoryTool(server);        // → Use createIssue with epicKey/storyPoints
+  registerCreateSubtaskTool(server);      // → Use createIssue with parentKey
+  registerCreateBulkSubtasksTool(server); // → Use multiple createIssue calls
+  registerGetEpicTool(server);            // → Use getIssue with issueKey
+  registerUpdateEpicTool(server);         // → Use updateIssue with issueKey
+  registerGetEpicIssuesTool(server);      // → Use searchIssues with JQL parent =
+  registerSearchEpicsTool(server);        // → Use searchIssues with issueType = Epic
+  registerSearchStoriesTool(server);      // → Use searchIssues with issueType = Story
 }

@@ -303,7 +303,7 @@ async function getUpdatedIssueDetails(issueKey: string, config: AtlassianConfig)
   };
 }
 
-async function enhancedUpdateIssueImpl(params: EnhancedUpdateIssueParams, context: any) {
+export async function enhancedUpdateIssueImpl(params: EnhancedUpdateIssueParams, context: any) {
   const config: AtlassianConfig = Config.getConfigFromContextOrEnv(context);
   
   // Detect issue type

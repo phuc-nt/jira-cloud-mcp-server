@@ -339,7 +339,7 @@ function formatEnhancedIssue(issue: any, includeHierarchy: boolean, includeProgr
   return baseIssue;
 }
 
-async function enhancedSearchIssuesImpl(params: EnhancedSearchIssuesParams, context: any) {
+export async function enhancedSearchIssuesImpl(params: EnhancedSearchIssuesParams, context: any) {
   const config: AtlassianConfig = Config.getConfigFromContextOrEnv(context);
   
   // Build smart JQL

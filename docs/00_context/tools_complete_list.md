@@ -1,12 +1,12 @@
 # MCP Jira Server v3.0.0: Complete Tools Reference
 
-Tài liệu này liệt kê đầy đủ 52 tools mà MCP Jira Server v3.0.0 hỗ trợ, kèm endpoint Atlassian API thực tế và thông tin kỹ thuật chi tiết dành cho developers.
+Tài liệu này liệt kê đầy đủ 53 tools mà MCP Jira Server v3.0.0 hỗ trợ, kèm endpoint Atlassian API thực tế và thông tin kỹ thuật chi tiết dành cho developers.
 
 **Version**: 3.0.0  
 **Architecture**: Tools-only (no resources) với Universal/Enhanced tool consolidation  
-**Total Tools**: 52 tools (12% reduction qua tool consolidation)  
+**Total Tools**: 53 tools (45 core + 8 backward compatibility facades)  
 **API Coverage**: Jira Platform API v3 + Agile API v1.0  
-**Last Updated**: August 9, 2025 (Sprint 5.2 Complete - User & Board Consolidation)
+**Last Updated**: August 9, 2025 (Sprint 5.3 Complete - Migration & Cleanup with Backward Compatibility)
 
 ## Tools by Category
 
@@ -107,18 +107,20 @@ Tài liệu này liệt kê đầy đủ 52 tools mà MCP Jira Server v3.0.0 h�
 | getProjectVersion | Lấy chi tiết version | versionId | `/rest/api/3/version/{versionId}` | Single Version object |
 | updateFixVersion | Cập nhật Fix Version | versionId, name, description | `/rest/api/3/version/{versionId}` | Status của update |
 
-### 9. Epic, Story & Sub-task Management (8 tools) - Sprint 4.5
+### 9. Backward Compatibility Facades (8 tools) - Sprint 5.3
 
-| Tool | Mô tả | Tham số chính | Atlassian API Endpoint | Dữ liệu output |
-|------|-------|---------------|-----------------------|----------------|
-| getEpic | Lấy chi tiết Epic | epicKey | `/rest/agile/1.0/epic/{epicKey}` | Single Epic object |
-| updateEpic | Cập nhật Epic | epicKey, name, summary | `/rest/agile/1.0/epic/{epicKey}` | Status của update |
-| getEpicIssues | Lấy issues thuộc Epic | epicKey | `/rest/agile/1.0/epic/{epicKey}/issue` | Array của Issue objects |
-| searchEpics | Tìm kiếm Epics | projectKey, maxResults | `/rest/api/3/search` với JQL Epic | Array của Epic objects |
-| createStory | Tạo Story mới | projectKey, summary, epicKey | `/rest/api/3/issue` | Story key và ID mới |
-| searchStories | Tìm kiếm Stories | projectKey, epicKey | `/rest/api/3/search` với JQL Story | Array của Story objects |
-| createSubtask | Tạo Sub-task mới | parentKey, summary | `/rest/api/3/issue` | Sub-task key và ID mới |
-| createBulkSubtasks | Tạo nhiều Sub-tasks | parentKey, subtasks[] | `/rest/api/3/issue/bulk` | Array của Sub-task objects |
+**🚨 DEPRECATED TOOLS - Will be removed in v4.0.0**
+
+| Tool | Mô tả | Migrates To | Enhanced Replacement |
+|------|-------|-------------|---------------------|
+| createStory | Tạo Story mới | createIssue | Auto-detects Story from epicKey/storyPoints |
+| createSubtask | Tạo Sub-task mới | createIssue | Auto-detects Sub-task from parentKey |
+| createBulkSubtasks | Tạo nhiều Sub-tasks | Multiple createIssue | Better per-subtask error handling |
+| getEpic | Lấy chi tiết Epic | getIssue | Enhanced Epic-specific details |
+| updateEpic | Cập nhật Epic | updateIssue | Smart Epic field mapping |
+| getEpicIssues | Lấy issues thuộc Epic | searchIssues | JQL: "parent = epicKey" with hierarchy |
+| searchEpics | Tìm kiếm Epics | searchIssues | JQL: "issueType = Epic" with progress |
+| searchStories | Tìm kiếm Stories | searchIssues | JQL: "issueType = Story" with Epic context |
 
 ## API Architecture
 
@@ -171,25 +173,28 @@ Tài liệu này liệt kê đầy đủ 52 tools mà MCP Jira Server v3.0.0 h�
 - Stories: createStory
 - Sub-tasks: createSubtask, createBulkSubtasks
 
-## Success Metrics - Sprint 5.2 Consolidation Update
+## Success Metrics - Sprint 5.3 Migration & Cleanup Complete
 
-- **Total Tools**: 52 tools operational (12% reduction from 59 tools)
-- **Tool Consolidation**: 
-  - Universal searchUsers: 3 → 1 tool (66% user tools reduction)
-  - Enhanced getBoardIssues: 2 → 1 tool (50% board tools reduction)
-- **Test Coverage**: 100% success rate (52/52 tools working)
-- **API Coverage**: Complete Jira v3 + Agile v1.0 integration với intelligent endpoint selection
-- **Architecture**: Enhanced tools-only MCP server với Universal/Enhanced consolidation patterns
-- **Validation**: Comprehensive testing with consolidated tools maintaining backward compatibility
+- **Total Tools**: 53 tools operational (45 core + 8 backward compatibility facades)
+- **Tool Consolidation Strategy**: 
+  - **Core Tools**: 45 enhanced tools (59→45, 24% reduction)
+  - **Backward Compatibility**: 8 facade tools for smooth migration
+  - **Migration Timeline**: Deprecated tools removed in v4.0.0
+- **Architecture**: Complete tool consolidation with backward compatibility layer
+- **Enhanced Universal Tools**: 4 consolidated tools replacing 16 specialized tools
+  - Universal searchUsers: 3→1 tool (66% reduction)
+  - Enhanced getBoardIssues: 2→1 tool (50% reduction) 
+  - Enhanced createIssue: Intelligent type detection
+  - Enhanced searchIssues: Smart filtering with JQL
 
-### Consolidation Benefits
-- **Simplified API Surface**: 12% fewer tools to learn and maintain
-- **Enhanced Functionality**: Consolidated tools offer more features than specialized tools
-- **Better User Experience**: Single tools handle related operations with intelligent mode/scope switching
-- **Maintained Compatibility**: All existing tool names preserved for seamless migration
+### Sprint 5.3 Achievements
+- **Facade Layer**: 100% backward compatibility maintained during migration
+- **Tool Cleanup**: 8 specialized tool files removed successfully
+- **Migration Path**: Clear deprecation warnings with migration guidance
+- **Production Ready**: Complete backward compatibility for existing integrations
 
 ---
 
 *Generated: August 9, 2025*  
 *MCP Jira Server v3.0.0 - Complete Tools Reference*  
-*Sprint 5.2: User & Board Consolidation Complete - 52 tools operational*
+*Sprint 5.3: Migration & Cleanup Complete - 53 tools (45 core + 8 facades)*

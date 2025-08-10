@@ -139,7 +139,7 @@ function buildAdditionalFields(params: CreateIssueParams, detectedType: string):
   return additionalFields;
 }
 
-async function createIssueToolImpl(params: CreateIssueParams, context: any) {
+export async function createIssueToolImpl(params: CreateIssueParams, context: any) {
   const config: AtlassianConfig = Config.getConfigFromContextOrEnv(context);
   
   // Intelligent type detection
