@@ -39,18 +39,18 @@ mcp-jira-search      # 18 tools - Read-only data retrieval
 
 ## Architecture
 
-### Module Distribution (50 Total Tools)
+### Module Distribution (48 Total Tools)
 
 | Module | Tools | Success Rate | Use Case |
 |--------|-------|--------------|-----------|
 | **Core** | 14 | 100% | Essential CRUD operations |
 | **Agile** | 10 | 100% | Sprint & workflow management |
 | **Dashboard** | 8 | 87.5% | Analytics & reporting |
-| **Search** | 18 | 100% | Read-only data retrieval |
+| **Search** | 16 | 100% | Read-only data retrieval |
 
 ### Deployment Flexibility
 
-**Essential Stack** (Core + Search = 32 tools)
+**Essential Stack** (Core + Search = 30 tools)
 ```json
 {
   "mcpServers": {
@@ -147,15 +147,15 @@ Analytics, reporting, and dashboard management.
 
 **Key Tools:** `createDashboard`, `getDashboardGadgets`, `getJiraGadgets`
 
-### 🔍 Search Module (18 tools)
+### 🔍 Search Module (16 tools)
 Read-only data retrieval and search operations - completely safe for auto-approval.
 
 **Auto-Approve All Tools:**
 ```json
 "autoApprove": [
-  "searchIssues", "enhancedSearchIssues", "listIssues", "listBacklogIssues",
+  "searchIssues", "enhancedSearchIssues", "listBacklogIssues",
   "getIssue", "getIssueTransitions", "getIssueComments",
-  "searchUsers", "universalSearchUsers", "listUsers", "getUser",
+  "universalSearchUsers", "listUsers", "getUser",
   "listProjects", "listProjectVersions", "listFilters", "listBoards", "listSprints",
   "getProject", "getFilter"
 ]
@@ -221,9 +221,9 @@ nano test-client/.env
 
 | Configuration | Tools | Memory Usage | Startup Time | Use Case |
 |---------------|-------|--------------|--------------|-----------|
-| Search Only | 18 | ~36% of v3.x | ~64% faster | Read-only integration |
-| Core + Search | 32 | ~42% of v3.x | ~58% faster | Essential operations |
-| All Modules | 50 | ~65% of v3.x | ~35% faster | Full functionality |
+| Search Only | 16 | ~34% of v3.x | ~66% faster | Read-only integration |
+| Core + Search | 30 | ~40% of v3.x | ~60% faster | Essential operations |
+| All Modules | 48 | ~63% of v3.x | ~37% faster | Full functionality |
 | Legacy v3.x | 56 | 100% baseline | 100% baseline | Backward compatibility |
 
 ## Contributing
