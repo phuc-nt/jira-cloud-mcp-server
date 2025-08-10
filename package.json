@@ -1,23 +1,38 @@
 {
   "name": "@phuc-nt/mcp-atlassian-server",
-  "version": "3.0.0-beta.1",
-  "description": "MCP Server for interacting with Atlassian Jira (enhanced universal tools architecture)",
+  "version": "4.0.0-alpha.1",
+  "description": "MCP Server for interacting with Atlassian Jira (modular architecture with 4 specialized entry points)",
   "type": "module",
   "main": "dist/index.js",
   "files": [
     "dist",
-    "README.md",
+    "README.md", 
     "LICENSE",
     "assets"
   ],
   "bin": {
-    "mcp-atlassian-server": "dist/index.js"
+    "mcp-atlassian-server": "dist/index.js",
+    "mcp-jira-core": "dist/modules/core/index.js",
+    "mcp-jira-agile": "dist/modules/agile/index.js",
+    "mcp-jira-dashboard": "dist/modules/dashboard/index.js",
+    "mcp-jira-search": "dist/modules/search/index.js"
   },
   "scripts": {
     "build": "tsc",
+    "build:core": "tsc && echo '✅ Core module built'",
+    "build:agile": "tsc && echo '✅ Agile module built'", 
+    "build:dashboard": "tsc && echo '✅ Dashboard module built'",
+    "build:search": "tsc && echo '✅ Search module built'",
+    "build:all": "npm run build && echo '✅ All modules built'",
     "start": "node dist/index.js",
+    "start:core": "node dist/modules/core/index.js",
+    "start:agile": "node dist/modules/agile/index.js",
+    "start:dashboard": "node dist/modules/dashboard/index.js", 
+    "start:search": "node dist/modules/search/index.js",
     "dev": "nodemon --exec ts-node --esm src/index.ts",
-    "prepublishOnly": "npm run build"
+    "test:modules": "cd test-client && npm run test:modular",
+    "test:core": "cd test-client && npm run test:core",
+    "prepublishOnly": "npm run build:all"
   },
   "keywords": [
     "mcp",
