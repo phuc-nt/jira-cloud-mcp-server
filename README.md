@@ -1,228 +1,139 @@
-# MCP Atlassian Server (by phuc-nt)
+# Jira Cloud MCP Server
 
 <p align="center">
-  <img src="assets/atlassian_logo_icon.png" alt="Atlassian Logo" width="120" />
+  <img src="assets/atlassian_logo_icon.png" alt="Jira Logo" width="120" />
 </p>
 
-[![MCP Atlassian Server (by phuc-nt)](https://img.shields.io/badge/MCP%20Marketplace--Pending%20Review-orange)](https://github.com/phuc-nt/mcp-atlassian-server)
-[![smithery badge](https://smithery.ai/badge/@phuc-nt/mcp-atlassian-server)](https://smithery.ai/server/@phuc-nt/mcp-atlassian-server)
+[![MCP Server](https://img.shields.io/badge/MCP%20Server-Jira%20Cloud-blue)](https://github.com/phuc-nt/jira-cloud-mcp-server)
+[![Tools Only](https://img.shields.io/badge/Architecture-Tools%20Only-green)](https://modelcontextprotocol.io)
 
-## What's New in Version 3.0.0-beta 🚀 ENHANCED UNIVERSAL TOOLS
+## Overview
 
-**MCP Jira Server v3.0.0-beta** introduces revolutionary tool consolidation with enhanced universal tools!
+**Jira Cloud MCP Server** connects AI agents (Claude Desktop, Cline, Cursor) to Atlassian Jira Cloud through the Model Context Protocol (MCP). This is a **Jira-only, tools-only** fork of the original [MCP Atlassian Server](https://github.com/phuc-nt/mcp-atlassian-server), streamlined for focused Jira operations.
 
-### ✅ Sprint 5.1 Complete - Tool Consolidation & Enhancement  
-- **🔄 Enhanced Architecture**: 4 universal tools with intelligent auto-detection 
-- **🎯 Tool Consolidation**: 75% reduction in complexity while increasing functionality
-- **⚡ Performance Boost**: Average 628ms per operation (vs 1.5s+ before)
-- **🛠️ Enhanced Tools**: createIssue, searchIssues, getIssue, updateIssue with AI-friendly interfaces
-- **✅ 100% Test Success**: All integration tests pass, zero error rate
-- **🔧 Critical Fixes**: Epic fallback strategy, field validation, assignee handling
+### Key Features
+- **56 Jira tools** for complete workflow management
+- **Backward compatibility** - all deprecated tools work via facades  
+- **Enhanced universal tools** with intelligent auto-detection
+- **100% test success rate** with real Jira API validation
+- **Production ready** with comprehensive error handling
 
-### 🎉 Enhanced Universal Tools (4 Core Tools)
-- **Enhanced createIssue**: Auto-type detection (Epic/Story/Sub-task), smart field mapping
-- **Enhanced searchIssues**: Intelligent JQL building, type-aware filtering, hierarchy support  
-- **Enhanced getIssue**: Context-aware expansion, Epic→Stories→Sub-tasks relationships
-- **Enhanced updateIssue**: Type-specific handling, dual API strategy, graceful degradation
+## Architecture
 
-### 🔄 What Changed from v2.x.x
-- **Tool Consolidation**: 15+ specialized tools → 4 enhanced universal tools
-- **Auto-Detection**: Intelligent Epic/Story/Sub-task type detection from context
-- **Unified Interface**: Single tools handle multiple issue types with smart field mapping
-- **Performance Optimized**: Significant speed improvements and error handling
-- **AI-Friendly**: Clear usage patterns designed for AI assistant interaction
-- **Production Ready**: 100% test coverage with comprehensive workflow validation
+**Tools-Only Design**: Pure MCP tools interface, no resources
+- 4 Enhanced Universal Tools (createIssue, searchIssues, getIssue, updateIssue)
+- 44 Specialized Tools (projects, users, boards, sprints, filters, etc.)
+- 8 Backward Compatibility Facades for deprecated tools
 
-### 🛠️ Complete Jira Tool Coverage (Enhanced + Legacy)
-- **Enhanced Core** (4 tools): Universal issue operations with intelligent handling
-- **User Management** (4 tools): Search, list, assignable users with project context
-- **Board Operations** (5 tools): Agile boards, issues, configuration, sprints  
-- **Project & Filter Management** (10+ tools): Project info, filters, dashboards
-- **Specialized Operations** (30+ tools): Comments, transitions, versions, gadgets
+## Quick Start
 
-👉 **See the full transformation details in [docs/START_POINT.md](./docs/START_POINT.md)**
-
-## Introduction
-
-**MCP Jira Server v3.0.0 (by phuc-nt)** is a Model Context Protocol (MCP) server that connects AI agents like Cline, Claude Desktop, or Cursor to Atlassian Jira with a powerful tools-only interface, enabling comprehensive Jira operations through 51 specialized tools including advanced Fix Version management.
-
-> **Note:** This server is primarily designed and optimized for use with Cline, though it follows the MCP standard and can work with other MCP-compatible clients.
-
-![Introduction Demo](https://raw.githubusercontent.com/phuc-nt/public-assets/main/mcp-atlassian-server/introduce.gif)
-
-- **Key Features:**  
-  - Connect AI agents to Atlassian Jira with 51 comprehensive tools
-  - Fix Version lifecycle management for release planning
-  - Pure tools-only architecture for consistent, reliable operations
-  - 100% test success rate with real Jira API validation
-  - High performance with sub-500ms response times
-  - Easy integration with Cline through MCP Marketplace
-  - Local-first design for personal development environments
-
-## The Why Behind This Project
-
-As a developer working daily with Jira, I found myself spending significant time navigating the UI for routine operations. While Jira is powerful, I longed for a more efficient way to interact with it during development workflows.
-
-The emergence of AI Agents and the Model Context Protocol (MCP) presented the perfect opportunity. Version 3.0.0 represents a focused approach - streamlining to Jira-only with a pure tools-only architecture for maximum reliability and performance.
-
-This project evolved from a learning experiment into a production-ready tool that achieves 100% test success rate and provides comprehensive Jira integration through 25 specialized tools.
-
-## System Architecture v3.0.0 - Tools-Only
-
-```mermaid
-graph TD
-    AI[Cline AI Assistant] <--> MCP[MCP Jira Server v3.0.0]
-    MCP <--> JiraAPI[Jira API v3]
-    
-    subgraph "MCP Server - Tools-Only Architecture"
-        IssueTools[Issue Tools<br/>listIssues, getIssue, searchIssues<br/>createIssue, updateIssue, transitionIssue]
-        ProjectTools[Project Tools<br/>listProjects, getProject]
-        UserTools[User Tools<br/>getUser, searchUsers]
-        SprintTools[Sprint Tools<br/>createSprint, startSprint, closeSprint<br/>addIssueToSprint, addIssuesToBacklog]
-        FilterTools[Filter Tools<br/>createFilter, updateFilter, deleteFilter]
-        DashTools[Dashboard Tools<br/>createDashboard, updateDashboard<br/>addGadgetToDashboard, getJiraGadgets]
-    end
-    
-    MCP --> IssueTools
-    MCP --> ProjectTools  
-    MCP --> UserTools
-    MCP --> SprintTools
-    MCP --> FilterTools
-    MCP --> DashTools
-```
-
-## Installation & Setup
-
-For detailed installation and setup instructions, please refer to our [installation guide for AI assistants](./llms-install.md). This guide is specially formatted for AI/LLM assistants like Cline to read and automatically set up the MCP Jira Server v3.0.0.
-
-> **Note for Cline users**: The installation guide (llms-install.md) is optimized for Cline AI to understand and execute. You can simply ask Cline to "Install MCP Jira Server v3.0.0 (by phuc-nt)" and it will be able to parse the instructions and help you set up everything step-by-step.
-
-The guide includes:
-- Prerequisites and system requirements  
-- Step-by-step setup for Node.js environments
-- Configuring Cline AI assistant to connect with Jira
-- Getting and setting up Atlassian API tokens
-- All 25 Jira tools usage examples and validation
-- Security recommendations and best practices
-
-### Installing via Smithery
-
-To install MCP Jira Server v3.0.0 for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@phuc-nt/mcp-atlassian-server):
+### Installation via Smithery (Claude Desktop)
 
 ```bash
-npx -y @smithery/cli install @phuc-nt/mcp-atlassian-server --client claude
+npx -y @smithery/cli install @phuc-nt/jira-cloud-mcp-server --client claude
 ```
 
-## Feature Overview - 25 Jira Tools
+### Manual Installation
 
-MCP Jira Server v3.0.0 provides AI assistants (Cline, Claude Desktop, Cursor...) with 25 comprehensive tools for complete Jira workflow management:
+1. **Install the server**:
+```bash
+npm install -g @phuc-nt/jira-cloud-mcp-server
+```
 
-### 📋 Issue Management Tools (7 tools)
-- **listIssues**: List and filter issues by project, assignee, status
-- **getIssue**: Get detailed issue information with transitions and subtasks  
-- **searchIssues**: Advanced JQL search with pagination support
-- **createIssue**: Create new issues with custom fields support
-- **updateIssue**: Update issue fields and properties
-- **transitionIssue**: Change issue status with workflow transitions
-- **assignIssue**: Assign/unassign issues to users
+2. **Configure your MCP client** with your Jira credentials:
+```json
+{
+  "mcpServers": {
+    "jira-cloud": {
+      "command": "jira-cloud-mcp-server",
+      "env": {
+        "ATLASSIAN_SITE_NAME": "your-site.atlassian.net",
+        "ATLASSIAN_USER_EMAIL": "your-email@company.com", 
+        "ATLASSIAN_API_TOKEN": "your-api-token"
+      }
+    }
+  }
+}
+```
 
-### 🏗️ Project Management Tools (2 tools)
-- **listProjects**: List all accessible projects with filtering
-- **getProject**: Get detailed project information with components and versions
+3. **Get your API token** from [Atlassian Account Settings](https://id.atlassian.com/manage-profile/security/api-tokens)
 
-### 👥 User Management Tools (2 tools) 
-- **getUser**: Get detailed user profile with groups and roles
-- **searchUsers**: Search for users by name/email with project filtering
+## Example Tools Usage
 
-### 🏃‍♂️ Sprint & Agile Tools (6 tools)
-- **createSprint**: Create new sprints with timeline settings
-- **startSprint**: Start sprints with goal and timeline
-- **closeSprint**: Close completed sprints  
-- **addIssueToSprint**: Add issues to active sprints
-- **addIssuesToBacklog**: Move issues to product backlog
-- **rankBacklogIssues**: Reorder backlog priority
+```typescript
+// Create different issue types automatically
+await createIssue({
+  projectKey: "PROJ",
+  summary: "New Epic",
+  issueType: "Epic"  // Auto-detected from context
+});
 
-### 🔍 Filter Management Tools (3 tools)
-- **createFilter**: Create JQL filters for issue searching
-- **updateFilter**: Modify existing filter criteria
-- **deleteFilter**: Remove unused filters
+// Smart search with JQL building
+await searchIssues({
+  projectKey: "PROJ", 
+  issueType: "Story",
+  status: "In Progress"
+});
 
-### 📊 Dashboard & Gadget Tools (5 tools)
-- **createDashboard**: Create custom dashboards
-- **updateDashboard**: Modify dashboard properties  
-- **addGadgetToDashboard**: Add gadgets to dashboards
-- **removeGadgetFromDashboard**: Remove gadgets from dashboards
-- **getJiraGadgets**: List all available dashboard gadgets (31 types)
+// Get issue with full hierarchy
+await getIssue({
+  issueKey: "PROJ-123",
+  includeHierarchy: true  // Epic → Stories → Sub-tasks
+});
+```
 
-> **✅ 100% Test Success Rate**: All 25 tools validated with real Jira API integration
-> 
-> **⚡ High Performance**: 5/6 tools meet <500ms response time target
-> 
-> For complete API reference and usage examples, see: [docs/START_POINT.md](./docs/START_POINT.md)
+## Tool Categories
+
+### Enhanced Universal (4 tools)
+- `createIssue` - Universal creation with auto-type detection
+- `searchIssues` - Intelligent JQL building and filtering  
+- `getIssue` - Context-aware expansion with hierarchy
+- `updateIssue` - Type-specific handling with fallbacks
+
+### Core Operations (44 tools)
+- **Issues**: List, transition, assign, comment management
+- **Projects**: Project info, components, versions
+- **Agile**: Boards, sprints, backlog management
+- **Users**: Search, assignable users, project members
+- **Filters & Dashboards**: CRUD operations with gadgets
+
+### Backward Compatibility (8 tools)  
+- Legacy tools (`createStory`, `getEpic`, etc.) work via facades
+- Deprecation warnings guide migration to enhanced tools
+
+## Project Evolution
+
+This server is the **Jira-focused evolution** of the original dual-system MCP Atlassian Server:
+
+- **Original**: Jira + Confluence with Resources + Tools
+- **This Fork**: Jira-only with Tools-only architecture
+- **Benefits**: Simplified, faster, more reliable, easier to maintain
+
+## Documentation
+
+- **[Installation Guide](./llms-install.md)** - Detailed setup for AI assistants
+- **[API Reference](./docs/START_POINT.md)** - Complete tool documentation  
+- **[Migration Guide](./docs/02_implementation/sprints/sprint_5_3_completion_report.md)** - Backward compatibility details
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
+
+## Security
+
+- API tokens inherit user permissions
+- Store tokens securely in environment variables
+- Never commit tokens to version control
+- Review token permissions regularly
+
+## License
+
+MIT License - see [LICENSE](./LICENSE) for details.
 
 ---
 
-## Request Flow - Tools-Only Architecture
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Cline as Cline AI
-    participant MCP as MCP Jira Server v3.0.0
-    participant Jira as Jira API v3
-    
-    User->>Cline: "Find all my assigned issues"
-    Cline->>MCP: Call listIssues tool
-    MCP->>Jira: GET /rest/api/3/search with JQL
-    Jira->>MCP: JSON Response with Issues
-    MCP->>Cline: Formatted Tool Response
-    Cline->>User: "I found 5 assigned issues..."
-    
-    User->>Cline: "Create new issue about login bug"
-    Cline->>MCP: Call createIssue tool
-    MCP->>Jira: POST /rest/api/3/issue
-    Jira->>MCP: Created Issue Data
-    MCP->>Cline: Success Response with Issue Key
-    Cline->>User: "Created issue PROJ-124"
-    
-    User->>Cline: "Add the issue to current sprint"
-    Cline->>MCP: Call addIssueToSprint tool
-    MCP->>Jira: POST /rest/agile/1.0/sprint/{id}/issue
-    Jira->>MCP: Sprint Update Confirmation
-    MCP->>Cline: Success Response
-    Cline->>User: "Added PROJ-124 to Sprint 23"
-```
-
-## Security & Performance
-
-### Security Notes
-- Your Jira API token inherits all permissions of the user that created it
-- Never share your token with non-trusted parties
-- Be cautious when asking AI assistants to analyze config files containing your token
-- See detailed security guidelines in [llms-install.md](./llms-install.md#security-warning-when-using-llms)
-
-### Performance Metrics
-- **100% Test Success Rate**: All 25 tools validated with real Jira API
-- **High Performance**: 5/6 tools achieve <500ms response times
-- **Reliable Operation**: Comprehensive error handling with graceful fallbacks
-- **Production Ready**: Extensive validation and performance testing
-
-## Documentation & Support
-
-### 📚 Documentation
-- **[API Reference](./docs/API_REFERENCE.md)**: Complete reference for all 25 tools
-- **[Usage Examples](./docs/USAGE_EXAMPLES.md)**: Real-world examples and workflows
-- **[Installation Guide](./llms-install.md)**: Step-by-step setup for AI assistants
-- **[Project Status](./docs/START_POINT.md)**: Current development status and roadmap
-
-### 🤝 Contribute & Support
-- Contribute by opening Pull Requests or Issues on GitHub
-- Join the MCP/Cline community for additional support
-- Report bugs or request features via GitHub Issues
-- Star ⭐ the project if you find it useful!
-
-### 🏆 Achievement Badges
-- ✅ **100% Test Success** - All 25 tools operational
-- ⚡ **High Performance** - Sub-500ms response times  
-- 🛠️ **Production Ready** - Comprehensive error handling
-- 📊 **Complete Coverage** - Full Jira workflow support
+**Status**: ✅ Production Ready (v3.0.0) | 🧪 56/56 Tools Passing | 🚀 Zero Breaking Changes

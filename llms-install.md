@@ -1,276 +1,202 @@
-# MCP Jira Server v3.0.0 (by phuc-nt) Installation Guide for AI
+# Jira Cloud MCP Server v3.0.0 Installation Guide for AI
 
-> **Important Note:** MCP Jira Server v3.0.0 is primarily developed and optimized for use with the Cline AI assistant. While it follows the MCP standard and can work with other compatible MCP clients, the best performance and experience are achieved with Cline.
+> **Important Note:** Jira Cloud MCP Server is optimized for AI assistants like Claude Desktop, Cline, and Cursor. This is a **Jira-only, tools-only** fork of the original MCP Atlassian Server, focused on streamlined Jira operations.
 
-> **Version Note:** This guide is for MCP Jira Server v3.0.0 with tools-only architecture. This version provides 25 Jira tools with 100% test success rate and high performance (<500ms response times).
+> **Version Note:** This guide is for Jira Cloud MCP Server v3.0.0 with 56 tools including backward compatibility facades. Achieves 100% test success rate with production-ready performance.
 
 ## System Requirements
 - macOS 10.15+ or Windows 10+ 
 - Node.js 18+ (for running the MCP server)
 - Atlassian Cloud account with Jira access
 - Jira API token (instructions below)
-- Cline AI assistant (main supported client)
+- AI assistant (Claude Desktop, Cline, Cursor)
 
 ## Installation Options
 
-You have two ways to install MCP Jira Server v3.0.0:
+You have two ways to install Jira Cloud MCP Server:
 
-1. **[Install from npm](#option-1-install-from-npm)** (recommended, easier) - Install directly from npm registry
-2. **[Clone & Build from source](#option-2-clone-and-build-from-source)** - Clone the GitHub repository and build locally
+1. **[Install via Smithery](#option-1-install-via-smithery)** (easiest for Claude Desktop)
+2. **[Manual installation](#option-2-manual-installation)** (npm or from source)
 
-## Option 1: Install from npm
+## Option 1: Install via Smithery
 
-This is the recommended method as it's simpler and lets you easily update to new versions.
-
-### Install the package globally
+For Claude Desktop users, use Smithery for automatic installation:
 
 ```bash
-npm install -g @phuc-nt/mcp-atlassian-server
+npx -y @smithery/cli install @phuc-nt/jira-cloud-mcp-server --client claude
 ```
 
-Or install in your project:
+This automatically configures Claude Desktop with the MCP server. Skip to [Get API Token section](#get-atlassian-api-token).
+
+## Option 2: Manual Installation  
+
+### Install from npm (Recommended)
 
 ```bash
-npm install @phuc-nt/mcp-atlassian-server
+# Global installation
+npm install -g @phuc-nt/jira-cloud-mcp-server
+
+# Or install in your project
+npm install @phuc-nt/jira-cloud-mcp-server
 ```
 
-### Find the installation path
-
-After installation, you'll need to know the path to the package for Cline configuration:
+### Install from Source
 
 ```bash
-# For global installation, find the global node_modules directory
-npm root -g
-# Output will be something like: /usr/local/lib/node_modules
-
-# For local installation, the path will be in your project directory
-# e.g., /your/project/node_modules/@phuc-nt/mcp-atlassian-server
-```
-
-The full path to the executable will be: `<npm_modules_path>/@phuc-nt/mcp-atlassian-server/dist/index.js`
-
-Skip to [Configure Cline section](#configure-cline) after installing from npm.
-
-## Option 2: Clone and Build from Source
-
-### Prerequisite Tools Check & Installation
-
-### Check Installed Tools
-
-Verify that Git, Node.js, and npm are installed:
-
-```bash
-git --version
-node --version
-npm --version
-```
-
-If the above commands show version numbers, you have the required tools. If not, follow the steps below:
-
-### Install Git
-
-#### macOS
-**Method 1**: Using Homebrew (recommended)
-```bash
-# Install Homebrew if not available
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Install Git
-brew install git
-```
-
-**Method 2**: Install Xcode Command Line Tools
-```bash
-xcode-select --install
-```
-
-#### Windows
-1. Download the Git installer from [git-scm.com](https://git-scm.com/download/win)
-2. Run the installer with default options
-3. After installation, open Command Prompt or PowerShell and check: `git --version`
-
-### Install Node.js and npm
-
-#### macOS
-**Method 1**: Using Homebrew (recommended)
-```bash
-brew install node
-```
-
-**Method 2**: Using nvm (Node Version Manager)
-```bash
-# Install nvm
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-
-# Install Node.js LTS
-nvm install --lts
-```
-
-#### Windows
-1. Download Node.js installer from [nodejs.org](https://nodejs.org/) (choose LTS version)
-2. Run the installer with default options
-3. After installation, open Command Prompt or PowerShell and check:
-   ```
-   node --version
-   npm --version
-   ```
-
-### Step 1: Clone the Repository
-```bash
-# macOS/Linux
-git clone https://github.com/phuc-nt/mcp-atlassian-server.git
-cd mcp-atlassian-server
-
-# Windows
-git clone https://github.com/phuc-nt/mcp-atlassian-server.git
-cd mcp-atlassian-server
-```
-
-### Step 2: Install Dependencies
-```bash
+git clone git@github.com:phuc-nt/jira-cloud-mcp-server.git
+cd jira-cloud-mcp-server
 npm install
-```
-
-### Step 3: Build the Project
-```bash
 npm run build
 ```
 
-## Configure Cline
+## Configure Your AI Assistant
 
-MCP Atlassian Server is specifically designed for seamless integration with Cline. Below is the guide to configure Cline to connect to the server:
+### Claude Desktop Configuration
 
-### Determine the Full Path
-
-#### For npm installation
-If you installed the package via npm, you need the path to the installed package:
-
-```bash
-# For global npm installation
-echo "$(npm root -g)/@phuc-nt/mcp-atlassian-server/dist/index.js"
-
-# For local npm installation (run from your project directory)
-echo "$(pwd)/node_modules/@phuc-nt/mcp-atlassian-server/dist/index.js"
-```
-
-#### For source code installation
-
-First, determine the full path to your project directory:
-
-```bash
-# macOS/Linux
-pwd
-
-# Windows (PowerShell)
-(Get-Location).Path
-
-# Windows (Command Prompt)
-cd
-```
-
-Then, add the following configuration to your `cline_mcp_settings.json` file:
+Add to your `claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
-    "phuc-nt/mcp-atlassian-server": {
-      "disabled": false,
-      "timeout": 60,
-      "command": "node",
-      "args": [
-        "/path/to/mcp-atlassian-server/dist/index.js"
-      ],
+    "jira-cloud": {
+      "command": "jira-cloud-mcp-server",
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site.atlassian.net",
-        "ATLASSIAN_USER_EMAIL": "your-email@example.com",
+        "ATLASSIAN_USER_EMAIL": "your-email@company.com", 
         "ATLASSIAN_API_TOKEN": "your-api-token"
-      },
-      "transportType": "stdio"
+      }
     }
   }
 }
 ```
 
-Replace:
-- For **npm installation**: Use the path to the npm package: 
-  - Global install: `/path/to/global/node_modules/@phuc-nt/mcp-atlassian-server/dist/index.js` 
-  - Local install: `/path/to/your/project/node_modules/@phuc-nt/mcp-atlassian-server/dist/index.js`
-- For **source installation**: Use the path you just obtained with `pwd` command
-- `your-site.atlassian.net` with your Atlassian site name
-- `your-email@example.com` with your Atlassian email
-- `your-api-token` with your Atlassian API token
+### Cline Configuration
 
-> **Note for global npm installs**: You can find the global node_modules path by running: `npm root -g`
+Add to your `cline_mcp_settings.json`:
 
-> **Note for Windows**: The path on Windows may look like `C:\\Users\\YourName\\AppData\\Roaming\\npm\\node_modules\\@phuc-nt\\mcp-atlassian-server\\dist\\index.js` (use `\\` instead of `/`).
-
-## Step 5: Get Atlassian API Token
-1. Go to https://id.atlassian.com/manage-profile/security/api-tokens
-2. Click "Create API token", name it (e.g., "MCP Server")
-3. Copy the token immediately (it will not be shown again)
-
-### Note on API Token Permissions
-
-- **The API token inherits all permissions of the account that created it** – there is no separate permission mechanism for the token itself.
-- **To use all features of MCP Server**, the account creating the token must have appropriate permissions:
-  - **Jira**: Needs Browse Projects, Edit Issues, Assign Issues, Transition Issues, Create Issues, etc.
-  - **Confluence**: Needs View Spaces, Add Pages, Add Comments, Edit Pages, etc.
-- **If the token is read-only**, you can only use read resources (view issues, projects) but cannot create/update.
-- **Recommendations**:
-  - For personal use: You can use your main account's token
-  - For team/long-term use: Create a dedicated service account with appropriate permissions
-  - Do not share your token; if you suspect it is compromised, revoke and create a new one
-- **If you get a "permission denied" error**, check the permissions of the account that created the token on the relevant projects/spaces
-
-> **Summary**: MCP Atlassian Server works best when using an API token from an account with all the permissions needed for the actions you want the AI to perform on Jira/Confluence.
-
-### Security Warning When Using LLMs
-
-- **Security risk**: If you or the AI in Cline ask an LLM to read/analyze the `cline_mcp_settings.json` file, **your Atlassian token will be sent to a third-party server** (OpenAI, Anthropic, etc.).
-- **How it works**:
-  - Cline does **NOT** automatically send config files to the cloud
-  - However, if you ask to "check the config file" or similar, the file content (including API token) will be sent to the LLM endpoint for processing
-- **Safety recommendations**:
-  - Do not ask the LLM to read/check config files containing tokens
-  - If you need support, remove sensitive information before sending to the LLM
-  - Treat your API token like a password – never share it in LLM prompts
-
-> **Important**: If you do not ask the LLM to read the config file, your API token will only be used locally and will not be sent anywhere.
-
-## Documentation Resources
-
-MCP Atlassian Server (by phuc-nt) now includes a comprehensive documentation series:
-
-1. [MCP Overview & Architecture](./docs/knowledge/01-mcp-overview-architecture.md): Core concepts, architecture, and design principles
-2. [MCP Tools & Resources Development](./docs/knowledge/02-mcp-tools-resources.md): How to develop and extend MCP resources and tools
-3. [MCP Prompts & Sampling](./docs/knowledge/03-mcp-prompts-sampling.md): Guide for prompt engineering and sampling with MCP
-
-These documents provide deeper insights into the server's functionality and are valuable for both users and developers.
-
-## Verify Installation
-
-### Test the MCP Server directly
-
-You can test that the MCP Server runs correctly by executing it directly:
-
-```bash
-# For npm global install
-node $(npm root -g)/@phuc-nt/mcp-atlassian-server/dist/index.js
-
-# For npm local install
-node ./node_modules/@phuc-nt/mcp-atlassian-server/dist/index.js
-
-# For source code install
-node ./dist/index.js
+```json
+{
+  "mcpServers": {
+    "jira-cloud": {
+      "command": "node",
+      "args": ["/path/to/jira-cloud-mcp-server/dist/index.js"],
+      "env": {
+        "ATLASSIAN_SITE_NAME": "your-site.atlassian.net",
+        "ATLASSIAN_USER_EMAIL": "your-email@company.com",
+        "ATLASSIAN_API_TOKEN": "your-api-token"
+      }
+    }
+  }
+}
 ```
 
-You should see output indicating that the server has started and registered resources and tools.
+### Cursor Configuration
 
-### Test with Cline
+Add to your Cursor MCP settings:
 
-After configuration, test the connection by asking Cline a question related to Jira or Confluence, for example:
-- "List all projects in Jira"
-- "Search for Confluence pages about [topic]"
-- "Create a new issue in project DEMO"
+```json
+{
+  "mcpServers": {
+    "jira-cloud": {
+      "command": "jira-cloud-mcp-server",
+      "env": {
+        "ATLASSIAN_SITE_NAME": "your-site.atlassian.net", 
+        "ATLASSIAN_USER_EMAIL": "your-email@company.com",
+        "ATLASSIAN_API_TOKEN": "your-api-token"
+      }
+    }
+  }
+}
+```
 
-Cline is optimized to work with this MCP Atlassian Server (by phuc-nt) and will automatically use the most appropriate resources and tools for your queries.
+## Get Atlassian API Token
+
+1. Go to https://id.atlassian.com/manage-profile/security/api-tokens
+2. Click "Create API token", name it (e.g., "Jira Cloud MCP")
+3. Copy the token immediately (it will not be shown again)
+
+### API Token Permissions
+
+- **Inherits user permissions**: Token has same access as the account that created it
+- **Required permissions**: Browse Projects, Create/Edit/Transition Issues, Manage Sprints
+- **Best practice**: Use dedicated service account for team environments
+- **Security**: Never share tokens, revoke if compromised
+
+## Tool Categories (56 Total)
+
+### Enhanced Universal Tools (4)
+- `createIssue` - Universal creation with auto-type detection
+- `searchIssues` - Intelligent JQL building and filtering  
+- `getIssue` - Context-aware expansion with hierarchy
+- `updateIssue` - Type-specific handling with fallbacks
+
+### Core Operations (44)
+- **Issues**: List, transition, assign, comments
+- **Projects**: Info, components, versions
+- **Agile**: Boards, sprints, backlog management  
+- **Users**: Search, assignable users
+- **Filters & Dashboards**: CRUD operations
+
+### Backward Compatibility (8)
+- Legacy tools work via facades with deprecation warnings
+- Seamless migration from specialized tools
+
+## Usage Examples
+
+```bash
+# Ask your AI assistant:
+"List all issues assigned to me in project ABC"
+"Create a new Epic called 'User Authentication'"
+"Move issue ABC-123 to In Progress status"
+"Search for all open bugs in the current sprint"
+"Create a sub-task under ABC-123 for code review"
+```
+
+## Security Guidelines
+
+### Safe Practices
+- Store tokens in environment variables only
+- Use dedicated API tokens (not personal passwords)
+- Don't commit tokens to version control
+- Regularly rotate API tokens
+
+### AI Safety Warning
+- **Risk**: Asking AI to read config files sends tokens to cloud providers
+- **Safe**: Tokens stay local unless you ask AI to examine config
+- **Best practice**: Never ask AI to read/analyze credential files
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"Permission denied"**: Check API token permissions
+2. **"Site not found"**: Verify ATLASSIAN_SITE_NAME format
+3. **"Tool not found"**: Restart AI assistant after configuration
+4. **Slow responses**: Check network connectivity to Atlassian
+
+### Test Installation
+
+```bash
+# Test MCP server directly
+node /path/to/jira-cloud-mcp-server/dist/index.js
+
+# Should show: "MCP server started with 56 tools"
+```
+
+### Get Help
+
+- **GitHub Issues**: https://github.com/phuc-nt/jira-cloud-mcp-server/issues
+- **Documentation**: [Project Documentation](./docs/START_POINT.md)
+- **Original Project**: [MCP Atlassian Server](https://github.com/phuc-nt/mcp-atlassian-server)
+
+## Project Background
+
+**Jira Cloud MCP Server** is a focused fork of the original MCP Atlassian Server:
+
+- **Original**: Jira + Confluence with Resources + Tools
+- **This Fork**: Jira-only with Tools-only architecture  
+- **Benefits**: Simplified, faster, more reliable, easier to maintain
+
+---
+
+**Status**: ✅ Production Ready (v3.0.0) | 🧪 56/56 Tools Working | 🛡️ Backward Compatible
