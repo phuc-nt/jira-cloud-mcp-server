@@ -428,7 +428,7 @@ export async function enhancedSearchIssuesImpl(params: EnhancedSearchIssuesParam
 
 export const registerEnhancedSearchIssuesTool = (server: McpServer) => {
   server.tool(
-    'searchIssues',
+    'enhancedSearchIssues',
     'Enhanced search for Jira issues with smart filtering, auto-detection, and hierarchy support. Replaces searchEpics and searchStories tools.',
     enhancedSearchIssuesSchema.shape,
     async (params: EnhancedSearchIssuesParams, context: Record<string, any>) => {

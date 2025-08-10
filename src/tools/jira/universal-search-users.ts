@@ -318,7 +318,7 @@ function calculateUserStatistics(users: any[]): any {
 // Tool registration
 export const registerUniversalSearchUsersTool = (server: McpServer) => {
   server.tool(
-    'searchUsers',
+    'universalSearchUsers',
     `UNIVERSAL USER SEARCH - Replaces 3 specialized user tools
 
 CONSOLIDATES: searchUsers, listUsers, getAssignableUsers
