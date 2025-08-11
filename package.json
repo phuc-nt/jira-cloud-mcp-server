@@ -1,6 +1,6 @@
 {
   "name": "@phuc-nt/mcp-atlassian-server",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "MCP Server for interacting with Atlassian Jira (modular architecture with 4 specialized entry points)",
   "type": "module",
   "main": "dist/index.js",

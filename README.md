@@ -1,18 +1,26 @@
-# MCP Jira Server v4.0.0
+# MCP Jira Server v4.1.0
 
 <p align="center">
   <img src="assets/atlassian_logo_icon.png" alt="Jira Logo" width="120" />
 </p>
 
-[![MCP Server](https://img.shields.io/badge/MCP%20Server-v4.0.0-blue)](https://github.com/phuc-nt/mcp-atlassian-server)
+[![MCP Server](https://img.shields.io/badge/MCP%20Server-v4.1.0-blue)](https://github.com/phuc-nt/mcp-atlassian-server)
 [![Modular Architecture](https://img.shields.io/badge/Architecture-Modular-green)](https://modelcontextprotocol.io)
 [![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)]()
 
 ## Overview
 
-**MCP Jira Server v4.0.0** is a production-ready, modular MCP server enabling AI assistants (Claude Desktop, Cline, Cursor) to interact with Atlassian Jira through specialized modules. Built for flexibility, performance, and memory optimization.
+**MCP Jira Server v4.1.0** is a production-ready, modular MCP server enabling AI assistants (Claude Desktop, Cline, Cursor) to interact with Atlassian Jira through specialized modules. Built for flexibility, performance, and memory optimization with enhanced AI client compatibility.
 
-### 🚀 New in v4.0.0: Modular Architecture
+### 🚀 New in v4.1.0: Enhanced AI Client Experience
+
+**Latest Improvements:**
+- **Tool Optimization**: Reduced from 49 → 46 tools (6% improvement) 
+- **Enhanced Documentation**: Comprehensive AI client usage patterns
+- **Error Prevention**: Eliminated common integration issues
+- **Smart Workflows**: Step-by-step guidance for complex operations
+
+### 🏗️ Modular Architecture (v4.0.0+)
 
 Choose the modules you need for optimized memory usage and focused functionality:
 
@@ -21,11 +29,11 @@ Choose the modules you need for optimized memory usage and focused functionality
 mcp-jira-core        # 14 tools - Essential CRUD operations  
 mcp-jira-agile       # 10 tools - Sprint & Board management
 mcp-jira-dashboard   # 8 tools - Analytics & reporting
-mcp-jira-search      # 17 tools - Advanced search & Epic discovery
+mcp-jira-search      # 14 tools - Enhanced search & Epic discovery
 ```
 
 **Memory Optimization**: Up to 64% reduction depending on module selection  
-**Success Rate**: 100% (49/49 tools working across all modules)  
+**Success Rate**: 100% (46/46 tools working across all modules)  
 **Architecture**: Clean separation, independent entry points, production-ready
 
 ## Key Features
@@ -39,18 +47,18 @@ mcp-jira-search      # 17 tools - Advanced search & Epic discovery
 
 ## Architecture
 
-### Module Distribution (49 Total Tools)
+### Module Distribution (46 Total Tools - Optimized)
 
 | Module | Tools | Success Rate | Use Case |
 |--------|-------|--------------|-----------|
 | **Core** | 14 | 100% | Essential CRUD operations |
 | **Agile** | 10 | 100% | Sprint & workflow management |
 | **Dashboard** | 8 | 100% | Analytics & reporting |
-| **Search** | 17 | 100% | Advanced search & Epic discovery |
+| **Search** | 14 | 100% | Enhanced search & Epic discovery |
 
 ### Deployment Flexibility
 
-**Essential Stack** (Core + Search = 30 tools)
+**Essential Stack** (Core + Search = 28 tools)
 ```json
 {
   "mcpServers": {
@@ -246,5 +254,5 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-**v4.0.0 Production Ready** - Modular architecture with 100% tool success rate and Epic search excellence  
+**v4.1.0 Production Ready** - Optimized architecture with enhanced AI client experience and 100% tool success rate  
 Built with ❤️ for the MCP and Jira communities
