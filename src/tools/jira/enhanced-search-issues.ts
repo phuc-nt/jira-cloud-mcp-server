@@ -16,10 +16,7 @@ export const enhancedSearchIssuesSchema = z.object({
   // Issue type filtering - auto-detects based on parameters
   issueType: z.string().optional().describe('Specific issue type (Epic, Story, Task, Bug, Sub-task)'),
   
-  // Smart type-specific filtering
-  epicName: z.string().optional().describe('Epic name to search for (auto-detects Epic type)'),
-  epicKey: z.string().optional().describe('Epic key to find Stories under this Epic'),
-  epicStatus: z.string().optional().describe('Epic status filter (To Do, In Progress, Done)'),
+  // Note: Epic search functionality moved to dedicated epicSearchAgile tool for better reliability
   
   storyPoints: z.number().optional().describe('Story points filter (auto-detects Story type)'),
   storyPointsMin: z.number().optional().describe('Minimum story points range'),
@@ -71,12 +68,8 @@ function detectSearchIssueType(params: EnhancedSearchIssuesParams): string | nul
     return params.issueType;
   }
   
-  // Auto-detect from parameters
-  if (params.epicName || params.epicStatus) {
-    return 'Epic';
-  }
-  
-  if (params.storyPoints || params.storyPointsMin || params.storyPointsMax || params.epicKey) {
+  // Auto-detect from parameters (Epic search moved to epicSearchAgile tool)
+  if (params.storyPoints || params.storyPointsMin || params.storyPointsMax) {
     return 'Story';
   }
   
@@ -109,18 +102,7 @@ function buildSmartJQL(params: EnhancedSearchIssuesParams): string {
     jqlParts.push(`issuetype = "${detectedType}"`);
   }
   
-  // Epic-specific filters
-  if (params.epicName) {
-    jqlParts.push(`"Epic Name" ~ "${params.epicName}"`);
-  }
-  
-  if (params.epicKey) {
-    jqlParts.push(`"Epic Link" = "${params.epicKey}"`);
-  }
-  
-  if (params.epicStatus) {
-    jqlParts.push(`"Epic Status" = "${params.epicStatus}"`);
-  }
+  // Epic search functionality moved to dedicated epicSearchAgile tool
   
   // Story points filters
   if (params.storyPoints) {
@@ -429,7 +411,7 @@ export async function enhancedSearchIssuesImpl(params: EnhancedSearchIssuesParam
 export const registerEnhancedSearchIssuesTool = (server: McpServer) => {
   server.tool(
     'enhancedSearchIssues',
-    'Enhanced search for Jira issues with smart filtering, auto-detection, and hierarchy support. Replaces searchEpics and searchStories tools.',
+    'Enhanced search for Jira issues with smart filtering, auto-detection, and hierarchy support. For Epic search, use dedicated epicSearchAgile tool.',
     enhancedSearchIssuesSchema.shape,
     async (params: EnhancedSearchIssuesParams, context: Record<string, any>) => {
       try {

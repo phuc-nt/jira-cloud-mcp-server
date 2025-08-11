@@ -1,11 +1,11 @@
-# MCP Jira Server v4.0.0-alpha.1 - Project Hub
+# MCP Jira Server v4.0.0 - Project Hub
 
-**Latest Achievement**: Sprint 6.3 ✅ COMPLETED - Search Module Finalization (100% Success)  
-**Key Achievement**: 49/50 tools working across 4 modules, complete modular architecture 🎉  
-**Current Status**: Phase 6 modular architecture 100% complete - All 4 modules operational  
-**Project Status**: v4.0.0 ✅ PRODUCTION READY - Modular Architecture Complete
+**Latest Achievement**: Sprint 6.4.2 ✅ COMPLETED - Epic Search Enhancement & Tool Cleanup  
+**Key Achievement**: 100% Epic search success via Agile API, Search Module optimized to 17 tools 🎉  
+**Current Status**: Phase 6 modular architecture with enhanced Epic capabilities  
+**Project Status**: v4.0.0 ✅ PRODUCTION READY - Epic Search Fully Restored
 
-> **Quick Status**: v4.0.0 Modular Architecture 100% Complete ✅ → Sprint 6.3: Perfect 100% Search Module Success
+> **Quick Status**: v4.0.0 Epic Search Enhancement ✅ → Sprint 6.4.2: 100% Epic functionality + 8.6% performance improvement
 
 ---
 

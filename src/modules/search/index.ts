@@ -17,7 +17,7 @@ class SearchModuleServer extends BaseModuleServer {
       name: 'mcp-jira-search',
       version: '4.0.0',
       moduleName: 'Search',
-      toolCount: 16
+      toolCount: 17
     });
   }
 

@@ -21,11 +21,11 @@ Choose the modules you need for optimized memory usage and focused functionality
 mcp-jira-core        # 14 tools - Essential CRUD operations  
 mcp-jira-agile       # 10 tools - Sprint & Board management
 mcp-jira-dashboard   # 8 tools - Analytics & reporting
-mcp-jira-search      # 18 tools - Read-only data retrieval
+mcp-jira-search      # 17 tools - Advanced search & Epic discovery
 ```
 
 **Memory Optimization**: Up to 64% reduction depending on module selection  
-**Success Rate**: 98% (49/50 tools working across all modules)  
+**Success Rate**: 100% (49/49 tools working across all modules)  
 **Architecture**: Clean separation, independent entry points, production-ready
 
 ## Key Features
@@ -39,14 +39,14 @@ mcp-jira-search      # 18 tools - Read-only data retrieval
 
 ## Architecture
 
-### Module Distribution (48 Total Tools)
+### Module Distribution (49 Total Tools)
 
 | Module | Tools | Success Rate | Use Case |
 |--------|-------|--------------|-----------|
 | **Core** | 14 | 100% | Essential CRUD operations |
 | **Agile** | 10 | 100% | Sprint & workflow management |
 | **Dashboard** | 8 | 87.5% | Analytics & reporting |
-| **Search** | 16 | 100% | Read-only data retrieval |
+| **Search** | 17 | 100% | Advanced search & Epic discovery |
 
 ### Deployment Flexibility
 
