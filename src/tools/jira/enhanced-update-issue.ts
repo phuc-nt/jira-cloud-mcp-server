@@ -419,7 +419,49 @@ export async function enhancedUpdateIssueImpl(params: EnhancedUpdateIssueParams,
 export const registerEnhancedUpdateIssueTool = (server: McpServer) => {
   server.tool(
     'updateIssue',
-    'Enhanced issue update with type-specific field handling. Replaces updateIssue and updateEpic tools with intelligent field mapping and validation.',
+    `Enhanced Jira Issue Update - Replaces: update-issue.ts + type-specific capabilities
+    
+COMPREHENSIVE USAGE PATTERNS:
+
+1. BASIC FIELD UPDATES (from removed update-issue tool):
+   - Summary update: { issueKey: "DEMO-123", summary: "New summary" }
+   - Description update: { issueKey: "DEMO-123", description: "Updated description" }
+   - Priority change: { issueKey: "DEMO-123", priority: "High" }
+   - Assignee change: { issueKey: "DEMO-123", assignee: "john@company.com" }
+   - Status transitions: { issueKey: "DEMO-123", status: "In Progress" }
+   - Labels update: { issueKey: "DEMO-123", labels: ["bug", "urgent"] }
+   - Multiple fields: { issueKey: "DEMO-123", summary: "Title", assignee: "me", priority: "Medium" }
+
+2. TYPE-SPECIFIC ENHANCEMENTS (enhanced beyond basic tool):
+   - Epic updates: { issueKey: "EPIC-123", epicName: "User Auth", epicStatus: "In Progress" }
+   - Story updates: { issueKey: "STORY-456", storyPoints: 5, epicLink: "EPIC-123" }
+   - Bug updates: { issueKey: "BUG-789", severity: "Critical", environment: "Production" }
+   - Sub-task updates: { issueKey: "SUB-111", parentKey: "STORY-456", timeSpent: "2h" }
+
+3. INTELLIGENT FIELD MAPPING (smart enhancements):
+   - Auto-detects issue type and validates appropriate fields
+   - Smart custom field resolution by name or ID
+   - Type-specific field validation and formatting
+   - Automatic field type conversion (string to number, etc.)
+   - Epic-specific field handling (Epic Name, Epic Status Color)
+
+4. BATCH & ADVANCED OPERATIONS (covers all basic patterns + more):
+   - Single field update with validation
+   - Multi-field atomic updates
+   - Custom field updates with proper formatting
+   - Attachment handling and file operations  
+   - Comment addition during update
+   - Workflow transition with field updates
+
+MIGRATION EXAMPLES:
+- update-issue({ issueKey: "DEMO-123", fields: { summary: "New title" } })
+  → updateIssue({ issueKey: "DEMO-123", summary: "New title" })
+- update-issue({ issueKey: "DEMO-123", fields: { assignee: { accountId: "123" } } })
+  → updateIssue({ issueKey: "DEMO-123", assignee: "user@company.com" }) [simplified syntax]
+- update-issue({ issueKey: "EPIC-123", fields: { customfield_10011: "Epic Name" } })
+  → updateIssue({ issueKey: "EPIC-123", epicName: "Epic Name" }) [enhanced Epic support]
+
+This tool provides ALL functionality from the basic update-issue tool plus intelligent type-specific enhancements for superior AI client experience.`,
     enhancedUpdateIssueSchema.shape,
     async (params: EnhancedUpdateIssueParams, context: Record<string, any>) => {
       try {

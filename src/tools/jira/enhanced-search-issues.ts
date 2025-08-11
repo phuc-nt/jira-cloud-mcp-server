@@ -411,7 +411,46 @@ export async function enhancedSearchIssuesImpl(params: EnhancedSearchIssuesParam
 export const registerEnhancedSearchIssuesTool = (server: McpServer) => {
   server.tool(
     'enhancedSearchIssues',
-    'Enhanced search for Jira issues with smart filtering, auto-detection, and hierarchy support. For Epic search, use dedicated epicSearchAgile tool.',
+    `Enhanced Jira Issue Search - Replaces: search-issues.ts + advanced capabilities
+    
+COMPREHENSIVE USAGE PATTERNS:
+
+1. BASIC JQL PATTERNS (from removed search-issues tool):
+   - Simple project search: { projectKey: "DEMO" }
+   - Status filtering: { projectKey: "DEMO", status: "In Progress" }
+   - Assignee search: { assignee: "john@company.com" }
+   - Priority filtering: { priority: "High" }
+   - Date range: { createdAfter: "2024-01-01", createdBefore: "2024-12-31" }
+   - Text search: { summary: "login bug", description: "authentication" }
+   - Combined filters: { projectKey: "DEMO", status: "Open", assignee: "me" }
+
+2. ENHANCED SMART DETECTION (new capabilities):
+   - Story points auto-detection: { storyPoints: 5 } → automatically adds issueType = Story
+   - Story points range: { storyPointsMin: 3, storyPointsMax: 8 } → smart Story filtering
+   - Sub-task discovery: { parentKey: "DEMO-123" } → finds all Sub-tasks
+   - Type-specific search: { issueType: "Bug", severity: "Critical" }
+
+3. PAGINATION & SORTING (covers all basic patterns):
+   - Basic pagination: { startAt: 0, maxResults: 50 }
+   - Custom sorting: { orderBy: "created DESC" }
+   - Field selection: { fields: ["summary", "status", "assignee"] }
+   - Large result handling with automatic chunking
+
+4. ADVANCED JQL BUILDING (enhanced beyond basic tool):
+   - Smart JQL construction from parameters
+   - Auto-detection of issue types based on provided fields
+   - Intelligent field expansion for optimal API calls
+   - Error handling with JQL syntax validation
+
+MIGRATION EXAMPLES:
+- search-issues({ jql: "project = DEMO AND status = Open" }) 
+  → enhancedSearchIssues({ projectKey: "DEMO", status: "Open" })
+- search-issues({ jql: "assignee = currentUser()" })
+  → enhancedSearchIssues({ assignee: "me" })
+- search-issues({ jql: "project = DEMO", expand: ["changelog"] })
+  → enhancedSearchIssues({ projectKey: "DEMO", expand: "changelog" })
+
+This tool provides ALL functionality from the basic search-issues tool plus intelligent enhancements for better AI client experience.`,
     enhancedSearchIssuesSchema.shape,
     async (params: EnhancedSearchIssuesParams, context: Record<string, any>) => {
       try {

@@ -540,7 +540,48 @@ export async function enhancedGetIssueImpl(params: EnhancedGetIssueParams, conte
 export const registerEnhancedGetIssueTool = (server: McpServer) => {
   server.tool(
     'getIssue',
-    'Enhanced issue retrieval with context-aware expansion. Replaces getIssue and getEpic tools with intelligent type detection and comprehensive details.',
+    `Enhanced Jira Issue Retrieval - Replaces: get-issue.ts + context-aware capabilities
+    
+COMPREHENSIVE USAGE PATTERNS:
+
+1. BASIC ISSUE RETRIEVAL (from removed get-issue tool):
+   - Simple issue fetch: { issueKey: "DEMO-123" }
+   - Issue with basic fields: { issueKey: "DEMO-123", expand: "summary,status,assignee" }
+   - Issue with custom fields: { issueKey: "DEMO-123", properties: ["customfield_10001"] }
+   - Issue with comments: { issueKey: "DEMO-123", expand: "comments" }
+   - Issue with attachments: { issueKey: "DEMO-123", expand: "attachment" }
+   - Issue with changelog: { issueKey: "DEMO-123", expand: "changelog" }
+
+2. CONTEXT-AWARE EXPANSION (enhanced capabilities):
+   - Smart Epic expansion: { issueKey: "EPIC-123" } → automatically includes Epic-specific fields
+   - Story with Epic context: { issueKey: "STORY-456" } → includes parent Epic details  
+   - Sub-task with hierarchy: { issueKey: "SUB-789" } → includes parent Story/Task details
+   - Sprint context detection: Issues in active sprints get sprint details automatically
+   - Board context: Issues get board configuration when relevant
+
+3. INTELLIGENT TYPE DETECTION (enhanced beyond basic tool):
+   - Auto-detects Epic type and expands Epic-specific fields (Epic Name, Epic Status, etc.)
+   - Auto-detects Story type and includes story-specific context (Story Points, Epic link)
+   - Auto-detects Sub-task type and includes parent task relationships
+   - Auto-detects Bug type and includes bug-specific fields (Severity, Environment)
+   - Type-specific field optimization for better performance
+
+4. ADVANCED FIELD HANDLING (covers all basic patterns + more):
+   - Dynamic field selection based on issue type
+   - Automatic custom field resolution by name or ID  
+   - Smart property expansion with context
+   - Optimized API calls to reduce response time
+   - Error handling with detailed field validation
+
+MIGRATION EXAMPLES:
+- get-issue({ issueKey: "DEMO-123" })
+  → getIssue({ issueKey: "DEMO-123" }) [same syntax, enhanced response]
+- get-issue({ issueKey: "DEMO-123", expand: "comments,changelog" })
+  → getIssue({ issueKey: "DEMO-123", expand: "comments,changelog" }) [enhanced with smart context]
+- get-issue({ issueKey: "EPIC-123", properties: ["all"] })
+  → getIssue({ issueKey: "EPIC-123" }) [automatically includes Epic-specific fields]
+
+This tool provides ALL functionality from the basic get-issue tool plus intelligent context-aware enhancements for optimal AI client experience.`,
     enhancedGetIssueSchema.shape,
     async (params: EnhancedGetIssueParams, context: Record<string, any>) => {
       try {

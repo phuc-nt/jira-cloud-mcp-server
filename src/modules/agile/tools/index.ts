@@ -14,7 +14,7 @@ import { registerGetSprintIssuesTool } from '../../../tools/jira/get-sprint-issu
 import { registerGetBoardTool } from '../../../tools/jira/get-board.js';
 import { registerGetBoardConfigurationTool } from '../../../tools/jira/get-board-configuration.js';
 import { registerEnhancedGetBoardIssuesTool } from '../../../tools/jira/enhanced-get-board-issues.js';
-import { registerGetBoardSprintsTool } from '../../../tools/jira/get-board-sprints.js';
+import { registerListSprintsTool } from '../../../tools/jira/list-sprints.js';
 
 // Backlog Management tools
 import { registerAddIssueToSprintTool } from '../../../tools/jira/add-issue-to-sprint.js';
@@ -31,7 +31,7 @@ export function registerAgileModuleTools(server: any) {
   registerGetBoardTool(server);                // 6. Get board information
   registerGetBoardConfigurationTool(server);   // 7. Board configuration details
   registerEnhancedGetBoardIssuesTool(server);  // 8. Enhanced board issues
-  registerGetBoardSprintsTool(server);         // 9. Board sprints list
+  registerListSprintsTool(server);             // 9. Enhanced sprint listing (replaces getBoardSprints)
   
   // Backlog Management (1 tool)
   registerAddIssueToSprintTool(server);        // 10. Add issues to sprint

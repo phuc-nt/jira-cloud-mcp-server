@@ -191,7 +191,44 @@ async function listSprintsImpl(params: ListSprintsParams, context: any) {
 export const registerListSprintsTool = (server: McpServer) => {
   server.tool(
     'listSprints',
-    'List Jira sprints with optional filtering by state and board, with pagination support',
+    `Enhanced Sprint Listing - Replaces: get-board-sprints.ts + general sprint discovery
+    
+COMPREHENSIVE USAGE PATTERNS:
+
+1. BOARD-SPECIFIC PATTERNS (from removed get-board-sprints tool):
+   - Get all sprints for a specific board: { boardId: 123 }
+   - Board sprints with state filter: { boardId: 123, state: "active" }
+   - Board sprint pagination: { boardId: 123, startAt: 0, maxResults: 50 }
+   - Closed board sprints: { boardId: 123, state: "closed" }
+   - Future board sprints: { boardId: 123, state: "future" }
+
+2. GENERAL SPRINT PATTERNS (original list-sprints functionality):  
+   - List all sprints: {} (no parameters)
+   - Filter by state: { state: "active" }
+   - Paginated listing: { startAt: 0, maxResults: 100 }
+   - All closed sprints: { state: "closed" }
+   - All future sprints: { state: "future" }
+
+3. SMART ENDPOINT DETECTION (enhanced capabilities):
+   - When boardId provided → uses /rest/agile/1.0/board/{id}/sprint (board-specific API)
+   - When boardId omitted → uses /rest/agile/1.0/sprint (general sprint API)
+   - Automatic optimization based on parameters
+   - Consistent response format across both endpoints
+
+4. ADVANCED FILTERING & PAGINATION:
+   - State-based filtering works with both board-specific and general modes
+   - Consistent pagination parameters across all patterns
+   - Efficient API usage with smart endpoint selection
+   - Error handling with board permission validation
+
+MIGRATION EXAMPLES:
+- get-board-sprints({ boardId: 123 })
+  → listSprints({ boardId: 123 }) [same result, unified interface]
+- get-board-sprints({ boardId: 123, state: "active", maxResults: 20 })
+  → listSprints({ boardId: 123, state: "active", maxResults: 20 }) [direct migration]
+- Original listSprints usage remains unchanged
+
+This tool provides ALL functionality from both get-board-sprints and original list-sprints tools with intelligent API optimization for superior performance.`,
     listSprintsSchema.shape,
     async (params: ListSprintsParams, context: Record<string, any>) => {
       try {

@@ -1,5 +1,5 @@
 import { registerCreateIssueTool } from './jira/create-issue.js';
-import { registerUpdateIssueTool } from './jira/update-issue.js';
+// Removed: registerUpdateIssueTool (replaced by enhanced-update-issue)
 import { registerTransitionIssueTool } from './jira/transition-issue.js';
 import { registerAssignIssueTool } from './jira/assign-issue.js';
 import { registerCreateFilterTool } from './jira/create-filter.js';
@@ -19,9 +19,9 @@ import { registerRemoveGadgetFromDashboardTool } from './jira/remove-gadget-from
 import { registerAddIssueToSprintTool } from './jira/add-issue-to-sprint.js';
 import { registerGetJiraGadgetsTool } from './jira/get-gadgets-new.js';
 import { registerListIssuesTool } from './jira/list-issues.js';
-import { registerGetIssueTool } from './jira/get-issue.js';
+// Removed: registerGetIssueTool (replaced by enhanced-get-issue)
 import { registerEnhancedGetIssueTool } from './jira/enhanced-get-issue.js';
-import { registerSearchIssuesTool } from './jira/search-issues.js';
+// Removed: registerSearchIssuesTool (replaced by enhanced-search-issues)
 import { registerEnhancedSearchIssuesTool } from './jira/enhanced-search-issues.js';
 import { registerListProjectsTool } from './jira/list-projects.js';
 import { registerGetProjectTool } from './jira/get-project.js';
@@ -35,7 +35,7 @@ import { registerListBoardsTool } from './jira/list-boards.js';
 import { registerGetBoardTool } from './jira/get-board.js';
 import { registerEnhancedGetBoardIssuesTool } from './jira/enhanced-get-board-issues.js';
 import { registerGetBoardConfigurationTool } from './jira/get-board-configuration.js';
-import { registerGetBoardSprintsTool } from './jira/get-board-sprints.js';
+// Removed: registerGetBoardSprintsTool (replaced by enhanced listSprints)
 import { registerListSprintsTool } from './jira/list-sprints.js';
 import { registerGetSprintTool } from './jira/get-sprint.js';
 import { registerGetSprintIssuesTool } from './jira/get-sprint-issues.js';
@@ -95,7 +95,7 @@ export function registerAllTools(server: any) {
   registerGetBoardTool(server);
   registerEnhancedGetBoardIssuesTool(server); // Enhanced tool replacing getBoardIssues, listBacklogIssues
   registerGetBoardConfigurationTool(server);
-  registerGetBoardSprintsTool(server);
+  // Removed: registerGetBoardSprintsTool (replaced by enhanced listSprints in Agile module)
   
   // Sprint management tools (read operations)
   registerListSprintsTool(server);

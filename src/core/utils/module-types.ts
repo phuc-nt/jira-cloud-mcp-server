@@ -40,7 +40,7 @@ export const MODULE_DEFINITIONS: Record<string, ModuleInfo> = {
   search: {
     name: 'Search',
     version: '4.0.0',
-    toolCount: 18,
+    toolCount: 13,
     description: 'Read-only operations for data retrieval and analysis',
     memoryReduction: '62%',
     useCase: 'Data analysis, read-only integrations'
