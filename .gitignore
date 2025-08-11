@@ -66,6 +66,9 @@ lerna-debug.log*
 tmp/
 temp/
 
+# Documentation folders
+docs/
+
 # OS generated files
 Thumbs.db
 .Spotlight-V100
