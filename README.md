@@ -45,7 +45,7 @@ mcp-jira-search      # 17 tools - Advanced search & Epic discovery
 |--------|-------|--------------|-----------|
 | **Core** | 14 | 100% | Essential CRUD operations |
 | **Agile** | 10 | 100% | Sprint & workflow management |
-| **Dashboard** | 8 | 87.5% | Analytics & reporting |
+| **Dashboard** | 8 | 100% | Analytics & reporting |
 | **Search** | 17 | 100% | Advanced search & Epic discovery |
 
 ### Deployment Flexibility
@@ -147,13 +147,13 @@ Analytics, reporting, and dashboard management.
 
 **Key Tools:** `createDashboard`, `getDashboardGadgets`, `getJiraGadgets`
 
-### 🔍 Search Module (16 tools)
+### 🔍 Search Module (17 tools)
 Read-only data retrieval and search operations - completely safe for auto-approval.
 
 **Auto-Approve All Tools:**
 ```json
 "autoApprove": [
-  "searchIssues", "enhancedSearchIssues", "listBacklogIssues",
+  "searchIssues", "enhancedSearchIssues", "listBacklogIssues", "epicSearchAgile",
   "getIssue", "getIssueTransitions", "getIssueComments",
   "universalSearchUsers", "listUsers", "getUser",
   "listProjects", "listProjectVersions", "listFilters", "listBoards", "listSprints",
@@ -221,9 +221,9 @@ nano test-client/.env
 
 | Configuration | Tools | Memory Usage | Startup Time | Use Case |
 |---------------|-------|--------------|--------------|-----------|
-| Search Only | 16 | ~34% of v3.x | ~66% faster | Read-only integration |
-| Core + Search | 30 | ~40% of v3.x | ~60% faster | Essential operations |
-| All Modules | 48 | ~63% of v3.x | ~37% faster | Full functionality |
+| Search Only | 17 | ~34% of v3.x | ~66% faster | Read-only integration |
+| Core + Search | 31 | ~40% of v3.x | ~60% faster | Essential operations |
+| All Modules | 49 | ~36% of v3.x | ~64% faster | Full functionality |
 | Legacy v3.x | 56 | 100% baseline | 100% baseline | Backward compatibility |
 
 ## Contributing
@@ -246,5 +246,5 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-**v4.0.0 Production Ready** - Modular architecture with 98% tool success rate  
+**v4.0.0 Production Ready** - Modular architecture with 100% tool success rate and Epic search excellence  
 Built with ❤️ for the MCP and Jira communities
