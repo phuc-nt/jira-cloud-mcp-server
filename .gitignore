@@ -68,6 +68,7 @@ temp/
 
 # Documentation folders
 docs/
+docs_sample/
 
 # OS generated files
 Thumbs.db
