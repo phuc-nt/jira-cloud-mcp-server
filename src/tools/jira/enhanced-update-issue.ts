@@ -13,12 +13,18 @@ const logger = Logger.getLogger('JiraTools:enhancedUpdateIssue');
 export const enhancedUpdateIssueSchema = z.object({
   issueKey: z.string().describe('Issue key (e.g., PROJ-123)'),
   
-  // Universal issue fields
+  // Universal issue fields (WORKING fields confirmed by AI Client)
   summary: z.string().optional().describe('New summary of the issue'),
   description: z.string().optional().describe('New description of the issue'),
   priority: z.string().optional().describe('New priority (High, Medium, Low)'),
   labels: z.array(z.string()).optional().describe('New labels for the issue'),
-  assignee: z.string().optional().describe('Assignee account ID or email'),
+  
+  // WARNING: Advanced fields may not work in all environments
+  assignee: z.string().optional().describe('Assignee accountId (NOT username). May require specific permissions.'),
+  components: z.array(z.string()).optional().describe('Component names. May require project-specific configuration.'),
+  fixVersions: z.array(z.string()).optional().describe('Fix version names. May require project-specific versions.'),
+  environment: z.string().optional().describe('Environment description. May not be available in all projects.'),
+  dueDate: z.string().optional().describe('Due date (YYYY-MM-DD format). May require specific field configuration.'),
   
   // Epic-specific fields (auto-detects Epic type)
   epicName: z.string().optional().describe('Epic name (auto-detects Epic type)'),
@@ -39,7 +45,7 @@ export const enhancedUpdateIssueSchema = z.object({
   issueType: z.string().optional().describe('Explicit issue type (overrides auto-detection)'),
   validateTransition: z.boolean().default(false).describe('Validate fields against current workflow'),
   smartFieldMapping: z.boolean().default(true).describe('Use smart field mapping for issue type')
-});
+});;
 
 type EnhancedUpdateIssueParams = z.infer<typeof enhancedUpdateIssueSchema>;
 

@@ -38,7 +38,37 @@ async function assignIssueToolImpl(params: AssignIssueParams, context: any) {
 export const registerAssignIssueTool = (server: McpServer) => {
   server.tool(
     'assignIssue',
-    'Assign a Jira issue to a user',
+    `Assign Jira Issue to User - AccountId Required
+
+AI CLIENT USAGE PATTERNS:
+
+1. FIND USER FIRST (REQUIRED STEP):
+   universalSearchUsers({ query: "john" })
+   → Returns: [{ accountId: "5b10ac8d82e05b22cc7d4ef5", displayName: "John Smith", emailAddress: "john@company.com" }]
+
+2. ASSIGN ISSUE USING ACCOUNTID:
+   assignIssue({ issueIdOrKey: "PROJ-123", accountId: "5b10ac8d82e05b22cc7d4ef5" })
+   ✅ CORRECT: Uses accountId from user search result
+
+3. COMMON MISTAKES TO AVOID:
+   ❌ WRONG: assignIssue({ issueIdOrKey: "PROJ-123", accountId: "john" })         // Username won't work
+   ❌ WRONG: assignIssue({ issueIdOrKey: "PROJ-123", accountId: "john@company.com" }) // Email won't work
+   ✅ RIGHT: assignIssue({ issueIdOrKey: "PROJ-123", accountId: "5b10ac8d82e05b22cc7d4ef5" }) // AccountId works
+
+4. UNASSIGN ISSUE:
+   assignIssue({ issueIdOrKey: "PROJ-123", accountId: "" })  // Empty string unassigns
+   OR
+   assignIssue({ issueIdOrKey: "PROJ-123" })  // Omit accountId to unassign
+
+WORKFLOW RECOMMENDATIONS:
+Step 1: Search for user: universalSearchUsers({ query: "user_name_or_email" })
+Step 2: Extract accountId from search results
+Step 3: Use accountId in assignIssue call
+
+ERROR PREVENTION:
+- "User does not exist": Use universalSearchUsers to find correct accountId
+- "Permission denied": User may lack assign permissions for this project
+- "Invalid accountId": Ensure you're using the full UUID accountId format`,
     assignIssueSchema.shape,
     async (params: AssignIssueParams, context: Record<string, any>) => {
       try {
@@ -52,11 +82,19 @@ export const registerAssignIssueTool = (server: McpServer) => {
           ]
         };
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify({ success: false, error: error instanceof Error ? error.message : String(error) })
+              text: JSON.stringify({ 
+                success: false, 
+                error: errorMessage,
+                issueKey: params.issueIdOrKey,
+                suggestion: errorMessage.includes('does not exist') || errorMessage.includes('permission')
+                  ? "Use universalSearchUsers first to find the correct accountId. Username or email won't work."
+                  : "Check issue permissions and user access rights"
+              })
             }
           ],
           isError: true
@@ -64,4 +102,4 @@ export const registerAssignIssueTool = (server: McpServer) => {
       }
     }
   );
-}; 
+};; 

@@ -13,10 +13,10 @@ const logger = Logger.getLogger('JiraTools:createIssue');
 export const createIssueSchema = z.object({
   projectKey: z.string().describe('Project key (e.g., PROJ)'),
   summary: z.string().describe('Issue summary'),
-  issueType: z.string().optional().describe('Issue type (Task, Bug, Story, Epic, Sub-task). Auto-detected if not provided.'),
+  issueType: z.string().optional().describe('Issue type (Task, Story, Epic, Sub-task). Auto-detected if not provided. Note: "Bug" type may not be available in all projects.'),
   description: z.string().optional().describe('Issue description'),
   priority: z.string().optional().describe('Priority (e.g., High, Medium, Low)'),
-  assignee: z.string().optional().describe('Assignee username'),
+  assignee: z.string().optional().describe('Assignee accountId (NOT username). Use getUser or universalSearchUsers to find accountId.'),
   labels: z.array(z.string()).optional().describe('Labels for the issue'),
   
   // Epic-specific fields (auto-detects Epic type)
@@ -33,10 +33,9 @@ export const createIssueSchema = z.object({
   // Additional fields
   components: z.array(z.string()).optional().describe('Component names'),
   fixVersions: z.array(z.string()).optional().describe('Fix version names'),
-  reporter: z.string().optional().describe('Reporter username'),
   environment: z.string().optional().describe('Environment description'),
   dueDate: z.string().optional().describe('Due date (YYYY-MM-DD format)')
-});
+});;
 
 type CreateIssueParams = z.infer<typeof createIssueSchema>;
 
@@ -85,9 +84,7 @@ function buildAdditionalFields(params: CreateIssueParams, detectedType: string):
     additionalFields.assignee = { name: params.assignee };
   }
   
-  if (params.reporter) {
-    additionalFields.reporter = { name: params.reporter };
-  }
+  // Reporter field removed - not supported in most environments
   
   if (params.labels && params.labels.length > 0) {
     additionalFields.labels = params.labels;
