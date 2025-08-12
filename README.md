@@ -1,49 +1,44 @@
-# MCP Jira Server v4.1.0
+# MCP Jira Server
+
+> **AI meets Jira** - Connect AI assistants to your Jira workspace with modular architecture and enhanced compatibility
 
 <p align="center">
   <img src="assets/atlassian_logo_icon.png" alt="Jira Logo" width="120" />
 </p>
 
-[![MCP Server](https://img.shields.io/badge/MCP%20Server-v4.1.0-blue)](https://github.com/phuc-nt/mcp-atlassian-server)
-[![Modular Architecture](https://img.shields.io/badge/Architecture-Modular-green)](https://modelcontextprotocol.io)
-[![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)]()
+[![Tools](https://img.shields.io/badge/Tools-46%20Optimized-blue)](#features)
+[![Modules](https://img.shields.io/badge/Architecture-4%20Modules-orange)](#modular-architecture)
+[![License](https://img.shields.io/badge/License-MIT-green)](#license)
+[![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)](#production-status)
 
-## Overview
+## 🚀 What is this?
 
-**MCP Jira Server v4.1.0** is a production-ready, modular MCP server enabling AI assistants (Claude Desktop, Cline, Cursor) to interact with Atlassian Jira through specialized modules. Built for flexibility, performance, and memory optimization with enhanced AI client compatibility.
+**MCP Jira Server** enables AI assistants like **Claude**, **Cline**, **Cursor**, and other MCP-compatible tools to interact with Atlassian Jira using **API token authentication** - featuring **modular architecture**, enhanced AI client compatibility, and enterprise-ready performance. Choose only the modules you need for optimized memory usage.
 
-### 🚀 New in v4.1.0: Enhanced AI Client Experience
+## ✨ Features
 
-**Latest Improvements:**
-- **Tool Optimization**: Reduced from 49 → 46 tools (6% improvement) 
-- **Enhanced Documentation**: Comprehensive AI client usage patterns
-- **Error Prevention**: Eliminated common integration issues
-- **Smart Workflows**: Step-by-step guidance for complex operations
+### 🔧 **46 Optimized Tools Across 4 Modules:**
 
-### 🏗️ Modular Architecture (v4.0.0+)
+- **Core Module** (14): Essential CRUD operations, user management, project operations
+- **Agile Module** (10): Sprint & board management, workflow operations  
+- **Dashboard Module** (8): Analytics, reporting, dashboard management
+- **Search Module** (14): Enhanced search & Epic discovery, universal user search
 
-Choose the modules you need for optimized memory usage and focused functionality:
+### 🎯 **Key Capabilities:**
+
+- ✅ **Modular Architecture** - Up to 64% memory reduction with selective loading
+- ✅ **Enhanced AI Client Compatibility** - Comprehensive usage patterns & error prevention
+- ✅ **Production Ready** - 100% test success rate across all 46 tools
+
+## 🚀 Quick Start
+
+### 📦 Install from NPM (Recommended)
 
 ```bash
-# 4 Specialized Entry Points:
-mcp-jira-core        # 14 tools - Essential CRUD operations  
-mcp-jira-agile       # 10 tools - Sprint & Board management
-mcp-jira-dashboard   # 8 tools - Analytics & reporting
-mcp-jira-search      # 14 tools - Enhanced search & Epic discovery
+npm install -g jira-cloud-mcp-server
 ```
 
-**Memory Optimization**: Up to 64% reduction depending on module selection  
-**Success Rate**: 100% (46/46 tools working across all modules)  
-**Architecture**: Clean separation, independent entry points, production-ready
-
-## Key Features
-
-- **🎯 Modular Design**: 4 specialized modules for different use cases
-- **⚡ Performance**: Up to 64% memory reduction with selective loading
-- **🔐 Security**: Read-only modules eliminate data modification risks
-- **🧪 Battle-Tested**: 100% test coverage with real Jira API validation
-- **🔄 Backward Compatibility**: Legacy monolithic entry point maintained
-- **🛡️ Production Ready**: Comprehensive error handling and logging
+**📖 [Complete Installation Guide](INSTALL.md)** - Follow the step-by-step setup guide
 
 ## Architecture
 
@@ -62,197 +57,97 @@ mcp-jira-search      # 14 tools - Enhanced search & Epic discovery
 ```json
 {
   "mcpServers": {
-    "jira-core": {"command": "npx", "args": ["@phuc-nt/mcp-atlassian-server/dist/modules/core"]},
-    "jira-search": {"command": "npx", "args": ["@phuc-nt/mcp-atlassian-server/dist/modules/search"]}
+    "jira-core": {"command": "npx", "args": ["jira-cloud-mcp-server/dist/modules/core"]},
+    "jira-search": {"command": "npx", "args": ["jira-cloud-mcp-server/dist/modules/search"]}
   }
 }
 ```
 
-**Complete Agile Team** (Core + Agile + Search = 42 tools)
+**Complete Agile Team** (Core + Agile + Search = 38 tools)
 ```json
 {
   "mcpServers": {
-    "jira-core": {"command": "npx", "args": ["@phuc-nt/mcp-atlassian-server/dist/modules/core"]},
-    "jira-agile": {"command": "npx", "args": ["@phuc-nt/mcp-atlassian-server/dist/modules/agile"]},
-    "jira-search": {"command": "npx", "args": ["@phuc-nt/mcp-atlassian-server/dist/modules/search"]}
+    "jira-core": {"command": "npx", "args": ["jira-cloud-mcp-server/dist/modules/core"]},
+    "jira-agile": {"command": "npx", "args": ["jira-cloud-mcp-server/dist/modules/agile"]},
+    "jira-search": {"command": "npx", "args": ["jira-cloud-mcp-server/dist/modules/search"]}
   }
 }
 ```
 
-**Analytics Focus** (Search + Dashboard = 26 tools)
+**Analytics Focus** (Search + Dashboard = 22 tools)
 ```json
 {
   "mcpServers": {
-    "jira-search": {"command": "npx", "args": ["@phuc-nt/mcp-atlassian-server/dist/modules/search"]},
-    "jira-dashboard": {"command": "npx", "args": ["@phuc-nt/mcp-atlassian-server/dist/modules/dashboard"]}
+    "jira-search": {"command": "npx", "args": ["jira-cloud-mcp-server/dist/modules/search"]},
+    "jira-dashboard": {"command": "npx", "args": ["jira-cloud-mcp-server/dist/modules/dashboard"]}
   }
 }
 ```
 
-**Legacy Compatibility** (All 56 tools)
+**Legacy Compatibility** (All 46 tools)
 ```json
 {
   "mcpServers": {
-    "jira": {"command": "npx", "args": ["@phuc-nt/mcp-atlassian-server"]}
+    "jira": {"command": "npx", "args": ["jira-cloud-mcp-server"]}
   }
 }
 ```
 
-## Quick Start
+## 💡 Usage Examples
 
-### Installation via NPM
+**Create Issues with Natural Language:**
 
-```bash
-npm install -g @phuc-nt/mcp-atlassian-server
+```
+Human: Create a new Epic called "User Authentication System" in the DEMO project
+
+AI Assistant: I'll create that Epic for you using the createIssue tool:
+□ Project: DEMO
+□ Issue Type: Epic (auto-detected)
+□ Summary: "User Authentication System"
+□ Creating issue now...
+
+✅ Created Epic DEMO-142: "User Authentication System"
 ```
 
-### Configuration
+**Advanced Search & Analysis:**
 
-Create your `.env` file:
-```bash
-ATLASSIAN_SITE_NAME=your-site-name
-ATLASSIAN_USER_EMAIL=your-email@example.com
-ATLASSIAN_API_TOKEN=your-api-token
+```
+Human: Find all high-priority bugs assigned to me that were created last week
+
+AI Assistant: I'll search for your high-priority bugs from last week:
+□ Use enhancedSearchIssues with JQL: "assignee = currentUser() AND priority = High AND issueType = Bug AND created >= -7d"
+□ Found 3 matching issues
+□ Analyzing priority, status, and resolution timeframes...
+
+Found 3 high-priority bugs: DEMO-140, DEMO-138, DEMO-135 - details attached.
 ```
 
-### Claude Desktop Setup
+**Sprint Management & Agile Workflows:**
 
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+```
+Human: Show me the current sprint status and add issue DEMO-123 to the active sprint
 
-```json
-{
-  "mcpServers": {
-    "jira-core": {
-      "command": "npx",
-      "args": ["@phuc-nt/mcp-atlassian-server/dist/modules/core"],
-      "env": {
-        "ATLASSIAN_SITE_NAME": "your-site-name",
-        "ATLASSIAN_USER_EMAIL": "your-email@example.com",
-        "ATLASSIAN_API_TOKEN": "your-api-token"
-      }
-    }
-  }
-}
+AI Assistant: I'll check your sprint status and add the issue:
+□ Use listSprints to find active sprint for your board
+□ Use getSprintIssues to see current sprint contents  
+□ Use addIssueToSprint to add DEMO-123
+□ Provide sprint summary with updated issue count
+
+Current Sprint "Sprint 24" has 12 issues, adding DEMO-123 now... ✅ Added successfully!
 ```
 
-## Module Guide
+## 🛠️ Tech Stack
 
-### 🔧 Core Module (14 tools)
-Essential CRUD operations for issue and data management.
+- **TypeScript** - Type-safe development with strict mode
+- **Node.js** - Runtime environment (16.x+)
+- **MCP Protocol** - Model Context Protocol for AI integration
+- **Jira APIs** - Native Jira Platform API v3 + Agile API v1.0
+- **Modular Architecture** - Specialized modules for optimized performance
 
-**Auto-Approve Safe Tools:**
-```json
-"autoApprove": ["getAssignableUsers", "getIssueTransitions"]
-```
+## 📄 License
 
-### 🏃‍♂️ Agile Module (10 tools)  
-Sprint and board management for agile workflows.
-
-**Key Tools:** `createSprint`, `startSprint`, `closeSprint`, `addIssueToSprint`
-
-### 📊 Dashboard Module (8 tools)
-Analytics, reporting, and dashboard management.
-
-**Key Tools:** `createDashboard`, `getDashboardGadgets`, `getJiraGadgets`
-
-### 🔍 Search Module (17 tools)
-Read-only data retrieval and search operations - completely safe for auto-approval.
-
-**Auto-Approve All Tools:**
-```json
-"autoApprove": [
-  "searchIssues", "enhancedSearchIssues", "listBacklogIssues", "epicSearchAgile",
-  "getIssue", "getIssueTransitions", "getIssueComments",
-  "universalSearchUsers", "listUsers", "getUser",
-  "listProjects", "listProjectVersions", "listFilters", "listBoards", "listSprints",
-  "getProject", "getFilter"
-]
-```
-
-## API Authentication
-
-### Jira Cloud API Token
-
-1. Go to [Atlassian Account Settings](https://id.atlassian.com/manage-profile/security/api-tokens)
-2. Create API token
-3. Use your email and token for authentication
-
-### Required Permissions
-
-- **Jira Core**: Browse projects, Create/Edit/Delete issues
-- **Jira Agile**: Manage sprints and boards  
-- **Jira Admin**: Dashboard and filter management (Dashboard module)
-
-## Testing
-
-### Test Individual Modules
-
-```bash
-# Test Search module (read-only, safe)
-cd test-client
-npx tsx src/modules/test-search-module.ts
-
-# Test Core module (CRUD operations)
-npx tsx src/modules/test-core-module.ts
-
-# Test Agile module
-npx tsx src/modules/test-agile-module.ts
-
-# Test Dashboard module  
-npx tsx src/modules/test-dashboard-module.ts
-```
-
-### Environment Setup for Testing
-
-```bash
-# Copy sample environment
-cp test-client/.env.sample test-client/.env
-
-# Edit with your credentials
-nano test-client/.env
-```
-
-## Migration from v3.x
-
-### Breaking Changes
-- **Multiple Entry Points**: Choose specific modules instead of monolithic server
-- **Configuration Update**: Update MCP client configs for new module paths
-- **Memory Optimization**: Significant reduction in resource usage
-
-### Migration Strategy
-1. **Assessment**: Determine which modules you need
-2. **Gradual**: Start with Core + Search modules  
-3. **Optimization**: Add Agile/Dashboard as needed
-4. **Testing**: Validate with your specific workflows
-
-## Performance Benchmarks
-
-| Configuration | Tools | Memory Usage | Startup Time | Use Case |
-|---------------|-------|--------------|--------------|-----------|
-| Search Only | 17 | ~34% of v3.x | ~66% faster | Read-only integration |
-| Core + Search | 31 | ~40% of v3.x | ~60% faster | Essential operations |
-| All Modules | 49 | ~36% of v3.x | ~64% faster | Full functionality |
-| Legacy v3.x | 56 | 100% baseline | 100% baseline | Backward compatibility |
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'feat: add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-## Support
-
-- 📖 [Documentation](https://github.com/phuc-nt/mcp-atlassian-server/docs)
-- 🐛 [Issues](https://github.com/phuc-nt/mcp-atlassian-server/issues)
-- 💬 [Discussions](https://github.com/phuc-nt/mcp-atlassian-server/discussions)
-
-## License
-
-MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-**v4.1.0 Production Ready** - Optimized architecture with enhanced AI client experience and 100% tool success rate  
-Built with ❤️ for the MCP and Jira communities
+**🎉 Connect your AI assistant to Jira with modular architecture and enhanced compatibility!**

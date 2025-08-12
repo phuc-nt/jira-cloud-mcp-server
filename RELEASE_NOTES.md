@@ -2,7 +2,7 @@
 
 🎯 **Optimized & AI-Ready: Refined MCP Server with 46 optimized tools across 4 specialized modules!**
 
-Available on npm (`@phuc-nt/mcp-atlassian-server`) or GitHub. Works with Claude Desktop, Cline, Cursor, and any MCP-compatible client.
+Available on npm (`jira-cloud-mcp-server`) or GitHub. Works with Claude Desktop, Cline, Cursor, and any MCP-compatible client.
 
 ---
 
@@ -81,7 +81,7 @@ Enhanced search and data retrieval - completely safe for auto-approval
 
 ### NPM Installation
 ```bash
-npm install -g @phuc-nt/mcp-atlassian-server
+npm install -g jira-cloud-mcp-server
 ```
 
 ### Modular Configuration (Recommended)
@@ -93,7 +93,7 @@ Choose the modules you need for optimized memory usage:
   "mcpServers": {
     "jira-core": {
       "command": "npx",
-      "args": ["@phuc-nt/mcp-atlassian-server/dist/modules/core"],
+      "args": ["jira-cloud-mcp-server/dist/modules/core"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -102,7 +102,7 @@ Choose the modules you need for optimized memory usage:
     },
     "jira-search": {
       "command": "npx",
-      "args": ["@phuc-nt/mcp-atlassian-server/dist/modules/search"],
+      "args": ["jira-cloud-mcp-server/dist/modules/search"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com", 
@@ -119,7 +119,7 @@ Choose the modules you need for optimized memory usage:
   "mcpServers": {
     "jira": {
       "command": "npx",
-      "args": ["@phuc-nt/mcp-atlassian-server"],
+      "args": ["jira-cloud-mcp-server"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",

@@ -1,5 +1,5 @@
 {
-  "name": "@phuc-nt/mcp-atlassian-server",
+  "name": "jira-cloud-mcp-server",
   "version": "4.1.0",
   "description": "MCP Server for interacting with Atlassian Jira (46 optimized tools across 4 specialized modules with enhanced AI client compatibility)",
   "type": "module",
@@ -65,11 +65,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/phuc-nt/mcp-atlassian-server.git"
+    "url": "git+https://github.com/phuc-nt/jira-cloud-mcp-server.git"
   },
-  "homepage": "https://github.com/phuc-nt/mcp-atlassian-server#readme",
+  "homepage": "https://github.com/phuc-nt/jira-cloud-mcp-server#readme",
   "bugs": {
-    "url": "https://github.com/phuc-nt/mcp-atlassian-server/issues"
+    "url": "https://github.com/phuc-nt/jira-cloud-mcp-server/issues"
   },
   "engines": {
     "node": ">=16.0.0"
