@@ -1,6 +1,6 @@
 {
   "name": "mcp-jira-cloud-server",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "MCP Server for interacting with Atlassian Jira (46 optimized tools across 4 specialized modules with enhanced AI client compatibility)",
   "type": "module",
   "main": "dist/index.js",
@@ -11,7 +11,7 @@
     "assets"
   ],
   "bin": {
-    "mcp-atlassian-server": "dist/index.js",
+    "mcp-jira-cloud-server": "dist/index.js",
     "mcp-jira-core": "dist/modules/core/index.js",
     "mcp-jira-agile": "dist/modules/agile/index.js",
     "mcp-jira-dashboard": "dist/modules/dashboard/index.js",
