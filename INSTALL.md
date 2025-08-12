@@ -95,6 +95,30 @@ which mcp-jira-cloud-server
 
 ## Step 4: Configure Your AI Client
 
+### Configuration Format
+
+**Important:** Use the following format for reliable MCP connections:
+
+```json
+{
+  "mcpServers": {
+    "server-name": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio", 
+      "command": "node",
+      "args": ["/path/to/binary"],
+      "env": { /* environment variables */ }
+    }
+  }
+}
+```
+
+**Key points:**
+- Use `"command": "node"` with `"args": ["/path/to/binary"]` format
+- Include `"type": "stdio"` and `"timeout": 60` for stability
+- Set `"disabled": false` to ensure module is active
+
 ### Deployment Options
 
 Choose the configuration that best fits your needs:
@@ -106,8 +130,11 @@ Choose the configuration that best fits your needs:
 {
   "mcpServers": {
     "jira-core": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
       "command": "node",
-      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server/dist/modules/core"],
+      "args": ["/opt/homebrew/bin/mcp-jira-core"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -115,8 +142,11 @@ Choose the configuration that best fits your needs:
       }
     },
     "jira-search": {
-      "command": "node", 
-      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server/dist/modules/search"],
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
+      "command": "node",
+      "args": ["/opt/homebrew/bin/mcp-jira-search"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -134,8 +164,11 @@ Choose the configuration that best fits your needs:
 {
   "mcpServers": {
     "jira-core": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
       "command": "node",
-      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server/dist/modules/core"],
+      "args": ["/opt/homebrew/bin/mcp-jira-core"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com", 
@@ -143,8 +176,11 @@ Choose the configuration that best fits your needs:
       }
     },
     "jira-agile": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
       "command": "node",
-      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server/dist/modules/agile"],
+      "args": ["/opt/homebrew/bin/mcp-jira-agile"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -152,8 +188,11 @@ Choose the configuration that best fits your needs:
       }
     },
     "jira-search": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
       "command": "node",
-      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server/dist/modules/search"],
+      "args": ["/opt/homebrew/bin/mcp-jira-search"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -171,8 +210,11 @@ Choose the configuration that best fits your needs:
 {
   "mcpServers": {
     "jira-search": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
       "command": "node",
-      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server/dist/modules/search"],
+      "args": ["/opt/homebrew/bin/mcp-jira-search"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -180,8 +222,11 @@ Choose the configuration that best fits your needs:
       }
     },
     "jira-dashboard": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
       "command": "node",
-      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server/dist/modules/dashboard"],
+      "args": ["/opt/homebrew/bin/mcp-jira-dashboard"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -199,6 +244,9 @@ Choose the configuration that best fits your needs:
 {
   "mcpServers": {
     "jira": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
       "command": "node",
       "args": ["/opt/homebrew/bin/mcp-jira-cloud-server"],
       "env": {
@@ -220,7 +268,7 @@ If you built from source instead of using npm:
   "mcpServers": {
     "jira-core": {
       "command": "node",
-      "args": ["/full/path/to/mcp-jira-cloud-server/dist/modules/core"],
+      "args": ["/full/path/to/mcp-jira-cloud-server/dist/modules/core",
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
