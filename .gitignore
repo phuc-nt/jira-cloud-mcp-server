@@ -70,6 +70,14 @@ temp/
 docs/
 docs_sample/
 
+# Docker files
+Dockerfile
+docker-compose.yml
+start-docker.sh
+
+# Example/Sample files
+.env.example
+
 # OS generated files`
 Thumbs.db
 .Spotlight-V100
