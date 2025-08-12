@@ -51,47 +51,15 @@ npm install -g mcp-jira-cloud-server
 | **Dashboard** | 8 | 100% | Analytics & reporting |
 | **Search** | 14 | 100% | Enhanced search & Epic discovery |
 
-### Deployment Flexibility
+### Configuration Options
 
-**Essential Stack** (Core + Search = 28 tools)
-```json
-{
-  "mcpServers": {
-    "jira-core": {"command": "npx", "args": ["mcp-jira-cloud-server/dist/modules/core"]},
-    "jira-search": {"command": "npx", "args": ["mcp-jira-cloud-server/dist/modules/search"]}
-  }
-}
-```
+**4 Deployment Options:**
+- **Essential Stack** (28 tools): Core + Search modules
+- **Complete Agile** (38 tools): Core + Agile + Search modules  
+- **Analytics Focus** (22 tools): Search + Dashboard modules
+- **Legacy Compatibility** (46 tools): All modules in single server
 
-**Complete Agile Team** (Core + Agile + Search = 38 tools)
-```json
-{
-  "mcpServers": {
-    "jira-core": {"command": "npx", "args": ["mcp-jira-cloud-server/dist/modules/core"]},
-    "jira-agile": {"command": "npx", "args": ["mcp-jira-cloud-server/dist/modules/agile"]},
-    "jira-search": {"command": "npx", "args": ["mcp-jira-cloud-server/dist/modules/search"]}
-  }
-}
-```
-
-**Analytics Focus** (Search + Dashboard = 22 tools)
-```json
-{
-  "mcpServers": {
-    "jira-search": {"command": "npx", "args": ["mcp-jira-cloud-server/dist/modules/search"]},
-    "jira-dashboard": {"command": "npx", "args": ["mcp-jira-cloud-server/dist/modules/dashboard"]}
-  }
-}
-```
-
-**Legacy Compatibility** (All 46 tools)
-```json
-{
-  "mcpServers": {
-    "jira": {"command": "npx", "args": ["mcp-jira-cloud-server"]}
-  }
-}
-```
+**📖 [Complete Configuration Guide](INSTALL.md)** - Detailed setup instructions with working configs
 
 ## 💡 Usage Examples
 
