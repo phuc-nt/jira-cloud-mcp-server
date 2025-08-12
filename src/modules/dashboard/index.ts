@@ -1,36 +1,29 @@
 #!/usr/bin/env node
 /**
- * Dashboard Module Entry Point
- * 8 Dashboard & Gadget Management Tools
- * Memory optimized for Analytics & Reporting
+ * MCP Atlassian Server - Dashboard Module
+ * v4.0.0 Modular Architecture
+ * 
+ * Dashboard & Gadget management: 8 tools
+ * Memory reduction: ~70% vs full server
+ * Use case: Analytics, reporting, dashboard management
  */
 
-import { BaseModuleServer } from '../../core/server-base.js';
+import { createModuleServer } from '../../core/server-base.js';
+import { MODULE_DEFINITIONS, ModuleType } from '../../core/utils/module-types.js';
 import { registerDashboardModuleTools } from './tools/index.js';
-import { MODULE_DEFINITIONS } from '../../core/utils/module-types.js';
 
-class DashboardModuleServer extends BaseModuleServer {
-  constructor() {
-    super({
-      name: 'mcp-jira-dashboard',
-      version: '4.0.0-alpha.1',
-      moduleName: 'Dashboard',
-      toolCount: 8
-    });
-  }
+const moduleConfig = {
+  name: 'phuc-nt/mcp-atlassian-server-dashboard',
+  version: MODULE_DEFINITIONS[ModuleType.DASHBOARD].version,
+  moduleName: MODULE_DEFINITIONS[ModuleType.DASHBOARD].name,
+  toolCount: MODULE_DEFINITIONS[ModuleType.DASHBOARD].toolCount
+};
 
-  protected registerModuleTools(): void {
-    registerDashboardModuleTools(this.server);
-  }
-}
+// Create and start Dashboard module server
+const dashboardServer = createModuleServer(moduleConfig, registerDashboardModuleTools);
 
-// Create and start the Dashboard module server
-export function createDashboardModuleServer() {
-  return new DashboardModuleServer();
-}
-
-// Start server if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = createDashboardModuleServer();
-  server.startServer().catch(console.error);
-}
+// Start the server
+dashboardServer.startServer().catch(error => {
+  console.error('Dashboard module failed to start:', error);
+  process.exit(1);
+});

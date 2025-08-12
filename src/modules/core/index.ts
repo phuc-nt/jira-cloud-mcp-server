@@ -1,8 +1,9 @@
+#!/usr/bin/env node
 /**
  * MCP Atlassian Server - Core Module
  * v4.0.0 Modular Architecture
  * 
- * Essential CRUD operations: 12 tools
+ * Essential CRUD operations: 14 tools
  * Memory reduction: ~75% vs full server
  * Use case: Basic integrations, essential operations
  */

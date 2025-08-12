@@ -1,33 +1,29 @@
+#!/usr/bin/env node
 /**
- * Search Module Server - Advanced Search Operations
- * Specialized entry point for search and discovery tools
- * Based on proven BaseModuleServer pattern from Sprint 6.1-6.2
+ * MCP Atlassian Server - Search Module
+ * v4.0.0 Modular Architecture
+ * 
+ * Advanced search operations: 13 tools
+ * Memory reduction: ~70% vs full server
+ * Use case: Search, discovery, query operations
  */
 
-import { BaseModuleServer } from '../../core/server-base.js';
+import { createModuleServer } from '../../core/server-base.js';
+import { MODULE_DEFINITIONS, ModuleType } from '../../core/utils/module-types.js';
 import { registerSearchModuleTools } from './tools/index.js';
 
-/**
- * Search Module Server extending BaseModuleServer
- * Handles advanced search, discovery, and query operations
- */
-class SearchModuleServer extends BaseModuleServer {
-  constructor() {
-    super({
-      name: 'mcp-jira-search',
-      version: '4.0.0',
-      moduleName: 'Search',
-      toolCount: 13
-    });
-  }
+const moduleConfig = {
+  name: 'phuc-nt/mcp-atlassian-server-search',
+  version: MODULE_DEFINITIONS[ModuleType.SEARCH].version,
+  moduleName: MODULE_DEFINITIONS[ModuleType.SEARCH].name,
+  toolCount: MODULE_DEFINITIONS[ModuleType.SEARCH].toolCount
+};
 
-  protected registerModuleTools(): void {
-    registerSearchModuleTools(this.serverWithContext);
-  }
-}
+// Create and start Search module server
+const searchServer = createModuleServer(moduleConfig, registerSearchModuleTools);
 
-// Create and start the Search module server
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new SearchModuleServer();
-  server.startServer().catch(console.error);
-}
+// Start the server
+searchServer.startServer().catch(error => {
+  console.error('Search module failed to start:', error);
+  process.exit(1);
+});

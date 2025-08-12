@@ -1,36 +1,29 @@
 #!/usr/bin/env node
 /**
- * Agile Module Entry Point
- * 10 Sprint & Board Management Tools
- * Memory optimized for Agile workflows
+ * MCP Atlassian Server - Agile Module
+ * v4.0.0 Modular Architecture
+ * 
+ * Sprint & Board management: 10 tools
+ * Memory reduction: ~70% vs full server
+ * Use case: Agile workflows, sprint planning, board management
  */
 
-import { BaseModuleServer } from '../../core/server-base.js';
+import { createModuleServer } from '../../core/server-base.js';
+import { MODULE_DEFINITIONS, ModuleType } from '../../core/utils/module-types.js';
 import { registerAgileModuleTools } from './tools/index.js';
-import { MODULE_DEFINITIONS } from '../../core/utils/module-types.js';
 
-class AgileModuleServer extends BaseModuleServer {
-  constructor() {
-    super({
-      name: 'mcp-jira-agile',
-      version: '4.0.0-alpha.1',
-      moduleName: 'Agile',
-      toolCount: 10
-    });
-  }
+const moduleConfig = {
+  name: 'phuc-nt/mcp-atlassian-server-agile',
+  version: MODULE_DEFINITIONS[ModuleType.AGILE].version,
+  moduleName: MODULE_DEFINITIONS[ModuleType.AGILE].name,
+  toolCount: MODULE_DEFINITIONS[ModuleType.AGILE].toolCount
+};
 
-  protected registerModuleTools(): void {
-    registerAgileModuleTools(this.server);
-  }
-}
+// Create and start Agile module server
+const agileServer = createModuleServer(moduleConfig, registerAgileModuleTools);
 
-// Create and start the Agile module server
-export function createAgileModuleServer() {
-  return new AgileModuleServer();
-}
-
-// Start server if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = createAgileModuleServer();
-  server.startServer().catch(console.error);
-}
+// Start the server
+agileServer.startServer().catch(error => {
+  console.error('Agile module failed to start:', error);
+  process.exit(1);
+});
