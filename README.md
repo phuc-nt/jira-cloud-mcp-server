@@ -35,7 +35,7 @@
 ### 📦 Install from NPM (Recommended)
 
 ```bash
-npm install -g jira-cloud-mcp-server
+npm install -g mcp-jira-cloud-server
 ```
 
 **📖 [Complete Installation Guide](INSTALL.md)** - Follow the step-by-step setup guide
@@ -57,8 +57,8 @@ npm install -g jira-cloud-mcp-server
 ```json
 {
   "mcpServers": {
-    "jira-core": {"command": "npx", "args": ["jira-cloud-mcp-server/dist/modules/core"]},
-    "jira-search": {"command": "npx", "args": ["jira-cloud-mcp-server/dist/modules/search"]}
+    "jira-core": {"command": "npx", "args": ["mcp-jira-cloud-server/dist/modules/core"]},
+    "jira-search": {"command": "npx", "args": ["mcp-jira-cloud-server/dist/modules/search"]}
   }
 }
 ```
@@ -67,9 +67,9 @@ npm install -g jira-cloud-mcp-server
 ```json
 {
   "mcpServers": {
-    "jira-core": {"command": "npx", "args": ["jira-cloud-mcp-server/dist/modules/core"]},
-    "jira-agile": {"command": "npx", "args": ["jira-cloud-mcp-server/dist/modules/agile"]},
-    "jira-search": {"command": "npx", "args": ["jira-cloud-mcp-server/dist/modules/search"]}
+    "jira-core": {"command": "npx", "args": ["mcp-jira-cloud-server/dist/modules/core"]},
+    "jira-agile": {"command": "npx", "args": ["mcp-jira-cloud-server/dist/modules/agile"]},
+    "jira-search": {"command": "npx", "args": ["mcp-jira-cloud-server/dist/modules/search"]}
   }
 }
 ```
@@ -78,8 +78,8 @@ npm install -g jira-cloud-mcp-server
 ```json
 {
   "mcpServers": {
-    "jira-search": {"command": "npx", "args": ["jira-cloud-mcp-server/dist/modules/search"]},
-    "jira-dashboard": {"command": "npx", "args": ["jira-cloud-mcp-server/dist/modules/dashboard"]}
+    "jira-search": {"command": "npx", "args": ["mcp-jira-cloud-server/dist/modules/search"]},
+    "jira-dashboard": {"command": "npx", "args": ["mcp-jira-cloud-server/dist/modules/dashboard"]}
   }
 }
 ```
@@ -88,7 +88,7 @@ npm install -g jira-cloud-mcp-server
 ```json
 {
   "mcpServers": {
-    "jira": {"command": "npx", "args": ["jira-cloud-mcp-server"]}
+    "jira": {"command": "npx", "args": ["mcp-jira-cloud-server"]}
   }
 }
 ```

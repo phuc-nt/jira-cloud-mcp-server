@@ -16,7 +16,7 @@
 **Quick install from npm registry:**
 
 ```bash
-npm install -g jira-cloud-mcp-server
+npm install -g mcp-jira-cloud-server
 ```
 
 **That's it!** Skip to [Step 2: Get Jira API Credentials](#step-2-get-jira-api-credentials) below.
@@ -38,8 +38,8 @@ npm --version
 #### Step 1: Clone Repository
 
 ```bash
-git clone https://github.com/phuc-nt/jira-cloud-mcp-server.git
-cd jira-cloud-mcp-server
+git clone https://github.com/phuc-nt/mcp-jira-cloud-server.git
+cd mcp-jira-cloud-server
 ```
 
 #### Step 2: Install Dependencies
@@ -81,17 +81,17 @@ Make sure your account has these Jira permissions:
 First, find where npm installed the package globally:
 
 ```bash
-which jira-cloud-mcp-server
+which mcp-jira-cloud-server
 ```
 
 **Copy this path** - you'll need it for the configuration below.
 
 **Common paths:**
 
-- **macOS (Homebrew):** `/opt/homebrew/bin/jira-cloud-mcp-server`
-- **macOS (Node.js):** `/usr/local/bin/jira-cloud-mcp-server`
-- **Linux:** `/usr/local/bin/jira-cloud-mcp-server`
-- **Windows:** `C:\Users\{username}\AppData\Roaming\npm\jira-cloud-mcp-server.cmd`
+- **macOS (Homebrew):** `/opt/homebrew/bin/mcp-jira-cloud-server`
+- **macOS (Node.js):** `/usr/local/bin/mcp-jira-cloud-server`
+- **Linux:** `/usr/local/bin/mcp-jira-cloud-server`
+- **Windows:** `C:\Users\{username}\AppData\Roaming\npm\mcp-jira-cloud-server.cmd`
 
 ## Step 4: Configure Your AI Client
 
@@ -107,7 +107,7 @@ Choose the configuration that best fits your needs:
   "mcpServers": {
     "jira-core": {
       "command": "node",
-      "args": ["/opt/homebrew/bin/jira-cloud-mcp-server/dist/modules/core"],
+      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server/dist/modules/core"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -116,7 +116,7 @@ Choose the configuration that best fits your needs:
     },
     "jira-search": {
       "command": "node", 
-      "args": ["/opt/homebrew/bin/jira-cloud-mcp-server/dist/modules/search"],
+      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server/dist/modules/search"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -135,7 +135,7 @@ Choose the configuration that best fits your needs:
   "mcpServers": {
     "jira-core": {
       "command": "node",
-      "args": ["/opt/homebrew/bin/jira-cloud-mcp-server/dist/modules/core"],
+      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server/dist/modules/core"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com", 
@@ -144,7 +144,7 @@ Choose the configuration that best fits your needs:
     },
     "jira-agile": {
       "command": "node",
-      "args": ["/opt/homebrew/bin/jira-cloud-mcp-server/dist/modules/agile"],
+      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server/dist/modules/agile"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -153,7 +153,7 @@ Choose the configuration that best fits your needs:
     },
     "jira-search": {
       "command": "node",
-      "args": ["/opt/homebrew/bin/jira-cloud-mcp-server/dist/modules/search"],
+      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server/dist/modules/search"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -172,7 +172,7 @@ Choose the configuration that best fits your needs:
   "mcpServers": {
     "jira-search": {
       "command": "node",
-      "args": ["/opt/homebrew/bin/jira-cloud-mcp-server/dist/modules/search"],
+      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server/dist/modules/search"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -181,7 +181,7 @@ Choose the configuration that best fits your needs:
     },
     "jira-dashboard": {
       "command": "node",
-      "args": ["/opt/homebrew/bin/jira-cloud-mcp-server/dist/modules/dashboard"],
+      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server/dist/modules/dashboard"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -200,7 +200,7 @@ Choose the configuration that best fits your needs:
   "mcpServers": {
     "jira": {
       "command": "node",
-      "args": ["/opt/homebrew/bin/jira-cloud-mcp-server"],
+      "args": ["/opt/homebrew/bin/mcp-jira-cloud-server"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -220,7 +220,7 @@ If you built from source instead of using npm:
   "mcpServers": {
     "jira-core": {
       "command": "node",
-      "args": ["/full/path/to/jira-cloud-mcp-server/dist/modules/core"],
+      "args": ["/full/path/to/mcp-jira-cloud-server/dist/modules/core"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -239,7 +239,7 @@ If you built from source instead of using npm:
 - `ATLASSIAN_USER_EMAIL`: Your Atlassian account email address
 - `ATLASSIAN_API_TOKEN`: Your API token from step 2
 
-**⚠️ Important:** Replace `/opt/homebrew/bin/jira-cloud-mcp-server` with **your actual path** from the `which` command above.
+**⚠️ Important:** Replace `/opt/homebrew/bin/mcp-jira-cloud-server` with **your actual path** from the `which` command above.
 
 ### Supported MCP Clients
 
@@ -268,8 +268,8 @@ pwd
 
 **Example paths:**
 
-- macOS: `/Users/yourname/jira-cloud-mcp-server/dist/modules/core`
-- Windows: `C:\\Users\\YourName\\jira-cloud-mcp-server\\dist\\modules\\core`
+- macOS: `/Users/yourname/mcp-jira-cloud-server/dist/modules/core`
+- Windows: `C:\\Users\\YourName\\mcp-jira-cloud-server\\dist\\modules\\core`
 
 ## Step 5: Verify Installation
 
@@ -307,7 +307,7 @@ Your MCP Jira Server is now ready with **46 optimized tools** and **100% test su
 - Create dashboards and analytics reports
 - Integrate Jira operations directly into your AI workflow
 
-**Need help?** Check the troubleshooting section or visit our [GitHub repository](https://github.com/phuc-nt/jira-cloud-mcp-server) for support.
+**Need help?** Check the troubleshooting section or visit our [GitHub repository](https://github.com/phuc-nt/mcp-jira-cloud-server) for support.
 
 **Ready to explore?** Start with simple commands like _"List all my assigned issues"_ or _"Create a new story in project ABC"_.
 

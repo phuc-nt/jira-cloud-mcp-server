@@ -2,7 +2,7 @@
 
 🎯 **Optimized & AI-Ready: Refined MCP Server with 46 optimized tools across 4 specialized modules!**
 
-Available on npm (`jira-cloud-mcp-server`) or GitHub. Works with Claude Desktop, Cline, Cursor, and any MCP-compatible client.
+Available on npm (`mcp-jira-cloud-server`) or GitHub. Works with Claude Desktop, Cline, Cursor, and any MCP-compatible client.
 
 ---
 
@@ -81,7 +81,7 @@ Enhanced search and data retrieval - completely safe for auto-approval
 
 ### NPM Installation
 ```bash
-npm install -g jira-cloud-mcp-server
+npm install -g mcp-jira-cloud-server
 ```
 
 ### Modular Configuration (Recommended)
@@ -93,7 +93,7 @@ Choose the modules you need for optimized memory usage:
   "mcpServers": {
     "jira-core": {
       "command": "npx",
-      "args": ["jira-cloud-mcp-server/dist/modules/core"],
+      "args": ["mcp-jira-cloud-server/dist/modules/core"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -102,7 +102,7 @@ Choose the modules you need for optimized memory usage:
     },
     "jira-search": {
       "command": "npx",
-      "args": ["jira-cloud-mcp-server/dist/modules/search"],
+      "args": ["mcp-jira-cloud-server/dist/modules/search"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com", 
@@ -119,7 +119,7 @@ Choose the modules you need for optimized memory usage:
   "mcpServers": {
     "jira": {
       "command": "npx",
-      "args": ["jira-cloud-mcp-server"],
+      "args": ["mcp-jira-cloud-server"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-site-name",
         "ATLASSIAN_USER_EMAIL": "your-email@example.com",
@@ -165,7 +165,7 @@ Choose the modules you need for optimized memory usage:
 - **[Installation Guide](./llms-install.md)** - Complete setup for AI assistants
 - **[API Reference](./docs/START_POINT.md)** - All 56 tools documented
 - **[Migration Guide](./docs/02_implementation/sprints/sprint_5_3_completion_report.md)** - v2.x to v3.0 upgrade details
-- **[GitHub Issues](https://github.com/phuc-nt/jira-cloud-mcp-server/issues)** - Support and feature requests
+- **[GitHub Issues](https://github.com/phuc-nt/mcp-jira-cloud-server/issues)** - Support and feature requests
 
 ## What's Changed Since v2.x
 
