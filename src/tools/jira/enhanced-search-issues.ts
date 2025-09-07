@@ -47,9 +47,10 @@ export const enhancedSearchIssuesSchema = z.object({
   jql: z.string().optional().describe('Custom JQL query (overrides smart filters)'),
   quickFilter: z.enum(['my-issues', 'recent', 'unresolved', 'recently-updated']).optional().describe('Quick filter shortcuts'),
   
-  // Pagination
+  // Pagination - Updated for new API
   maxResults: z.number().default(50).describe('Maximum number of results (default: 50)'),
-  startAt: z.number().default(0).describe('Starting index for pagination (default: 0)'),
+  nextPageToken: z.string().optional().describe('Token for next page from previous response (replaces startAt)'),
+  startAt: z.number().default(0).describe('DEPRECATED: Use nextPageToken for new API pagination'),
   
   // Response configuration
   fields: z.string().optional().describe('Comma-separated list of fields to include'),
@@ -334,39 +335,48 @@ export async function enhancedSearchIssuesImpl(params: EnhancedSearchIssuesParam
   }
 
   try {
-    const headers = createBasicHeaders(config.email, config.apiToken);
+    const headers = {
+      ...createBasicHeaders(config.email, config.apiToken),
+      'Content-Type': 'application/json'
+    };
     const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
 
     // Enhanced field selection
-    const defaultFields = 'key,summary,status,assignee,priority,created,updated,issuetype,project,description,labels,components';
-    const hierarchyFields = 'parent,subtasks,customfield_10011,customfield_10014'; // Epic Link, Epic Name
-    const progressFields = 'customfield_10016,customfield_10020,timetracking'; // Story Points, Sprint, Time Tracking
+    const defaultFields = ['key', 'summary', 'status', 'assignee', 'priority', 'created', 'updated', 'issuetype', 'project', 'description', 'labels', 'components'];
+    const hierarchyFields = ['parent', 'subtasks', 'customfield_10011', 'customfield_10014']; // Epic Link, Epic Name
+    const progressFields = ['customfield_10016', 'customfield_10020', 'timetracking']; // Story Points, Sprint, Time Tracking
     
-    let fields = params.fields || defaultFields;
+    let fields = params.fields ? params.fields.split(',') : defaultFields;
     
     if (params.includeHierarchy) {
-      fields += ',' + hierarchyFields;
+      fields = fields.concat(hierarchyFields);
     }
     
     if (params.includeProgress) {
-      fields += ',' + progressFields;
+      fields = fields.concat(progressFields);
     }
     
-    // Build search URL
-    const searchParams = new URLSearchParams({
+    // Build request body for new POST API - include fields to get full data
+    const requestBody: any = {
       jql: jqlQuery,
-      maxResults: params.maxResults.toString(),
-      startAt: params.startAt.toString(),
       fields: fields,
-      expand: 'names'
-    });
+      maxResults: params.maxResults
+    };
 
-    const url = `${baseUrl}/rest/api/3/search?${searchParams}`;
+    // Use nextPageToken if provided (new API)
+    if (params.nextPageToken) {
+      requestBody.nextPageToken = params.nextPageToken;
+    }
+
+    logger.debug('Request body:', JSON.stringify(requestBody, null, 2));
+
+    const url = `${baseUrl}/rest/api/3/search/jql`;
 
     const response = await fetch(url, { 
-      method: 'GET',
+      method: 'POST',
       headers, 
-      credentials: 'omit' 
+      credentials: 'omit',
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
@@ -377,16 +387,29 @@ export async function enhancedSearchIssuesImpl(params: EnhancedSearchIssuesParam
 
     const result = await response.json();
     
-    // Enhanced issue formatting
-    const formattedIssues = result.issues.map((issue: any) => 
+    // Log response for debugging
+    logger.debug('API Response structure:', JSON.stringify({ 
+      hasIssues: !!result.issues, 
+      issuesCount: result.issues?.length || 0,
+      hasTotal: result.hasOwnProperty('total'),
+      hasNextPageToken: !!result.nextPageToken,
+      keys: Object.keys(result)
+    }, null, 2));
+    
+    // With fields parameter, new API should return full issue data
+    logger.info(`API returned ${result.issues?.length || 0} issues with full data`);
+    
+    // Enhanced issue formatting for full issue data
+    const formattedIssues = result.issues?.map((issue: any) => 
       formatEnhancedIssue(issue, params.includeHierarchy, params.includeProgress)
-    );
+    ) || [];
 
     return {
       issues: formattedIssues,
-      total: result.total,
-      maxResults: result.maxResults,
-      startAt: result.startAt,
+      total: result.issues?.length || 0, // New API doesn't provide total count
+      maxResults: result.maxResults || params.maxResults,
+      nextPageToken: result.nextPageToken,
+      isLast: result.isLast,
       jql: jqlQuery,
       detectedIssueType: detectedType,
       searchCriteria: {
@@ -394,11 +417,11 @@ export async function enhancedSearchIssuesImpl(params: EnhancedSearchIssuesParam
         generatedJQL: jqlQuery
       },
       pagination: {
-        hasNext: (result.startAt + result.maxResults) < result.total,
-        hasPrevious: result.startAt > 0,
-        totalPages: Math.ceil(result.total / result.maxResults),
-        currentPage: Math.floor(result.startAt / result.maxResults) + 1
+        hasNext: !result.isLast,
+        nextPageToken: result.nextPageToken,
+        isLast: result.isLast
       },
+      fetchMethod: 'enhanced JQL API with fields',
       success: true
     };
 
