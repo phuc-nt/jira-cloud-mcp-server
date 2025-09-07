@@ -2,6 +2,36 @@
 
 All notable changes to MCP Jira Server will be documented in this file.
 
+## [4.1.7] - 2025-09-07 (Enhanced JQL API Migration)
+
+### 🚀 Major Enhancement: Modern Jira API Migration
+**Breaking change resolved**: Migrated from deprecated GET `/rest/api/3/search` to modern POST `/rest/api/3/search/jql`
+
+#### ✨ Key Improvements
+- **Full Issue Data Retrieval**: Enhanced `enhancedSearchIssues` now returns complete issue details instead of IDs only
+- **Modern Pagination**: Implemented `nextPageToken` continuation-based pagination (backward compatible with `startAt`)
+- **Performance Optimization**: Direct API calls with fields parameter eliminate need for bulk fetch operations
+- **Enhanced Error Handling**: Proper handling of unbounded JQL queries with helpful error messages
+
+#### 🔧 Technical Changes
+- **API Endpoint**: `GET /rest/api/3/search` → `POST /rest/api/3/search/jql`
+- **Request Format**: URL parameters → JSON body with fields array
+- **Pagination**: Offset-based → Token-based with `isLast` indicator
+- **Response Format**: Updated to handle new API structure with comprehensive logging
+
+#### ✅ Validation Results
+**All search patterns tested successfully:**
+- ✅ `fixVersion` filtering: 2 issues found with "Sprint 24 Release"
+- ✅ `priority` filtering: 15 high-priority issues discovered
+- ✅ `labels` filtering: 3 issues with "test" label located
+- ✅ JQL generation and execution: Perfect syntax translation from parameters
+
+#### 🎯 Benefits
+- **Immediate Impact**: No more "IDs only" responses - full issue data in single API call
+- **Future-Proof**: Aligned with Atlassian's enhanced JQL API roadmap  
+- **Backward Compatibility**: Existing `startAt` pagination still supported with deprecation warnings
+- **Enhanced Debugging**: Comprehensive request/response logging for troubleshooting
+
 ## [4.1.0] - 2025-08-12 (Phase 7 Complete - Tool Optimization & AI Client Enhancement)
 
 ### 🎯 Phase 7: Tool Optimization Complete

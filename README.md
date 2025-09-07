@@ -26,6 +26,7 @@
 
 ### 🎯 **Key Capabilities:**
 
+- ✅ **Modern JQL API** - Enhanced search with full issue data retrieval (no IDs-only limitation)
 - ✅ **Modular Architecture** - Up to 64% memory reduction with selective loading
 - ✅ **Enhanced AI Client Compatibility** - Comprehensive usage patterns & error prevention
 - ✅ **Production Ready** - 100% test success rate across all 46 tools
@@ -83,8 +84,9 @@ AI Assistant: I'll create that Epic for you using the createIssue tool:
 Human: Find all high-priority bugs assigned to me that were created last week
 
 AI Assistant: I'll search for your high-priority bugs from last week:
-□ Use enhancedSearchIssues with JQL: "assignee = currentUser() AND priority = High AND issueType = Bug AND created >= -7d"
-□ Found 3 matching issues
+□ Use enhancedSearchIssues with modern JQL API: "assignee = currentUser() AND priority = High AND issueType = Bug AND created >= -7d"
+□ Enhanced API returns full issue details (no IDs-only limitation)
+□ Found 3 matching issues with complete data in single API call
 □ Analyzing priority, status, and resolution timeframes...
 
 Found 3 high-priority bugs: DEMO-140, DEMO-138, DEMO-135 - details attached.
