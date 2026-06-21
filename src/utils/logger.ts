@@ -83,8 +83,10 @@ export class Logger {
    */
   info(message: string, data?: any): void {
     if (Logger.logLevel >= LogLevel.INFO) {
-      console.info(`${COLORS.BLUE}[INFO][${this.moduleName}]${COLORS.RESET} ${message}`);
-      if (data) console.info(data);
+      // MCP uses stdout for JSON-RPC; logs MUST go to stderr or they corrupt the
+      // protocol stream (client reports "Failed to parse JSONRPC message").
+      console.error(`${COLORS.BLUE}[INFO][${this.moduleName}]${COLORS.RESET} ${message}`);
+      if (data) console.error(data);
     }
   }
 
@@ -95,8 +97,9 @@ export class Logger {
    */
   debug(message: string, data?: any): void {
     if (Logger.logLevel >= LogLevel.DEBUG) {
-      console.debug(`${COLORS.GRAY}[DEBUG][${this.moduleName}]${COLORS.RESET} ${message}`);
-      if (data) console.debug(data);
+      // stderr, not stdout — see info() above (MCP stdout = JSON-RPC only).
+      console.error(`${COLORS.GRAY}[DEBUG][${this.moduleName}]${COLORS.RESET} ${message}`);
+      if (data) console.error(data);
     }
   }
 
