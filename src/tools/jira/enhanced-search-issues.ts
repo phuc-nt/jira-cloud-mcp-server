@@ -247,6 +247,7 @@ function formatEnhancedIssue(issue: any, includeHierarchy: boolean, includeProgr
     },
     created: issue.fields.created,
     updated: issue.fields.updated,
+    duedate: issue.fields.duedate || null,
     labels: issue.fields.labels || [],
     components: issue.fields.components?.map((comp: any) => comp.name) || []
   };
@@ -342,7 +343,7 @@ export async function enhancedSearchIssuesImpl(params: EnhancedSearchIssuesParam
     const baseUrl = normalizeAtlassianBaseUrl(config.baseUrl);
 
     // Enhanced field selection
-    const defaultFields = ['key', 'summary', 'status', 'assignee', 'priority', 'created', 'updated', 'issuetype', 'project', 'description', 'labels', 'components'];
+    const defaultFields = ['key', 'summary', 'status', 'assignee', 'priority', 'created', 'updated', 'duedate', 'issuetype', 'project', 'description', 'labels', 'components'];
     const hierarchyFields = ['parent', 'subtasks', 'customfield_10011', 'customfield_10014']; // Epic Link, Epic Name
     const progressFields = ['customfield_10016', 'customfield_10020', 'timetracking']; // Story Points, Sprint, Time Tracking
     
