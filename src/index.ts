@@ -1,9 +1,14 @@
 import dotenv from 'dotenv';
+import { createRequire } from 'module';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { registerAllTools } from './tools/index.js';
 import { Logger } from './utils/logger.js';
 import { AtlassianConfig } from './utils/atlassian-api-base.js';
+
+// Read own package.json for serverInfo.version default (ESM-safe require)
+const require = createRequire(import.meta.url);
+const packageJson = require('../package.json') as { version: string };
 
 // Load environment variables
 dotenv.config();
@@ -32,14 +37,18 @@ const atlassianConfig: AtlassianConfig = {
 
 logger.info('Initializing MCP Atlassian Server...');
 
-// Initialize MCP server with capabilities (tools-only)
-const server = new McpServer({
-  name: process.env.MCP_SERVER_NAME || 'phuc-nt/mcp-atlassian-server',
-  version: process.env.MCP_SERVER_VERSION || '1.0.0',
-  capabilities: {
-    tools: {}  // Only tools capability - no resources
+// Initialize MCP server (tools-only). The SDK reads capabilities from the SECOND arg
+// (ServerOptions), not the Implementation object; McpServer also auto-declares the tool
+// capability the moment .tool() is registered, so this is explicit-but-redundant.
+const server = new McpServer(
+  {
+    name: process.env.MCP_SERVER_NAME || 'phuc-nt/mcp-atlassian-server',
+    version: process.env.MCP_SERVER_VERSION || packageJson.version,
+  },
+  {
+    capabilities: { tools: {} },
   }
-});
+);
 
 // Create server wrapper with context injection
 const serverWithContext = {
@@ -64,8 +73,13 @@ async function startServer() {
   try {
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    
-    logger.info(`MCP Jira Server v3.0.0 started successfully`);
+
+    // Exit cleanly when stdin closes (e.g. parent process pipe closed). The SDK
+    // does not exit automatically on EOF, which can leave orphaned processes
+    // under spawn-per-call usage.
+    process.stdin.on('end', () => process.exit(0));
+
+    logger.info(`MCP Jira Server v${packageJson.version} started successfully`);
     logger.info(`Connected to: ${ATLASSIAN_SITE_NAME}`);
     logger.info(`Architecture: Tools-only (18+ Jira tools registered)`);
   } catch (error) {

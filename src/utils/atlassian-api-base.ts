@@ -1,7 +1,4 @@
-import { Version3Client } from "jira.js";
 import { Logger } from "./logger.js";
-import { ApiError, ApiErrorType } from "./error-handler.js";
-import fetch from "cross-fetch";
 
 export interface AtlassianConfig {
   baseUrl: string;
@@ -11,9 +8,6 @@ export interface AtlassianConfig {
 
 // Initialize logger
 export const logger = Logger.getLogger("AtlassianAPI");
-
-// Cache for Atlassian clients to reuse
-export const clientCache = new Map<string, Version3Client>();
 
 /**
  * Create basic headers for API request
@@ -40,44 +34,6 @@ export const createBasicHeaders = (email: string, apiToken: string) => {
   };
 };
 
-// Helper: Create or get Jira client from cache
-export function getJiraClient(config: AtlassianConfig): Version3Client {
-  const cacheKey = `jira:${config.baseUrl}:${config.email}`;
-  if (clientCache.has(cacheKey)) {
-    return clientCache.get(cacheKey) as Version3Client;
-  }
-  logger.debug(`Creating new Jira client for ${config.baseUrl}`);
-  // Normalize baseUrl
-  let baseUrl = config.baseUrl;
-  if (baseUrl.startsWith("http://")) {
-    baseUrl = baseUrl.replace("http://", "https://");
-  } else if (!baseUrl.startsWith("https://")) {
-    baseUrl = `https://${baseUrl}`;
-  }
-  if (!baseUrl.includes(".atlassian.net")) {
-    baseUrl = `${baseUrl}.atlassian.net`;
-  }
-  if (baseUrl.match(/\.atlassian\.net\.atlassian\.net/)) {
-    baseUrl = baseUrl.replace(".atlassian.net.atlassian.net", ".atlassian.net");
-  }
-  const client = new Version3Client({
-    host: baseUrl,
-    authentication: {
-      basic: {
-        email: config.email,
-        apiToken: config.apiToken,
-      },
-    },
-    baseRequestConfig: {
-      headers: {
-        "User-Agent": "MCP-Atlassian-Server/1.0.0",
-      },
-    },
-  });
-  clientCache.set(cacheKey, client);
-  return client;
-}
-
 // Helper: Normalize baseUrl for Atlassian API
 export function normalizeAtlassianBaseUrl(baseUrl: string): string {
   let normalizedUrl = baseUrl;
@@ -97,39 +53,6 @@ export function normalizeAtlassianBaseUrl(baseUrl: string): string {
   }
   return normalizedUrl;
 }
-
-// Helper: Call Jira API using jira.js (throw by default)
-export async function callJiraApi<T>(
-  config: AtlassianConfig,
-  endpoint: string,
-  method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
-  data: any = null,
-  params: Record<string, any> = {}
-): Promise<T> {
-  try {
-    const client = getJiraClient(config);
-    logger.debug(`Calling Jira API with jira.js: ${method} ${endpoint}`);
-    throw new ApiError(
-      ApiErrorType.UNKNOWN_ERROR,
-      "This API call method is not implemented with jira.js. Please use specific methods.",
-      501
-    );
-  } catch (error: any) {
-    logger.error(`Jira API error with jira.js:`, error);
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    const statusCode = error.response?.status || 500;
-    const errorMessage = error.message || "Unknown error";
-    throw new ApiError(
-      ApiErrorType.SERVER_ERROR,
-      `Jira API error: ${errorMessage}`,
-      statusCode,
-      error
-    );
-  }
-}
-
 
 // Helper: Convert Atlassian Document Format to simple Markdown
 export function adfToMarkdown(content: any): string {

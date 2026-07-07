@@ -1,6 +1,6 @@
 {
   "name": "mcp-jira-cloud-server",
-  "version": "4.1.7",
+  "version": "4.2.0",
   "description": "MCP Server for interacting with Atlassian Jira (46 optimized tools across 4 specialized modules with enhanced AI client compatibility)",
   "type": "module",
   "main": "dist/index.js",
@@ -46,13 +46,8 @@
   "author": "Phuc Nguyen",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.11.0",
-    "axios": "^1.6.2",
-    "axios-retry": "^4.5.0",
-    "cross-fetch": "^4.1.0",
+    "@modelcontextprotocol/sdk": "1.17.4",
     "dotenv": "^16.4.1",
-    "jira.js": "^3.0.0",
-    "mcp-jira-cloud-server": "^4.1.5",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -73,7 +68,7 @@
     "url": "https://github.com/phuc-nt/jira-cloud-mcp-server/issues"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=20"
   },
   "publishConfig": {
     "access": "public"
