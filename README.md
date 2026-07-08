@@ -39,6 +39,10 @@
 npm install -g mcp-jira-cloud-server
 ```
 
+> **Note:** the npm package name is `mcp-jira-cloud-server`, which differs from this repo's name
+> (`jira-cloud-mcp-server`). The name predates the repo rename and is kept as-is on publish —
+> renaming the package would create a new npm listing and lose install history / existing users.
+
 **📖 [Complete Installation Guide](INSTALL.md)** - Follow the step-by-step setup guide
 
 ## Architecture
